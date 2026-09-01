@@ -28,3 +28,17 @@ Track and manage shared household expenses. Single user can create bills, split 
 - Keep entities independent of framework
 - Single-user app (V1.0) - no auth/permissions needed
 - Local storage only via SQLite
+
+
+## Implementation Notes (Continued)
+
+### Data Layer (Phase 2 - NEXT TASK)
+- SQLite model mapping Bill entity
+- Local data source for SQLite operations
+- BillRepositoryImpl implementation
+- Place files under `lib/features/split_bills/data/`
+
+### Presentation Layer (Phase 3)
+- BillBloc for state management
+- Bill list and creation screens
+- Place files under `lib/features/split_bills/presentation/`
