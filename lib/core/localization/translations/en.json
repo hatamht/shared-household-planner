@@ -19,5 +19,20 @@
   "success": "Success",
   "confirm": "Confirm",
   "no_data": "No data",
-  "loading": "Loading..."
+  "loading": "Loading...",
+  "bills": "Bills",
+  "add_bill": "Add Bill",
+  "bill_name": "Bill Name",
+  "amount": "Amount",
+  "category": "Category",
+  "payer": "Payer",
+  "participants": "Participants",
+  "no_bills": "No bills yet",
+  "total_spent": "Total Spent",
+  "you_owe": "You Owe",
+  "name_required": "Name is required",
+  "amount_required": "Amount is required",
+  "amount_positive": "Amount must be positive",
+  "participants_required": "Participants required",
+  "participants_min": "At least 2 participants required"
 }

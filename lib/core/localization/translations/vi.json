@@ -19,5 +19,20 @@
   "success": "Thành công",
   "confirm": "Xác nhận",
   "no_data": "Không có dữ liệu",
-  "loading": "Đang tải..."
+  "loading": "Đang tải...",
+  "bills": "Chi tiêu",
+  "add_bill": "Thêm chi tiêu",
+  "bill_name": "Tên chi tiêu",
+  "amount": "Số tiền",
+  "category": "Danh mục",
+  "payer": "Người thanh toán",
+  "participants": "Người chia",
+  "no_bills": "Chưa có chi tiêu nào",
+  "total_spent": "Tổng chi",
+  "you_owe": "Bạn nợ",
+  "name_required": "Tên không được trống",
+  "amount_required": "Số tiền không được trống",
+  "amount_positive": "Số tiền phải lớn hơn 0",
+  "participants_required": "Cần người chia",
+  "participants_min": "Cần ít nhất 2 người chia"
 }
