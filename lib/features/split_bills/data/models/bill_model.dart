@@ -30,7 +30,8 @@ class BillModel extends Bill {
       paidBy: json['paidBy'] as String,
       participants: (json['participants'] as List<dynamic>)
           .map((p) => BillParticipant(
-            memberId: p['memberId'] as String,
+            participantId: p['participantId'] as String,
+            name: p['name'] as String,
             amount: (p['amount'] as num).toDouble(),
           ))
           .toList(),
@@ -47,7 +48,8 @@ class BillModel extends Bill {
       'paidBy': paidBy,
       'participants': participants
           .map((p) => {
-            'memberId': p.memberId,
+            'participantId': p.participantId,
+            'name': p.name,
             'amount': p.amount,
           })
           .toList(),

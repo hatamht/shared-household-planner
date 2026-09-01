@@ -32,8 +32,8 @@ void main() {
     date: DateTime(2026, 9, 1),
     paidBy: 'member1',
     participants: const [
-      BillParticipant(memberId: 'member1', amount: 50.0),
-      BillParticipant(memberId: 'member2', amount: 50.0),
+      BillParticipant(participantId: 'member1', name: 'John', amount: 50.0),
+      BillParticipant(participantId: 'member2', name: 'John', amount: 50.0),
     ],
   );
 
@@ -60,7 +60,7 @@ void main() {
       // arrange
       when(mockBillRepository.getAll()).thenAnswer(
         (_) async => const Left<Failure, List<Bill>>(
-          CacheFailure('Cache error'),
+          LocalFailure('Cache error'),
         ),
       );
 

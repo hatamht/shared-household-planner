@@ -17,7 +17,7 @@ class BillRepositoryImpl implements BillRepository {
       final result = await localDataSource.addBill(billModel);
       return Right(result);
     } catch (e) {
-      return Left(CacheFailure('Failed to create bill: ${e.toString()}'));
+      return Left(LocalFailure('Failed to create bill: ${e.toString()}'));
     }
   }
 
@@ -27,7 +27,7 @@ class BillRepositoryImpl implements BillRepository {
       final bills = await localDataSource.getAllBills();
       return Right(bills);
     } catch (e) {
-      return Left(CacheFailure('Failed to fetch bills: ${e.toString()}'));
+      return Left(LocalFailure('Failed to fetch bills: ${e.toString()}'));
     }
   }
 
@@ -37,7 +37,7 @@ class BillRepositoryImpl implements BillRepository {
       final bill = await localDataSource.getBillById(billId);
       return Right(bill);
     } catch (e) {
-      return Left(CacheFailure('Failed to fetch bill: ${e.toString()}'));
+      return Left(LocalFailure('Failed to fetch bill: ${e.toString()}'));
     }
   }
 
@@ -48,7 +48,7 @@ class BillRepositoryImpl implements BillRepository {
       final result = await localDataSource.updateBill(billModel);
       return Right(result);
     } catch (e) {
-      return Left(CacheFailure('Failed to update bill: ${e.toString()}'));
+      return Left(LocalFailure('Failed to update bill: ${e.toString()}'));
     }
   }
 
@@ -58,7 +58,7 @@ class BillRepositoryImpl implements BillRepository {
       await localDataSource.deleteBill(billId);
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Failed to delete bill: ${e.toString()}'));
+      return Left(LocalFailure('Failed to delete bill: ${e.toString()}'));
     }
   }
 }

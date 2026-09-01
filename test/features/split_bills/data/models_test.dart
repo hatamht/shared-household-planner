@@ -6,8 +6,8 @@ import 'package:shared_household_planner/features/split_bills/domain/entities/bi
 void main() {
   final tDate = DateTime(2026, 9, 1);
   const tParticipants = [
-    BillParticipant(memberId: 'member1', amount: 50.0),
-    BillParticipant(memberId: 'member2', amount: 50.0),
+    BillParticipant(participantId: 'member1', name: 'John', amount: 50.0),
+    BillParticipant(participantId: 'member2', name: 'John', amount: 50.0),
   ];
   final tBillModel = BillModel(
     id: 'bill1',
@@ -33,8 +33,8 @@ void main() {
         'date': '2026-09-01T00:00:00.000',
         'paidBy': 'member1',
         'participants': [
-          {'memberId': 'member1', 'amount': 50.0},
-          {'memberId': 'member2', 'amount': 50.0},
+          {'participantId': 'member1', 'name': 'John', 'amount': 50.0},
+          {'participantId': 'member2', 'name': 'Jane', 'amount': 50.0},
         ]
       };
 

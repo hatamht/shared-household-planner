@@ -20,8 +20,8 @@ void main() {
 
   final tDate = DateTime(2026, 9, 1);
   const tParticipants = [
-    BillParticipant(memberId: 'member1', amount: 50.0),
-    BillParticipant(memberId: 'member2', amount: 50.0),
+    BillParticipant(participantId: 'member1', name: 'John', amount: 50.0),
+    BillParticipant(participantId: 'member2', name: 'John', amount: 50.0),
   ];
   final tBillModel = BillModel(
     id: 'bill1',

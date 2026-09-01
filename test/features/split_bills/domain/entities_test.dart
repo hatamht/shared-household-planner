@@ -4,23 +4,24 @@ import 'package:shared_household_planner/features/split_bills/domain/entities/bi
 
 void main() {
   group('BillParticipant', () {
-    test('should create BillParticipant with memberId and amount', () {
-      const participant = BillParticipant(memberId: 'member1', amount: 50.0);
+    test('should create BillParticipant with participantId, name and amount', () {
+      const participant = BillParticipant(participantId: 'member1', name: 'John', amount: 50.0);
 
-      expect(participant.memberId, 'member1');
+      expect(participant.participantId, 'member1');
+      expect(participant.name, 'John');
       expect(participant.amount, 50.0);
     });
 
     test('two BillParticipants with same values should be equal', () {
-      const participant1 = BillParticipant(memberId: 'member1', amount: 50.0);
-      const participant2 = BillParticipant(memberId: 'member1', amount: 50.0);
+      const participant1 = BillParticipant(participantId: 'member1', name: 'John', amount: 50.0);
+      const participant2 = BillParticipant(participantId: 'member1', name: 'John', amount: 50.0);
 
       expect(participant1, participant2);
     });
 
     test('two BillParticipants with different values should not be equal', () {
-      const participant1 = BillParticipant(memberId: 'member1', amount: 50.0);
-      const participant2 = BillParticipant(memberId: 'member2', amount: 50.0);
+      const participant1 = BillParticipant(participantId: 'member1', name: 'John', amount: 50.0);
+      const participant2 = BillParticipant(participantId: 'member2', name: 'John', amount: 50.0);
 
       expect(participant1, isNot(participant2));
     });
@@ -30,8 +31,8 @@ void main() {
     test('should create Bill with all required fields', () {
       final date = DateTime.now();
       final participants = const [
-        BillParticipant(memberId: 'member1', amount: 50.0),
-        BillParticipant(memberId: 'member2', amount: 50.0),
+        BillParticipant(participantId: 'member1', name: 'John', amount: 50.0),
+        BillParticipant(participantId: 'member2', name: 'John', amount: 50.0),
       ];
       final bill = Bill(
         id: 'bill1',
@@ -55,8 +56,8 @@ void main() {
     test('two Bills with same values should be equal', () {
       final date = DateTime(2026, 9, 1);
       final participants = const [
-        BillParticipant(memberId: 'member1', amount: 50.0),
-        BillParticipant(memberId: 'member2', amount: 50.0),
+        BillParticipant(participantId: 'member1', name: 'John', amount: 50.0),
+        BillParticipant(participantId: 'member2', name: 'John', amount: 50.0),
       ];
 
       final bill1 = Bill(
