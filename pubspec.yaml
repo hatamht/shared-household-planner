@@ -22,6 +22,7 @@ dependencies:
   sqflite: ^2.2.0
   get_it: ^7.5.0
   equatable: ^2.0.5
+  dartz: ^0.10.1
 
 dev_dependencies:
   flutter_test:
