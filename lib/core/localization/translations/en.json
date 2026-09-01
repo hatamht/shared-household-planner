@@ -1,0 +1,23 @@
+{
+  "app_name": "Shared Household Planner",
+  "home": "Home",
+  "bills": "Bills",
+  "calendar": "Calendar",
+  "shopping": "Shopping List",
+  "settings": "Settings",
+  "language": "Language",
+  "theme": "Theme",
+  "light_mode": "Light",
+  "dark_mode": "Dark",
+  "add": "Add",
+  "edit": "Edit",
+  "delete": "Delete",
+  "save": "Save",
+  "cancel": "Cancel",
+  "ok": "OK",
+  "error": "Error",
+  "success": "Success",
+  "confirm": "Confirm",
+  "no_data": "No data",
+  "loading": "Loading..."
+}

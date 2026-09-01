@@ -1,0 +1,23 @@
+{
+  "app_name": "Trình quản lý hộ gia đình",
+  "home": "Trang chủ",
+  "bills": "Chi tiêu",
+  "calendar": "Lịch",
+  "shopping": "Danh sách mua",
+  "settings": "Cài đặt",
+  "language": "Ngôn ngữ",
+  "theme": "Giao diện",
+  "light_mode": "Sáng",
+  "dark_mode": "Tối",
+  "add": "Thêm",
+  "edit": "Sửa",
+  "delete": "Xóa",
+  "save": "Lưu",
+  "cancel": "Hủy",
+  "ok": "Đồng ý",
+  "error": "Lỗi",
+  "success": "Thành công",
+  "confirm": "Xác nhận",
+  "no_data": "Không có dữ liệu",
+  "loading": "Đang tải..."
+}
