@@ -20,6 +20,7 @@ dependencies:
   flutter_bloc: ^8.1.0
   bloc: ^8.1.0
   sqflite: ^2.2.0
+  path_provider: ^2.1.0
   get_it: ^7.5.0
   equatable: ^2.0.5
   dartz: ^0.10.1
