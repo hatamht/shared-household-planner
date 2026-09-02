@@ -4,20 +4,26 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'core/injection_container.dart';
 import 'core/localization/app_localizations.dart';
+import 'core/language/language_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'features/home/presentation/pages/home_screen.dart';
 
 final themeProvider = ThemeProvider();
+final languageProvider = LanguageProvider();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await themeProvider.loadTheme();
+  await languageProvider.loadLanguage();
   await setupServiceLocator();
   
   runApp(
-    ChangeNotifierProvider<ThemeProvider>(
-      create: (_) => themeProvider,
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ThemeProvider>(create: (_) => themeProvider),
+        ChangeNotifierProvider<LanguageProvider>(create: (_) => languageProvider),
+      ],
       child: const MyApp(),
     ),
   );
@@ -28,13 +34,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, _) {
+    return Consumer2<ThemeProvider, LanguageProvider>(
+      builder: (context, themeProvider, languageProvider, _) {
         return BlocProvider<BillsBloc>.value(
           value: getIt<BillsBloc>(),
           child: MaterialApp(
             title: 'Shared Household Planner',
-            locale: const Locale('en'),
+            locale: languageProvider.currentLocale,
             localizationsDelegates: const [
               AppLocalizationsDelegate(),
               GlobalMaterialLocalizations.delegate,
