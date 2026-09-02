@@ -7,6 +7,7 @@ import '../widgets/stats_card.dart';
 import '../../domain/entities/bill.dart';
 import '../../domain/entities/bill_participant.dart';
 import '../../../../core/localization/app_localizations.dart';
+import 'add_bill_screen.dart';
 
 class BillsListScreen extends StatefulWidget {
   const BillsListScreen({Key? key}) : super(key: key);
@@ -90,9 +91,13 @@ class _BillsListScreenState extends State<BillsListScreen> {
   }
 
   void _showAddBillDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AddBillDialog(),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider<BillsBloc>.value(
+          value: context.read<BillsBloc>(),
+          child: const AddBillScreen(),
+        ),
+      ),
     );
   }
 }
