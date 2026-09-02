@@ -146,7 +146,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       participants: billParticipants,
     );
 
-    context.read<BillsBloc>().add(AddBillEvent(bill));
+    context.read<BillsBloc>().add(AddBillEvent(bill: bill));
     Navigator.pop(context);
   }
 

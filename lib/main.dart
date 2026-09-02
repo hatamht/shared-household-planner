@@ -12,10 +12,12 @@ import 'features/split_bills/domain/repositories/bill_repository.dart';
 import 'features/split_bills/domain/usecases/add_bill_usecase.dart';
 import 'features/split_bills/domain/usecases/get_bills_usecase.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
+import 'features/split_bills/presentation/pages/bills_list_screen.dart';
 
 final getIt = GetIt.instance;
+final themeProvider = ThemeProvider();
 
-void setupServiceLocator() async {
+Future<void> setupServiceLocator() async {
   // Database
   final database = await DatabaseHelper().database;
   
@@ -48,7 +50,6 @@ void setupServiceLocator() async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ThemeProvider();
   await themeProvider.loadTheme();
   await setupServiceLocator();
   
@@ -81,8 +82,8 @@ class MyApp extends StatelessWidget {
             Locale('vi'),
           ],
           theme: themeProvider.currentTheme,
-          home: BlocProvider<BillsBloc>(
-            create: (_) => getIt<BillsBloc>(),
+          home: BlocProvider<BillsBloc>.value(
+            value: getIt<BillsBloc>(),
             child: const MyHomePage(title: 'Shared Household Planner'),
           ),
         );
@@ -162,6 +163,3 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
-
-// Import BillsListScreen at the end
-import 'features/split_bills/presentation/pages/bills_list_screen.dart';
