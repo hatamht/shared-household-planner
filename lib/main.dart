@@ -13,6 +13,7 @@ import 'features/split_bills/domain/usecases/add_bill_usecase.dart';
 import 'features/split_bills/domain/usecases/get_bills_usecase.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'features/split_bills/presentation/pages/bills_list_screen.dart';
+import 'features/home/presentation/pages/home_screen.dart';
 
 final getIt = GetIt.instance;
 final themeProvider = ThemeProvider();
@@ -68,98 +69,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
-        return MaterialApp(
-          title: 'Shared Household Planner',
-          locale: const Locale('en'),
-          localizationsDelegates: const [
-            AppLocalizationsDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en'),
-            Locale('vi'),
-          ],
-          theme: themeProvider.currentTheme,
-          home: BlocProvider<BillsBloc>.value(
-            value: getIt<BillsBloc>(),
-            child: const MyHomePage(title: 'Shared Household Planner'),
+        return BlocProvider<BillsBloc>.value(
+          value: getIt<BillsBloc>(),
+          child: MaterialApp(
+            title: 'Shared Household Planner',
+            locale: const Locale('en'),
+            localizationsDelegates: const [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              Locale('vi'),
+            ],
+            theme: themeProvider.currentTheme,
+            home: const HomeScreen(),
           ),
         );
       },
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  @override
-  Widget build(BuildContext context) {
-    final appLocalizations = AppLocalizations.of(context);
-    
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(appLocalizations.translate('app_name')),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: Consumer<ThemeProvider>(
-                builder: (context, themeProvider, _) {
-                  return IconButton(
-                    icon: Icon(
-                      themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                      color: Colors.white,
-                    ),
-                    onPressed: () => themeProvider.toggleTheme(),
-                    tooltip: themeProvider.isDarkMode ? 'Light Mode' : 'Dark Mode',
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              appLocalizations.translate('app_name'),
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Shared Household Planner',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => BlocProvider<BillsBloc>.value(
-                      value: getIt<BillsBloc>(),
-                      child: const BillsListScreen(),
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.receipt),
-              label: Text(appLocalizations.translate('split_bills')),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
