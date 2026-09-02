@@ -6,7 +6,6 @@ import 'core/injection_container.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
-import 'features/split_bills/presentation/pages/bills_list_screen.dart';
 import 'features/home/presentation/pages/home_screen.dart';
 
 final themeProvider = ThemeProvider();
