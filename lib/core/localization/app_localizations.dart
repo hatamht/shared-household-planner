@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 
 class AppLocalizations {
   final Locale locale;
-  late Map<String, String> _translations;
+  Map<String, String> _translations = {};
 
   AppLocalizations(this.locale);
 
