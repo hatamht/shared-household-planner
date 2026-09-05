@@ -13,17 +13,24 @@ class AppLocalizations {
   }
 
   Future<bool> load() async {
-    try {
-      final jsonString = await rootBundle.loadString(
-        'core/localization/translations/${locale.languageCode}.json',
-      );
-      _translations = Map<String, String>.from(
-        jsonDecode(jsonString) as Map<String, dynamic>,
-      );
-      return true;
-    } catch (e) {
-      print('🔴 Failed to load translations for ${locale.languageCode}: $e');
-      return false;
+    final candidates = [
+      'lib/core/localization/translations/${locale.languageCode}.json',
+      'core/localization/translations/${locale.languageCode}.json',
+    ];
+
+    for (final path in candidates) {
+      try {
+        final jsonString = await rootBundle.loadString(path);
+        _translations = Map<String, String>.from(
+          jsonDecode(jsonString) as Map<String, dynamic>,
+        );
+        return true;
+      } catch (_) {
+        // try next candidate
+      }
+    }
+
+    return false;
     }
   }
 

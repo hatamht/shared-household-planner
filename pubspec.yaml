@@ -50,8 +50,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - core/localization/translations/en.json
-    - core/localization/translations/vi.json
+    - lib/core/localization/translations/en.json
+    - lib/core/localization/translations/vi.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
