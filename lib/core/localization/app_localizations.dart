@@ -22,12 +22,17 @@ class AppLocalizations {
       );
       return true;
     } catch (e) {
+      print('🔴 Failed to load translations for ${locale.languageCode}: $e');
       return false;
     }
   }
 
   String translate(String key) {
-    return _translations[key] ?? key;
+    final result = _translations[key];
+    if (result == null) {
+      print('🟡 Missing translation key: "$key"');
+    }
+    return result ?? '[${key}]';
   }
 
   String t(String key) => translate(key);
