@@ -192,7 +192,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
               items: categories
                   .map((cat) => DropdownMenuItem(
                         value: cat,
-                        child: Text(loc.translate(cat)),
+                        child: Text(loc.translate('category_$cat')),
                       ))
                   .toList(),
               onChanged: (value) {

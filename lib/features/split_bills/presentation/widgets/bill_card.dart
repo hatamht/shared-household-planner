@@ -49,7 +49,7 @@ class BillCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${dateFormat.format(bill.date)} • ${bill.category}',
+                    '${dateFormat.format(bill.date)} • ${loc.translate('category_${bill.category}')}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 4),
