@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+import 'dart:convert';
 import '../models/bill_model.dart';
 
 class DatabaseException implements Exception {
@@ -25,9 +26,11 @@ class LocalBillDataSourceImpl implements LocalBillDataSource {
   @override
   Future<BillModel> addBill(BillModel bill) async {
     try {
+      final billJson = bill.toJson();
+      billJson['participants'] = jsonEncode(billJson['participants']);
       await database.insert(
         'bills',
-        bill.toJson(),
+        billJson,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       return bill;
@@ -66,9 +69,11 @@ class LocalBillDataSourceImpl implements LocalBillDataSource {
   @override
   Future<BillModel> updateBill(BillModel bill) async {
     try {
+      final billJson = bill.toJson();
+      billJson['participants'] = jsonEncode(billJson['participants']);
       final rowsAffected = await database.update(
         'bills',
-        bill.toJson(),
+        billJson,
         where: 'id = ?',
         whereArgs: [bill.id],
       );

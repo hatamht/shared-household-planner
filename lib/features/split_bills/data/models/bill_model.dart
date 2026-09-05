@@ -1,5 +1,6 @@
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill_participant.dart';
+import 'dart:convert';
 
 class BillModel extends Bill {
   const BillModel({
@@ -21,6 +22,15 @@ class BillModel extends Bill {
   );
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
+    // Handle participants as either String (from SQLite) or List (from toJson/tests)
+    List<dynamic> participantsList;
+    final participantsData = json['participants'];
+    if (participantsData is String) {
+      participantsList = jsonDecode(participantsData) as List<dynamic>;
+    } else {
+      participantsList = participantsData as List<dynamic>;
+    }
+    
     return BillModel(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -28,7 +38,7 @@ class BillModel extends Bill {
       category: json['category'] as String,
       date: DateTime.parse(json['date'] as String),
       paidBy: json['paidBy'] as String,
-      participants: (json['participants'] as List<dynamic>)
+      participants: participantsList
           .map((p) => BillParticipant(
             participantId: p['participantId'] as String,
             name: p['name'] as String,
