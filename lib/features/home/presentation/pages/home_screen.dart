@@ -22,13 +22,13 @@ class HomeScreen extends StatelessWidget {
               languageProvider.setLanguage(languageCode);
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'en',
-                child: Text('🇬🇧 English'),
+                child: Text('🇬🇧 ${appLocalizations.translate("english")}'),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'vi',
-                child: Text('🇻🇳 Tiếng Việt'),
+                child: Text('🇻🇳 ${appLocalizations.translate("vietnamese")}'),
               ),
             ],
             tooltip: appLocalizations.translate('language'),
@@ -54,8 +54,8 @@ class HomeScreen extends StatelessWidget {
                   );
                 },
                 tooltip: Theme.of(context).brightness == Brightness.dark
-                    ? 'Light Mode'
-                    : 'Dark Mode',
+                    ? appLocalizations.translate('light_mode')
+                    : appLocalizations.translate('dark_mode'),
               ),
             ),
           ),

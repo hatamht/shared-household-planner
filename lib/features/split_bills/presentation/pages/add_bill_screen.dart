@@ -167,7 +167,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
               controller: titleController,
               decoration: InputDecoration(
                 labelText: loc.translate('bill_name'),
-                hintText: 'e.g., Lunch, Taxi, Movie',
+                hintText: loc.translate('bill_name_example'),
                 border: const OutlineInputBorder(),
               ),
             ),
@@ -223,7 +223,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                     controller: participantController,
                     decoration: InputDecoration(
                       labelText: loc.translate('participant_name'),
-                      hintText: 'Enter name',
+                      hintText: loc.translate('enter_name'),
                       border: const OutlineInputBorder(),
                     ),
                   ),
