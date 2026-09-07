@@ -31,7 +31,6 @@ class AppLocalizations {
     }
 
     return false;
-    }
   }
 
   String translate(String key) {
