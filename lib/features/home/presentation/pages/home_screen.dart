@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_household_planner/core/localization/app_localizations.dart';
 import 'package:shared_household_planner/core/language/language_provider.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
+import 'package:shared_household_planner/features/projects/presentation/pages/project_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -80,6 +81,25 @@ class HomeScreen extends StatelessWidget {
               },
               icon: const Icon(Icons.receipt),
               label: Text(appLocalizations.translate('split_bills')),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              key: const Key('projectsButton'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ProjectScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.folder_shared),
+              label: Text(appLocalizations.translate('projects')),
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,

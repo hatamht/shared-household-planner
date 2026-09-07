@@ -7,6 +7,7 @@ import 'core/localization/app_localizations.dart';
 import 'core/language/language_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
+import 'features/projects/presentation/bloc/project_bloc.dart';
 import 'features/home/presentation/pages/home_screen.dart';
 
 final themeProvider = ThemeProvider();
@@ -36,8 +37,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<ThemeProvider, LanguageProvider>(
       builder: (context, themeProvider, languageProvider, _) {
-        return BlocProvider<BillsBloc>.value(
-          value: getIt<BillsBloc>(),
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<BillsBloc>.value(
+              value: getIt<BillsBloc>(),
+            ),
+            BlocProvider<ProjectBloc>.value(
+              value: getIt<ProjectBloc>(),
+            ),
+          ],
           child: MaterialApp(
             title: 'Shared Household Planner',
             locale: languageProvider.currentLocale,

@@ -57,5 +57,20 @@
   "category_utilities": "Tiện ích",
   "category_shopping": "Mua sắm",
   "category_health": "Sức khỏe",
-  "category_other": "Khác"
+  "category_other": "Khác",
+  "projects": "Dự án",
+  "create_project": "Tạo dự án",
+  "edit_project": "Sửa dự án",
+  "delete_project": "Xóa dự án",
+  "project_name": "Tên dự án",
+  "project_name_example": "VD: Chuyến đi Đà Nẵng, Mua sắm nhà",
+  "description": "Mô tả",
+  "description_example": "VD: Chuyến đi hè 2026",
+  "members": "Thành viên",
+  "add_member": "Thêm thành viên",
+  "member_name": "Tên thành viên",
+  "no_projects": "Chưa có dự án nào",
+  "project_name_required": "Tên dự án không được trống",
+  "min_1_member": "Cần ít nhất 1 thành viên",
+  "delete_project_confirm": "Bạn có chắc chắn muốn xóa dự án này?"
 }
