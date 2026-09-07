@@ -8,4 +8,5 @@ abstract class BillRepository {
   Future<Either<Failure, Bill>> getById(String billId);
   Future<Either<Failure, Bill>> update(Bill bill);
   Future<Either<Failure, void>> delete(String billId);
+  Future<Either<Failure, List<Bill>>> getBillsByProjectId(String projectId);
 }

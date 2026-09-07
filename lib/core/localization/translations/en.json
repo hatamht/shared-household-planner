@@ -80,5 +80,21 @@
   "payer_hint": "Who paid?",
   "select_participants": "Select Participants",
   "tap_to_toggle": "Tap to select/deselect",
-  "bill_linked_to_project": "Bill linked to project"
+  "bill_linked_to_project": "Bill linked to project",
+  "settlement": "Settlement",
+  "settlement_tab": "Settlement",
+  "statistics_tab": "Statistics",
+  "bills_tab": "Bills",
+  "owes": "owes",
+  "paid_by_label": "Paid by",
+  "no_settlement_needed": "Everyone is settled up! 🎉",
+  "top_payer": "Top Payer",
+  "top_debtor": "Owes the Most",
+  "net_balance": "Net Balance",
+  "total_expense": "Total Expense",
+  "all_settled": "All settled",
+  "project_bills": "Project Bills",
+  "per_person": "per person",
+  "no_bills_in_project": "No bills linked to this project yet",
+  "settlement_formula": "Formula: net = paid - owed"
 }

@@ -16,6 +16,7 @@ abstract class LocalBillDataSource {
   Future<BillModel> getBillById(String billId);
   Future<BillModel> updateBill(BillModel bill);
   Future<void> deleteBill(String billId);
+  Future<List<BillModel>> getBillsByProjectId(String projectId);
 }
 
 class LocalBillDataSourceImpl implements LocalBillDataSource {
@@ -99,6 +100,20 @@ class LocalBillDataSourceImpl implements LocalBillDataSource {
       }
     } on DatabaseException catch (e) {
       throw DatabaseException('Failed to delete bill: ${e.message}');
+    }
+  }
+
+  @override
+  Future<List<BillModel>> getBillsByProjectId(String projectId) async {
+    try {
+      final maps = await database.query(
+        'bills',
+        where: 'projectId = ?',
+        whereArgs: [projectId],
+      );
+      return maps.map((map) => BillModel.fromJson(map)).toList();
+    } on DatabaseException catch (e) {
+      throw DatabaseException('Failed to fetch bills by project: ${e.message}');
     }
   }
 }

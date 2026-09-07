@@ -61,4 +61,14 @@ class BillRepositoryImpl implements BillRepository {
       return Left(LocalFailure('Failed to delete bill: ${e.toString()}'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<Bill>>> getBillsByProjectId(String projectId) async {
+    try {
+      final bills = await localDataSource.getBillsByProjectId(projectId);
+      return Right(bills);
+    } catch (e) {
+      return Left(LocalFailure('Failed to fetch bills for project: ${e.toString()}'));
+    }
+  }
 }

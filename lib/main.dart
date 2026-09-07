@@ -6,6 +6,7 @@ import 'core/injection_container.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/language/language_provider.dart';
 import 'core/theme/app_theme.dart';
+import 'features/split_bills/domain/repositories/bill_repository.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'features/split_bills/presentation/pages/bills_list_screen.dart';
 import 'features/split_bills/presentation/pages/add_bill_screen.dart';
@@ -41,36 +42,43 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<ThemeProvider, LanguageProvider>(
       builder: (context, themeProvider, languageProvider, _) {
-        return MultiBlocProvider(
+        return MultiRepositoryProvider(
           providers: [
-            BlocProvider<BillsBloc>.value(
-              value: getIt<BillsBloc>(),
-            ),
-            BlocProvider<ProjectBloc>.value(
-              value: getIt<ProjectBloc>(),
+            RepositoryProvider<BillRepository>.value(
+              value: getIt<BillRepository>(),
             ),
           ],
-          child: MaterialApp(
-            title: 'Shared Household Planner',
-            locale: languageProvider.currentLocale,
-            localizationsDelegates: const [
-              AppLocalizationsDelegate(),
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider<BillsBloc>.value(
+                value: getIt<BillsBloc>(),
+              ),
+              BlocProvider<ProjectBloc>.value(
+                value: getIt<ProjectBloc>(),
+              ),
             ],
-            supportedLocales: const [
-              Locale('en'),
-              Locale('vi'),
-            ],
-            theme: themeProvider.currentTheme,
-            home: const HomeScreen(),
-            routes: {
-              '/bills': (context) => const BillsListScreen(),
-              '/add-bill': (context) => const AddBillScreen(),
-              '/projects': (context) => const ProjectScreen(),
-              '/create-project': (context) => const CreateProjectScreen(),
-            },
+            child: MaterialApp(
+              title: 'Shared Household Planner',
+              locale: languageProvider.currentLocale,
+              localizationsDelegates: const [
+                AppLocalizationsDelegate(),
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('en'),
+                Locale('vi'),
+              ],
+              theme: themeProvider.currentTheme,
+              home: const HomeScreen(),
+              routes: {
+                '/bills': (context) => const BillsListScreen(),
+                '/add-bill': (context) => const AddBillScreen(),
+                '/projects': (context) => const ProjectScreen(),
+                '/create-project': (context) => const CreateProjectScreen(),
+              },
+            ),
           ),
         );
       },

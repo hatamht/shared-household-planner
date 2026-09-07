@@ -4,6 +4,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../domain/entities/project.dart';
 import '../bloc/project_bloc.dart';
 import 'create_project_screen.dart';
+import 'project_detail_screen.dart';
 
 class ProjectScreen extends StatefulWidget {
   const ProjectScreen({super.key});
@@ -148,6 +149,13 @@ class _ProjectScreenState extends State<ProjectScreen> {
                         ),
                       ],
                     ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProjectDetailScreen(project: project),
+                        ),
+                      );
+                    },
                   ),
                 );
               },

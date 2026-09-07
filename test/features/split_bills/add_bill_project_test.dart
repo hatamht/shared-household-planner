@@ -55,6 +55,12 @@ class FakeBillRepository implements BillRepository {
     _bills.removeWhere((b) => b.id == billId);
     return const Right(null);
   }
+
+  @override
+  Future<Either<Failure, List<Bill>>> getBillsByProjectId(String projectId) async {
+    final filtered = _bills.where((b) => b.projectId == projectId).toList();
+    return Right(filtered);
+  }
 }
 
 // ─────────────────────────────────────────────

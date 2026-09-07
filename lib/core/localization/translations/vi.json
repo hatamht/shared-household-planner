@@ -80,5 +80,21 @@
   "payer_hint": "Ai đã thanh toán?",
   "select_participants": "Chọn người chia",
   "tap_to_toggle": "Nhấn để chọn/bỏ chọn",
-  "bill_linked_to_project": "Chi tiêu đã liên kết với dự án"
+  "bill_linked_to_project": "Chi tiêu đã liên kết với dự án",
+  "settlement": "Thanh toán",
+  "settlement_tab": "Thanh toán",
+  "statistics_tab": "Thống kê",
+  "bills_tab": "Chi tiêu",
+  "owes": "nợ",
+  "paid_by_label": "Người trả",
+  "no_settlement_needed": "Tất cả đã thanh toán xong! 🎉",
+  "top_payer": "Người trả nhiều nhất",
+  "top_debtor": "Người nợ nhiều nhất",
+  "net_balance": "Số dư",
+  "total_expense": "Tổng chi",
+  "all_settled": "Đã thanh toán",
+  "project_bills": "Chi tiêu dự án",
+  "per_person": "mỗi người",
+  "no_bills_in_project": "Chưa có chi tiêu nào trong dự án này",
+  "settlement_formula": "Công thức: số dư = đã trả - phải trả"
 }
