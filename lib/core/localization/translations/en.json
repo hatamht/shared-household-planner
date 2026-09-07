@@ -72,5 +72,13 @@
   "no_projects": "No projects yet",
   "project_name_required": "Project name is required",
   "min_1_member": "At least 1 member is required",
-  "delete_project_confirm": "Are you sure you want to delete this project?"
+  "delete_project_confirm": "Are you sure you want to delete this project?",
+  "select_project": "Select Project (Optional)",
+  "no_project": "No Project",
+  "project_members_loaded": "Project members loaded",
+  "project_no_members": "This project has no members. Please add members first.",
+  "payer_hint": "Who paid?",
+  "select_participants": "Select Participants",
+  "tap_to_toggle": "Tap to select/deselect",
+  "bill_linked_to_project": "Bill linked to project"
 }

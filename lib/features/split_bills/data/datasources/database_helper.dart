@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -36,6 +36,11 @@ class DatabaseHelper {
               updatedAt TEXT NOT NULL
             )
           ''');
+        }
+        if (oldVersion < 3) {
+          await db.execute(
+            'ALTER TABLE bills ADD COLUMN projectId TEXT',
+          );
         }
       },
     );
@@ -51,6 +56,7 @@ class DatabaseHelper {
         date TEXT NOT NULL,
         paidBy TEXT NOT NULL,
         participants TEXT NOT NULL,
+        projectId TEXT,
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');

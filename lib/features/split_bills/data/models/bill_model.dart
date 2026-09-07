@@ -11,6 +11,7 @@ class BillModel extends Bill {
     required DateTime date,
     required String paidBy,
     required List<BillParticipant> participants,
+    String? projectId,
   }) : super(
     id: id,
     title: title,
@@ -19,6 +20,7 @@ class BillModel extends Bill {
     date: date,
     paidBy: paidBy,
     participants: participants,
+    projectId: projectId,
   );
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class BillModel extends Bill {
             amount: (p['amount'] as num).toDouble(),
           ))
           .toList(),
+      projectId: json['projectId'] as String?,
     );
   }
 
@@ -63,6 +66,7 @@ class BillModel extends Bill {
             'amount': p.amount,
           })
           .toList(),
+      if (projectId != null) 'projectId': projectId,
     };
   }
 
@@ -75,6 +79,7 @@ class BillModel extends Bill {
       date: bill.date,
       paidBy: bill.paidBy,
       participants: bill.participants,
+      projectId: bill.projectId,
     );
   }
 }

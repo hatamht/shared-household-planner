@@ -9,6 +9,7 @@ class Bill extends Equatable {
   final DateTime date;
   final String paidBy;
   final List<BillParticipant> participants;
+  final String? projectId;
 
   const Bill({
     required this.id,
@@ -18,6 +19,7 @@ class Bill extends Equatable {
     required this.date,
     required this.paidBy,
     required this.participants,
+    this.projectId,
   });
 
   @override
@@ -29,5 +31,6 @@ class Bill extends Equatable {
         date,
         paidBy,
         participants,
+        projectId,
       ];
 }

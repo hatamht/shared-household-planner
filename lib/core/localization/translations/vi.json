@@ -72,5 +72,13 @@
   "no_projects": "Chưa có dự án nào",
   "project_name_required": "Tên dự án không được trống",
   "min_1_member": "Cần ít nhất 1 thành viên",
-  "delete_project_confirm": "Bạn có chắc chắn muốn xóa dự án này?"
+  "delete_project_confirm": "Bạn có chắc chắn muốn xóa dự án này?",
+  "select_project": "Chọn dự án (Tùy chọn)",
+  "no_project": "Không có dự án",
+  "project_members_loaded": "Đã tải thành viên dự án",
+  "project_no_members": "Dự án này chưa có thành viên. Vui lòng thêm thành viên trước.",
+  "payer_hint": "Ai đã thanh toán?",
+  "select_participants": "Chọn người chia",
+  "tap_to_toggle": "Nhấn để chọn/bỏ chọn",
+  "bill_linked_to_project": "Chi tiêu đã liên kết với dự án"
 }
