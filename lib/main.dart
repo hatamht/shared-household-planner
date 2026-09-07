@@ -7,7 +7,11 @@ import 'core/localization/app_localizations.dart';
 import 'core/language/language_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
+import 'features/split_bills/presentation/pages/bills_list_screen.dart';
+import 'features/split_bills/presentation/pages/add_bill_screen.dart';
 import 'features/projects/presentation/bloc/project_bloc.dart';
+import 'features/projects/presentation/pages/project_screen.dart';
+import 'features/projects/presentation/pages/create_project_screen.dart';
 import 'features/home/presentation/pages/home_screen.dart';
 
 final themeProvider = ThemeProvider();
@@ -61,6 +65,12 @@ class MyApp extends StatelessWidget {
             ],
             theme: themeProvider.currentTheme,
             home: const HomeScreen(),
+            routes: {
+              '/bills': (context) => const BillsListScreen(),
+              '/add-bill': (context) => const AddBillScreen(),
+              '/projects': (context) => const ProjectScreen(),
+              '/create-project': (context) => const CreateProjectScreen(),
+            },
           ),
         );
       },

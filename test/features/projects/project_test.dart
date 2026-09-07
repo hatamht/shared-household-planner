@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 import 'package:dartz/dartz.dart';
 import 'package:shared_household_planner/core/error/failure.dart';
 import 'package:shared_household_planner/core/usecases/usecase.dart';
+import 'package:shared_household_planner/core/language/language_provider.dart';
 import 'package:shared_household_planner/features/projects/domain/entities/project.dart';
 import 'package:shared_household_planner/features/projects/domain/repositories/project_repository.dart';
 import 'package:shared_household_planner/features/projects/domain/usecases/create_project_usecase.dart';
@@ -18,6 +20,7 @@ import 'package:shared_household_planner/features/projects/data/repositories/pro
 import 'package:shared_household_planner/features/projects/presentation/bloc/project_bloc.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/project_screen.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/create_project_screen.dart';
+import 'package:shared_household_planner/features/home/presentation/pages/home_screen.dart';
 import 'package:shared_household_planner/core/localization/app_localizations.dart';
 
 // Fake datasource for repository testing
@@ -117,6 +120,13 @@ class TestAppLocalizations extends AppLocalizations {
   TestAppLocalizations() : super(const Locale('en'));
 
   static const Map<String, String> _testStrings = {
+    'app_name': 'Shared Household Planner',
+    'split_bills': 'Split Bills',
+    'language': 'Language',
+    'english': 'English',
+    'vietnamese': 'Vietnamese',
+    'light_mode': 'Light',
+    'dark_mode': 'Dark',
     'projects': 'Projects',
     'no_projects': 'No projects yet',
     'create_project': 'Create Project',
@@ -448,6 +458,39 @@ void main() {
       // Save project
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
+    });
+
+    testWidgets('Navigation: HomeScreen -> Projects button -> ProjectScreen via /projects route', (tester) async {
+      await tester.pumpWidget(
+        ChangeNotifierProvider<LanguageProvider>(
+          create: (_) => LanguageProvider(),
+          child: BlocProvider<ProjectBloc>.value(
+            value: bloc,
+            child: MaterialApp(
+              home: const HomeScreen(),
+              routes: {
+                '/projects': (context) => const ProjectScreen(),
+                '/create-project': (context) => const CreateProjectScreen(),
+              },
+              localizationsDelegates: const [
+                TestAppLocalizationsDelegate(),
+              ],
+              supportedLocales: const [
+                Locale('en'),
+                Locale('vi'),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('projectsButton')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('projectsButton')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProjectScreen), findsOneWidget);
+      expect(find.text('No projects yet'), findsOneWidget);
     });
   });
 }

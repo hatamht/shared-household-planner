@@ -72,12 +72,9 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 40),
             ElevatedButton.icon(
+              key: const Key('splitBillsButton'),
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const BillsListScreen(),
-                  ),
-                );
+                Navigator.of(context).pushNamed('/bills');
               },
               icon: const Icon(Icons.receipt),
               label: Text(appLocalizations.translate('split_bills')),
@@ -92,11 +89,7 @@ class HomeScreen extends StatelessWidget {
             ElevatedButton.icon(
               key: const Key('projectsButton'),
               onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const ProjectScreen(),
-                  ),
-                );
+                Navigator.of(context).pushNamed('/projects');
               },
               icon: const Icon(Icons.folder_shared),
               label: Text(appLocalizations.translate('projects')),
