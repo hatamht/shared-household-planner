@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'bill_participant.dart';
+import 'category_icon.dart';
 
 class Bill extends Equatable {
   final String id;
@@ -13,6 +14,7 @@ class Bill extends Equatable {
   final String? categoryIcon;
   final String? currency;
   final String? imagePath;
+  final String? categoryColor;
 
   const Bill({
     required this.id,
@@ -26,7 +28,20 @@ class Bill extends Equatable {
     this.categoryIcon,
     this.currency,
     this.imagePath,
+    this.categoryColor,
   });
+
+  /// Effective color: returns categoryColor if present, or fallback from defaultCategoryIcons, or default gray
+  String get effectiveCategoryColor {
+    if (categoryColor != null && categoryColor!.isNotEmpty) {
+      return categoryColor!;
+    }
+    final match = defaultCategoryIcons.where((c) => c.id == category);
+    if (match.isNotEmpty) {
+      return match.first.colorHex;
+    }
+    return '#9E9E9E';
+  }
 
   @override
   List<Object?> get props => [
@@ -41,5 +56,6 @@ class Bill extends Equatable {
         categoryIcon,
         currency,
         imagePath,
+        categoryColor,
       ];
 }

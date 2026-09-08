@@ -118,5 +118,17 @@
   "category_party": "Tiệc tùng",
   "category_office": "Văn phòng",
   "category_pet": "Thú cưng",
-  "category_sport": "Thể thao"
+  "category_sport": "Thể thao",
+  "category_party_short": "Tiệp",
+  "color": "Màu sắc",
+  "suggestions": "Gợi ý",
+  "add_category": "Thêm danh mục",
+  "category_name": "Tên danh mục",
+  "custom_category": "Danh mục tùy chỉnh",
+  "category_name_required": "Tên danh mục không được để trống",
+  "category_already_exists": "Danh mục đã tồn tại",
+  "save_category": "Lưu danh mục",
+  "popular_suggestions": "Gợi ý phổ biến",
+  "choose_color": "Chọn màu sắc",
+  "choose_icon": "Chọn biểu tượng"
 }

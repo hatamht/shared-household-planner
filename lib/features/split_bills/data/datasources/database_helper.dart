@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -53,6 +53,20 @@ class DatabaseHelper {
             'ALTER TABLE bills ADD COLUMN imagePath TEXT',
           );
         }
+        if (oldVersion < 5) {
+          await db.execute(
+            'ALTER TABLE bills ADD COLUMN categoryColor TEXT',
+          );
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS categories (
+              id TEXT PRIMARY KEY,
+              name TEXT NOT NULL,
+              icon TEXT NOT NULL,
+              colorHex TEXT NOT NULL,
+              iconCodePoint INTEGER
+            )
+          ''');
+        }
       },
     );
   }
@@ -71,6 +85,7 @@ class DatabaseHelper {
         categoryIcon TEXT,
         currency TEXT DEFAULT 'VND',
         imagePath TEXT,
+        categoryColor TEXT,
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');
@@ -95,6 +110,16 @@ class DatabaseHelper {
         members TEXT NOT NULL,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS categories (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        icon TEXT NOT NULL,
+        colorHex TEXT NOT NULL,
+        iconCodePoint INTEGER
       )
     ''');
   }

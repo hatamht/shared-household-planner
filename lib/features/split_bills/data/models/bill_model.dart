@@ -15,6 +15,7 @@ class BillModel extends Bill {
     String? categoryIcon,
     String? currency,
     String? imagePath,
+    String? categoryColor,
   }) : super(
     id: id,
     title: title,
@@ -27,6 +28,7 @@ class BillModel extends Bill {
     categoryIcon: categoryIcon,
     currency: currency,
     imagePath: imagePath,
+    categoryColor: categoryColor,
   );
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,7 @@ class BillModel extends Bill {
       categoryIcon: json['categoryIcon'] as String?,
       currency: json['currency'] as String? ?? 'VND',
       imagePath: json['imagePath'] as String?,
+      categoryColor: json['categoryColor'] as String?,
     );
   }
 
@@ -79,6 +82,7 @@ class BillModel extends Bill {
       if (categoryIcon != null) 'categoryIcon': categoryIcon,
       if (currency != null) 'currency': currency,
       if (imagePath != null) 'imagePath': imagePath,
+      if (categoryColor != null) 'categoryColor': categoryColor,
     };
   }
 
@@ -95,6 +99,7 @@ class BillModel extends Bill {
       categoryIcon: bill.categoryIcon,
       currency: bill.currency,
       imagePath: bill.imagePath,
+      categoryColor: bill.categoryColor,
     );
   }
 }

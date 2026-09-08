@@ -9,6 +9,7 @@ import '../../domain/entities/bill.dart';
 import '../../domain/entities/bill_participant.dart';
 import '../../domain/entities/category_icon.dart';
 import '../bloc/bills_bloc.dart';
+import '../widgets/add_category_bottom_sheet.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/entities/project_settings.dart';
@@ -36,7 +37,8 @@ class _AddBillScreenState extends State<AddBillScreen> {
   late TextEditingController paidByController;
   late TextEditingController participantController;
 
-  // Selected Category & Icon
+  // Category list & current selection
+  late List<CategoryIconItem> categoriesList;
   late CategoryIconItem selectedCategoryItem;
 
   // Image path
@@ -66,7 +68,8 @@ class _AddBillScreenState extends State<AddBillScreen> {
     paidByController = TextEditingController();
     participantController = TextEditingController();
 
-    selectedCategoryItem = defaultCategoryIcons.first;
+    categoriesList = List.from(defaultCategoryIcons);
+    selectedCategoryItem = categoriesList.first;
     selectedCurrency = widget.projectSettings.defaultCurrency;
     imagePath = widget.initialImagePath;
 
@@ -85,6 +88,23 @@ class _AddBillScreenState extends State<AddBillScreen> {
     paidByController.dispose();
     participantController.dispose();
     super.dispose();
+  }
+
+  // ────────────────────────────────────────
+  // Open Add Category Bottom Sheet
+  // ────────────────────────────────────────
+  Future<void> _openAddCategorySheet() async {
+    final newCategory = await AddCategoryBottomSheet.show(
+      context,
+      existingCategories: categoriesList,
+    );
+
+    if (newCategory != null) {
+      setState(() {
+        categoriesList.add(newCategory);
+        selectedCategoryItem = newCategory;
+      });
+    }
   }
 
   // ────────────────────────────────────────
@@ -277,6 +297,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       categoryIcon: selectedCategoryItem.icon,
       currency: selectedCurrency,
       imagePath: imagePath,
+      categoryColor: selectedCategoryItem.colorHex,
     );
 
     context.read<BillsBloc>().add(AddBillEvent(bill: bill));
@@ -290,6 +311,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final currencySymbol = currencySymbols[selectedCurrency] ?? selectedCurrency;
+    final categoryColor = selectedCategoryItem.color;
 
     return Scaffold(
       appBar: AppBar(
@@ -300,7 +322,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. Title + Icon preview ─────────────────────────
+            // ── 1. Title + Category Color Badge ─────────────────
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -309,8 +331,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
+                    color: categoryColor.withOpacity(0.2),
+                    border: Border.all(color: categoryColor, width: 2),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -333,23 +356,40 @@ class _AddBillScreenState extends State<AddBillScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── 2. Icon Category Selector (12+ icons) ───────────
-            Text(
-              loc.translate('category'),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
+            // ── 2. Icon Category Selector (with Color Chips & + button) ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  loc.translate('category'),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                TextButton.icon(
+                  key: const Key('addCategoryButton'),
+                  onPressed: _openAddCategorySheet,
+                  icon: const Icon(Icons.add_circle_outline, size: 16),
+                  label: Text(loc.translate('add_category')),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    visualDensity: VisualDensity.compact,
                   ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             SizedBox(
-              height: 72,
+              height: 74,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: defaultCategoryIcons.length,
+                itemCount: categoriesList.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
                 itemBuilder: (context, index) {
-                  final cat = defaultCategoryIcons[index];
+                  final cat = categoriesList[index];
                   final isSelected = cat.id == selectedCategoryItem.id;
+                  final itemColor = cat.color;
+
                   return InkWell(
                     key: Key('category_icon_${cat.id}'),
                     onTap: () {
@@ -359,17 +399,15 @@ class _AddBillScreenState extends State<AddBillScreen> {
                     },
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
-                      width: 64,
+                      width: 68,
                       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Theme.of(context).colorScheme.primaryContainer
-                            : Theme.of(context).cardColor,
+                            ? itemColor.withOpacity(0.2)
+                            : itemColor.withOpacity(0.06),
                         border: Border.all(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : Colors.grey.shade300,
-                          width: isSelected ? 2 : 1,
+                          color: isSelected ? itemColor : itemColor.withOpacity(0.3),
+                          width: isSelected ? 2.5 : 1,
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -384,10 +422,8 @@ class _AddBillScreenState extends State<AddBillScreen> {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 10,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? itemColor : Colors.black87,
                             ),
                           ),
                         ],

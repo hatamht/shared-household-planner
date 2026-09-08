@@ -118,5 +118,16 @@
   "category_party": "Party",
   "category_office": "Office",
   "category_pet": "Pet",
-  "category_sport": "Sport"
+  "category_sport": "Sport",
+  "color": "Color",
+  "suggestions": "Suggestions",
+  "add_category": "Add Category",
+  "category_name": "Category Name",
+  "custom_category": "Custom Category",
+  "category_name_required": "Category name is required",
+  "category_already_exists": "Category already exists",
+  "save_category": "Save Category",
+  "popular_suggestions": "Popular Suggestions",
+  "choose_color": "Choose Color",
+  "choose_icon": "Choose Icon"
 }
