@@ -51,6 +51,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
   // Currency
   late String selectedCurrency;
 
+  // Transaction type tab
+  int selectedTransactionType = 0; // 0: Expense, 1: Income, 2: Transfer
+
   // When / Date
   DateTime selectedDate = DateTime.now();
 
@@ -343,75 +346,164 @@ class _AddBillScreenState extends State<AddBillScreen> {
     final loc = AppLocalizations.of(context);
     final currencySymbol = currencySymbols[selectedCurrency] ?? selectedCurrency;
     final categoryColor = selectedCategoryItem.color;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF242424) : Colors.white;
+    final cardBorder = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.translate('add_bill')),
+        title: Text(
+          loc.translate('add_bill'),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+        ),
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          key: const Key('closeButton'),
+          icon: const Icon(Icons.close),
+          splashRadius: 22,
+          tooltip: loc.translate('cancel'),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Divider(
+            height: 1.0,
+            thickness: 1.0,
+            color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. Title + Category Color Badge ─────────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  key: const Key('selectedCategoryIconBadge'),
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.2),
-                    border: Border.all(color: categoryColor, width: 2),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    selectedCategoryItem.icon,
-                    style: const TextStyle(fontSize: 26),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    key: const Key('titleField'),
-                    controller: titleController,
-                    focusNode: titleFocusNode,
-                    decoration: InputDecoration(
-                      labelText: loc.translate('bill_name'),
-                      hintText: loc.translate('bill_name_example'),
-                      border: const OutlineInputBorder(),
-                      suffixIcon: titleController.text.isNotEmpty
-                          ? IconButton(
-                              key: const Key('clearTitleButton'),
-                              icon: const Icon(Icons.clear),
-                              tooltip: 'Clear',
-                              onPressed: () {
-                                titleController.clear();
-                                isTitleManuallyEdited = false;
-                                titleFocusNode.requestFocus();
-                                setState(() {});
-                              },
-                            )
-                          : null,
-                    ),
-                    onChanged: (text) {
-                      final currentCatName = loc.translate(selectedCategoryItem.nameKey);
-                      if (text.isEmpty) {
-                        isTitleManuallyEdited = false;
-                      } else if (text != currentCatName) {
-                        isTitleManuallyEdited = true;
-                      }
-                      setState(() {});
-                    },
-                  ),
-                ),
-              ],
+            // ── 0. Tab Selector Refinement ───────────────────────
+            Container(
+              key: const Key('transactionTypeTabs'),
+              height: 44,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cardBorder),
+              ),
+              padding: const EdgeInsets.all(4),
+              child: Row(
+                children: [
+                  _buildTabItem(loc.translate('expense'), selectedTransactionType == 0, 0, categoryColor),
+                  _buildTabItem(loc.translate('income'), selectedTransactionType == 1, 1, categoryColor),
+                  _buildTabItem(loc.translate('transfer'), selectedTransactionType == 2, 2, categoryColor),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 
-            // ── 2. Icon Category Selector (with Color Chips & + button) ──
+            // ── 1. Title Section (CEO Clarification) ─────────────
+            // LEFT: Circular badge with category icon + brand color
+            // CENTER: Title input field (auto-filled)
+            // RIGHT: Camera icon button + Clear (X) button
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark
+                      ? categoryColor.withOpacity(0.4)
+                      : categoryColor.withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // LEFT: Circular category badge
+                  Container(
+                    key: const Key('selectedCategoryIconBadge'),
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: categoryColor.withOpacity(0.18),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: categoryColor, width: 2),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      selectedCategoryItem.icon,
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // CENTER: Title Input
+                  Expanded(
+                    child: TextField(
+                      key: const Key('titleField'),
+                      controller: titleController,
+                      focusNode: titleFocusNode,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: loc.translate('bill_name'),
+                        hintText: loc.translate('bill_name_example'),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      onChanged: (text) {
+                        final currentCatName =
+                            loc.translate(selectedCategoryItem.nameKey);
+                        if (text.isEmpty) {
+                          isTitleManuallyEdited = false;
+                        } else if (text != currentCatName) {
+                          isTitleManuallyEdited = true;
+                        }
+                        setState(() {});
+                      },
+                    ),
+                  ),
+
+                  // RIGHT: Camera button + Clear button
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        key: const Key('cameraTitleButton'),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        splashRadius: 20,
+                        tooltip: loc.translate('camera'),
+                        onPressed: () => _pickImage(ImageSource.camera),
+                      ),
+                      if (titleController.text.isNotEmpty)
+                        IconButton(
+                          key: const Key('clearTitleButton'),
+                          icon: const Icon(Icons.clear, size: 20),
+                          splashRadius: 20,
+                          tooltip: 'Clear',
+                          onPressed: () {
+                            titleController.clear();
+                            isTitleManuallyEdited = false;
+                            titleFocusNode.requestFocus();
+                            setState(() {});
+                          },
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── 2. Category Selector (Horizontal chips & + button) ──
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -448,8 +540,9 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   return InkWell(
                     key: Key('category_icon_${cat.id}'),
                     onTap: () => _onCategorySelected(cat, loc),
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
+                    borderRadius: BorderRadius.circular(12),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
                       width: 68,
                       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                       decoration: BoxDecoration(
@@ -460,7 +553,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                           color: isSelected ? itemColor : itemColor.withOpacity(0.3),
                           width: isSelected ? 2.5 : 1,
                         ),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -474,7 +567,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? itemColor : Colors.black87,
+                              color: isSelected ? itemColor : (isDark ? Colors.white70 : Colors.black87),
                             ),
                           ),
                         ],
@@ -487,167 +580,285 @@ class _AddBillScreenState extends State<AddBillScreen> {
             const SizedBox(height: 16),
 
             // ── 3. Image Upload & Preview ────────────────────────
-            Text(
-              loc.translate('image'),
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 8),
-            Row(
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                OutlinedButton.icon(
-                  key: const Key('pickGalleryButton'),
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library, size: 18),
-                  label: Text(loc.translate('gallery')),
+                Text(
+                  loc.translate('image'),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-                const SizedBox(width: 8),
-                OutlinedButton.icon(
-                  key: const Key('takeCameraButton'),
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt, size: 18),
-                  label: Text(loc.translate('camera')),
-                ),
-              ],
-            ),
-            if (imagePath != null) ...[
-              const SizedBox(height: 10),
-              Container(
-                key: const Key('imagePreview'),
-                height: 100,
-                width: 140,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.shade300),
-                  color: Colors.grey.shade100,
-                ),
-                child: Stack(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: File(imagePath!).existsSync()
-                          ? Image.file(
-                              File(imagePath!),
-                              fit: BoxFit.cover,
-                              width: 140,
-                              height: 100,
-                            )
-                          : Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.image, size: 36, color: Colors.grey),
-                                  Text(
-                                    imagePath!.split('/').last,
-                                    style: const TextStyle(fontSize: 10),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ),
-                            ),
+                    OutlinedButton.icon(
+                      key: const Key('pickGalleryButton'),
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library, size: 16),
+                      label: Text(loc.translate('gallery')),
+                      style: OutlinedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: CircleAvatar(
-                        radius: 12,
-                        backgroundColor: Colors.black54,
-                        child: IconButton(
-                          key: const Key('removeImageButton'),
-                          padding: EdgeInsets.zero,
-                          iconSize: 14,
-                          icon: const Icon(Icons.close, color: Colors.white),
-                          onPressed: _removeImage,
-                          tooltip: loc.translate('remove_image'),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      key: const Key('takeCameraButton'),
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt, size: 16),
+                      label: Text(loc.translate('camera')),
+                      style: OutlinedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
                   ],
                 ),
+              ],
+            ),
+            if (imagePath != null) ...[
+              const SizedBox(height: 10),
+              Center(
+                child: Container(
+                  key: const Key('imagePreview'),
+                  height: 140,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: cardBorder),
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: File(imagePath!).existsSync()
+                            ? Image.file(
+                                File(imagePath!),
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 140,
+                              )
+                            : Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.image, size: 40, color: Colors.grey),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      imagePath!.split('/').last,
+                                      style: const TextStyle(fontSize: 11),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                      ),
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Colors.black.withOpacity(0.65),
+                          child: IconButton(
+                            key: const Key('removeImageButton'),
+                            padding: EdgeInsets.zero,
+                            iconSize: 16,
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: _removeImage,
+                            tooltip: loc.translate('remove_image'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
             const SizedBox(height: 16),
 
-            // ── 4. Amount + Currency ────────────────────────────
+            // ── 4. Amount + Currency Section ─────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cardBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.15 : 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Currency pill dropdown
+                  Container(
+                    key: const Key('currencyPillContainer'),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        key: const Key('currencyDropdown'),
+                        value: selectedCurrency,
+                        isDense: true,
+                        borderRadius: BorderRadius.circular(12),
+                        items: widget.projectSettings.availableCurrencies
+                            .map((c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(
+                                    '$c (${currencySymbols[c] ?? c})',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => selectedCurrency = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Amount input right-aligned
+                  Expanded(
+                    child: TextField(
+                      controller: amountController,
+                      textAlign: TextAlign.right,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: loc.translate('amount'),
+                        hintText: '100,000',
+                        border: InputBorder.none,
+                        suffixText: currencySymbol,
+                        suffixStyle: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // ── 5. Paid By & When (Two-column layout) ─────────────
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Column 1: Paid By Card
                 Expanded(
-                  flex: 3,
-                  child: TextField(
-                    controller: amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: loc.translate('amount'),
-                      hintText: '100000',
-                      border: const OutlineInputBorder(),
-                      suffixText: currencySymbol,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: TextField(
+                      key: const Key('payerField'),
+                      controller: paidByController,
+                      decoration: InputDecoration(
+                        labelText: loc.translate('payer'),
+                        hintText: loc.translate('payer_hint'),
+                        border: InputBorder.none,
+                        isDense: true,
+                        prefixIcon: const Icon(Icons.person_outline, size: 20),
+                        prefixIconConstraints: const BoxConstraints(minWidth: 28),
+                        helperText: selectedProject != null &&
+                                selectedProject!.members.isNotEmpty
+                            ? selectedProject!.members.join(', ')
+                            : null,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
+
+                // Column 2: When (Date Picker Card)
                 Expanded(
-                  flex: 2,
-                  child: DropdownButtonFormField<String>(
-                    key: const Key('currencyDropdown'),
-                    value: selectedCurrency,
-                    decoration: InputDecoration(
-                      labelText: loc.translate('currency'),
-                      border: const OutlineInputBorder(),
+                  child: InkWell(
+                    key: const Key('datePickerButton'),
+                    onTap: _selectDate,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: cardBorder),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  loc.translate('when'),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white60 : Colors.grey.shade600,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  DateFormat('yyyy-MM-dd').format(selectedDate),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    items: widget.projectSettings.availableCurrencies
-                        .map((c) => DropdownMenuItem(
-                              value: c,
-                              child: Text('$c (${currencySymbols[c] ?? c})'),
-                            ))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => selectedCurrency = val);
-                      }
-                    },
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-
-            // ── 5. Paid By ──────────────────────────────────────
-            TextField(
-              key: const Key('payerField'),
-              controller: paidByController,
-              decoration: InputDecoration(
-                labelText: loc.translate('payer'),
-                hintText: loc.translate('payer_hint'),
-                border: const OutlineInputBorder(),
-                helperText: selectedProject != null &&
-                        selectedProject!.members.isNotEmpty
-                    ? selectedProject!.members.join(', ')
-                    : null,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // ── 6. When (Date Picker) ───────────────────────────
-            InkWell(
-              key: const Key('datePickerButton'),
-              onTap: _selectDate,
-              borderRadius: BorderRadius.circular(4),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: loc.translate('when'),
-                  border: const OutlineInputBorder(),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                ),
-                child: Text(DateFormat('yyyy-MM-dd').format(selectedDate)),
-              ),
-            ),
             const SizedBox(height: 20),
 
-            // ── 7. Split Section ────────────────────────────────
+            // ── 6. Split Section (Cards with Avatars & Checkboxes) ─
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -659,7 +870,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 ),
                 if (_perPersonAmount > 0)
                   Text(
-                    '${loc.translate('each_pays')}: ${_perPersonAmount.toStringAsFixed(0)} $currencySymbol',
+                    '${loc.translate('each_pays')}: ${_formatAmount(_perPersonAmount)} $currencySymbol',
                     key: const Key('realtimeSplitText'),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
@@ -683,24 +894,30 @@ class _AddBillScreenState extends State<AddBillScreen> {
             ),
             const SizedBox(height: 8),
             if (selectedProject != null)
-              _buildProjectMemberChips(loc)
+              _buildProjectMemberCards(loc, currencySymbol)
             else
               _buildManualParticipants(loc),
 
             const SizedBox(height: 24),
 
-            // ── 8. Save Button ──────────────────────────────────
+            // ── 7. Save Button ──────────────────────────────────
             SizedBox(
               width: double.infinity,
+              height: 52,
               child: ElevatedButton(
                 key: const Key('saveProjectButton'),
                 onPressed: _submitForm,
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Text(
-                    loc.translate('save_bill'),
-                    style: const TextStyle(fontSize: 16),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: categoryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
+                  elevation: 2,
+                ),
+                child: Text(
+                  loc.translate('save_bill'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -709,6 +926,61 @@ class _AddBillScreenState extends State<AddBillScreen> {
       ),
     );
   }
+
+  // ────────────────────────────────────────
+  // Helper: Number formatter
+  // ────────────────────────────────────────
+  String _formatAmount(double amount) {
+    if (amount % 1 == 0) {
+      return amount.toInt().toString();
+    }
+    return amount.toStringAsFixed(1);
+  }
+
+  // ────────────────────────────────────────
+  // Helper: Tab Item
+  // ────────────────────────────────────────
+  Widget _buildTabItem(String label, bool isSelected, int index, Color activeColor) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            selectedTransactionType = index;
+          });
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? (isDark ? const Color(0xFF2E2E2E) : Colors.white)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.06),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? activeColor : (isDark ? Colors.white60 : Colors.grey.shade600),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
 
   // ────────────────────────────────────────
   // Project Dropdown widget
@@ -748,15 +1020,20 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
-  // Project member toggle chips
+  // Project member cards (Acceptance 7: Card-based display with avatars & checkboxes)
   // ────────────────────────────────────────
-  Widget _buildProjectMemberChips(AppLocalizations loc) {
+  Widget _buildProjectMemberCards(AppLocalizations loc, String currencySymbol) {
     if (projectMembers.isEmpty) {
       return Text(
         loc.translate('project_no_members'),
         style: const TextStyle(color: Colors.orange),
       );
     }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF242424) : Colors.white;
+    final cardBorder = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
+    final activeColor = selectedCategoryItem.color;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -766,6 +1043,114 @@ class _AddBillScreenState extends State<AddBillScreen> {
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
+
+        // Member Cards List
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: projectMembers.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 6),
+          itemBuilder: (context, index) {
+            final member = projectMembers[index];
+            final isSelected = selectedParticipants.contains(member);
+
+            return InkWell(
+              key: Key('member_card_$member'),
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    selectedParticipants.remove(member);
+                  } else {
+                    selectedParticipants.add(member);
+                  }
+                });
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? (isDark ? activeColor.withOpacity(0.12) : activeColor.withOpacity(0.06))
+                      : cardBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? activeColor : cardBorder,
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    // Avatar / Initial
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: isSelected
+                          ? activeColor
+                          : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+                      child: Text(
+                        member.isNotEmpty ? member[0].toUpperCase() : '?',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black54),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Member Name
+                    Expanded(
+                      child: Text(
+                        member,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+
+                    // Amount if selected
+                    if (isSelected && _perPersonAmount > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Text(
+                          '${_formatAmount(_perPersonAmount)} $currencySymbol',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: activeColor,
+                          ),
+                        ),
+                      ),
+
+                    // Checkbox
+                    Checkbox(
+                      key: Key('member_checkbox_$member'),
+                      value: isSelected,
+                      activeColor: activeColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      onChanged: (selected) {
+                        setState(() {
+                          if (selected == true) {
+                            selectedParticipants.add(member);
+                          } else {
+                            selectedParticipants.remove(member);
+                          }
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+
+        const SizedBox(height: 8),
+
+        // FilterChips row for quick toggle and full backwards compatibility
         Wrap(
           spacing: 8,
           runSpacing: 4,
@@ -777,7 +1162,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
               selected: isSelected,
               avatar: CircleAvatar(
                 backgroundColor: isSelected
-                    ? Theme.of(context).colorScheme.primary
+                    ? activeColor
                     : Colors.grey.shade300,
                 child: Text(
                   member.isNotEmpty ? member[0].toUpperCase() : '?',
@@ -788,8 +1173,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 ),
               ),
               checkmarkColor: Colors.white,
-              selectedColor:
-                  Theme.of(context).colorScheme.primaryContainer,
+              selectedColor: activeColor.withOpacity(0.2),
               onSelected: (selected) {
                 setState(() {
                   if (selected) {
@@ -805,6 +1189,15 @@ class _AddBillScreenState extends State<AddBillScreen> {
       ],
     );
   }
+
+
+  // ────────────────────────────────────────
+  // Project member toggle chips (legacy support)
+  // ────────────────────────────────────────
+  Widget _buildProjectMemberChips(AppLocalizations loc) {
+    return _buildProjectMemberCards(loc, currencySymbols[selectedCurrency] ?? selectedCurrency);
+  }
+
 
   // ────────────────────────────────────────
   // Manual participants (no project selected)
@@ -827,6 +1220,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
             ),
             const SizedBox(width: 8),
             ElevatedButton.icon(
+              key: const Key('addParticipantButton'),
               onPressed: _addManualParticipant,
               icon: const Icon(Icons.add),
               label: Text(loc.translate('add')),
