@@ -10,6 +10,9 @@ class Bill extends Equatable {
   final String paidBy;
   final List<BillParticipant> participants;
   final String? projectId;
+  final String? categoryIcon;
+  final String? currency;
+  final String? imagePath;
 
   const Bill({
     required this.id,
@@ -20,6 +23,9 @@ class Bill extends Equatable {
     required this.paidBy,
     required this.participants,
     this.projectId,
+    this.categoryIcon,
+    this.currency,
+    this.imagePath,
   });
 
   @override
@@ -32,5 +38,8 @@ class Bill extends Equatable {
         paidBy,
         participants,
         projectId,
+        categoryIcon,
+        currency,
+        imagePath,
       ];
 }

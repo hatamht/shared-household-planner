@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -42,6 +42,17 @@ class DatabaseHelper {
             'ALTER TABLE bills ADD COLUMN projectId TEXT',
           );
         }
+        if (oldVersion < 4) {
+          await db.execute(
+            'ALTER TABLE bills ADD COLUMN categoryIcon TEXT',
+          );
+          await db.execute(
+            "ALTER TABLE bills ADD COLUMN currency TEXT DEFAULT 'VND'",
+          );
+          await db.execute(
+            'ALTER TABLE bills ADD COLUMN imagePath TEXT',
+          );
+        }
       },
     );
   }
@@ -57,6 +68,9 @@ class DatabaseHelper {
         paidBy TEXT NOT NULL,
         participants TEXT NOT NULL,
         projectId TEXT,
+        categoryIcon TEXT,
+        currency TEXT DEFAULT 'VND',
+        imagePath TEXT,
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');

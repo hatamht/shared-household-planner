@@ -37,17 +37,14 @@ class BillsBloc extends Bloc<BillsEvent, BillsState> {
     AddBillEvent event,
     Emitter<BillsState> emit,
   ) async {
-    final currentState = state;
-    if (currentState is BillsLoaded) {
-      emit(AddBillLoading());
-      final result = await addBillUseCase(AddBillParams(bill: event.bill));
-      result.fold(
-        (failure) => emit(AddBillError(failure: failure)),
-        (_) {
-          // Reload bills after adding
-          add(GetBillsEvent());
-        },
-      );
-    }
+    emit(AddBillLoading());
+    final result = await addBillUseCase(AddBillParams(bill: event.bill));
+    result.fold(
+      (failure) => emit(AddBillError(failure: failure)),
+      (_) {
+        // Reload bills after adding
+        add(GetBillsEvent());
+      },
+    );
   }
 }

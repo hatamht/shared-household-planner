@@ -12,6 +12,9 @@ class BillModel extends Bill {
     required String paidBy,
     required List<BillParticipant> participants,
     String? projectId,
+    String? categoryIcon,
+    String? currency,
+    String? imagePath,
   }) : super(
     id: id,
     title: title,
@@ -21,6 +24,9 @@ class BillModel extends Bill {
     paidBy: paidBy,
     participants: participants,
     projectId: projectId,
+    categoryIcon: categoryIcon,
+    currency: currency,
+    imagePath: imagePath,
   );
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
@@ -48,6 +54,9 @@ class BillModel extends Bill {
           ))
           .toList(),
       projectId: json['projectId'] as String?,
+      categoryIcon: json['categoryIcon'] as String?,
+      currency: json['currency'] as String? ?? 'VND',
+      imagePath: json['imagePath'] as String?,
     );
   }
 
@@ -67,6 +76,9 @@ class BillModel extends Bill {
           })
           .toList(),
       if (projectId != null) 'projectId': projectId,
+      if (categoryIcon != null) 'categoryIcon': categoryIcon,
+      if (currency != null) 'currency': currency,
+      if (imagePath != null) 'imagePath': imagePath,
     };
   }
 
@@ -80,6 +92,9 @@ class BillModel extends Bill {
       paidBy: bill.paidBy,
       participants: bill.participants,
       projectId: bill.projectId,
+      categoryIcon: bill.categoryIcon,
+      currency: bill.currency,
+      imagePath: bill.imagePath,
     );
   }
 }

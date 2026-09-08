@@ -1,15 +1,30 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../domain/entities/bill.dart';
 import '../../domain/entities/bill_participant.dart';
+import '../../domain/entities/category_icon.dart';
 import '../bloc/bills_bloc.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../projects/domain/entities/project.dart';
+import '../../../projects/domain/entities/project_settings.dart';
 import '../../../projects/presentation/bloc/project_bloc.dart';
-import 'package:uuid/uuid.dart';
 
 class AddBillScreen extends StatefulWidget {
-  const AddBillScreen({Key? key}) : super(key: key);
+  final ProjectSettings projectSettings;
+  final Future<String?> Function(ImageSource source)? onPickImage;
+  final String? initialImagePath;
+
+  const AddBillScreen({
+    Key? key,
+    this.projectSettings = const ProjectSettings(),
+    this.onPickImage,
+    this.initialImagePath,
+  }) : super(key: key);
 
   @override
   State<AddBillScreen> createState() => _AddBillScreenState();
@@ -19,7 +34,19 @@ class _AddBillScreenState extends State<AddBillScreen> {
   late TextEditingController titleController;
   late TextEditingController amountController;
   late TextEditingController paidByController;
-  String? selectedCategory;
+  late TextEditingController participantController;
+
+  // Selected Category & Icon
+  late CategoryIconItem selectedCategoryItem;
+
+  // Image path
+  String? imagePath;
+
+  // Currency
+  late String selectedCurrency;
+
+  // When / Date
+  DateTime selectedDate = DateTime.now();
 
   // Project-aware state
   Project? selectedProject;
@@ -28,17 +55,8 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
   // Legacy free-text for non-project flow
   List<String> manualParticipants = [];
-  late TextEditingController participantController;
 
-  final categories = [
-    'food',
-    'transport',
-    'entertainment',
-    'utilities',
-    'shopping',
-    'health',
-    'other',
-  ];
+  final ImagePicker _defaultPicker = ImagePicker();
 
   @override
   void initState() {
@@ -47,6 +65,15 @@ class _AddBillScreenState extends State<AddBillScreen> {
     amountController = TextEditingController();
     paidByController = TextEditingController();
     participantController = TextEditingController();
+
+    selectedCategoryItem = defaultCategoryIcons.first;
+    selectedCurrency = widget.projectSettings.defaultCurrency;
+    imagePath = widget.initialImagePath;
+
+    amountController.addListener(() {
+      setState(() {});
+    });
+
     // Load all projects for the dropdown
     context.read<ProjectBloc>().add(const GetAllProjects());
   }
@@ -61,6 +88,56 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
+  // Image Pick & Remove
+  // ────────────────────────────────────────
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      if (widget.onPickImage != null) {
+        final path = await widget.onPickImage!(source);
+        if (path != null) {
+          setState(() => imagePath = path);
+        }
+        return;
+      }
+
+      final XFile? file = await _defaultPicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (file != null) {
+        setState(() => imagePath = file.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
+  }
+
+  void _removeImage() {
+    setState(() => imagePath = null);
+  }
+
+  // ────────────────────────────────────────
+  // Date Picker
+  // ────────────────────────────────────────
+  Future<void> _selectDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null) {
+      setState(() => selectedDate = picked);
+    }
+  }
+
+  // ────────────────────────────────────────
   // Project selection handler
   // ────────────────────────────────────────
   void _onProjectSelected(Project? project) {
@@ -72,9 +149,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
         paidByController.clear();
       } else {
         projectMembers = List.from(project.members);
-        // Pre-select ALL members
         selectedParticipants = Set.from(project.members);
-        // Smart payer: pre-fill with first member as suggestion
         if (project.members.isNotEmpty && paidByController.text.isEmpty) {
           paidByController.text = project.members.first;
         }
@@ -89,7 +164,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
-  // Manual participant (non-project flow)
+  // Manual participant handler
   // ────────────────────────────────────────
   void _addManualParticipant() {
     if (participantController.text.isNotEmpty) {
@@ -106,9 +181,6 @@ class _AddBillScreenState extends State<AddBillScreen> {
     });
   }
 
-  // ────────────────────────────────────────
-  // Computed participant list
-  // ────────────────────────────────────────
   List<String> get _effectiveParticipants {
     if (selectedProject != null) {
       return selectedParticipants.toList();
@@ -117,19 +189,30 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
+  // Real-time Split Calculation
+  // ────────────────────────────────────────
+  double get _currentAmount => double.tryParse(amountController.text) ?? 0.0;
+
+  double get _perPersonAmount {
+    final count = _effectiveParticipants.length;
+    if (count == 0 || _currentAmount <= 0) return 0.0;
+    return _currentAmount / count;
+  }
+
+  // ────────────────────────────────────────
   // Validation
   // ────────────────────────────────────────
   bool _validateForm() {
     final loc = AppLocalizations.of(context);
 
-    if (titleController.text.isEmpty) {
+    if (titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('bill_name_required'))),
       );
       return false;
     }
 
-    if (amountController.text.isEmpty) {
+    if (amountController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('amount_required'))),
       );
@@ -144,14 +227,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
       return false;
     }
 
-    if (selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(loc.translate('category_required'))),
-      );
-      return false;
-    }
-
-    if (paidByController.text.isEmpty) {
+    if (paidByController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('payer_required'))),
       );
@@ -159,7 +235,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
     }
 
     final parts = _effectiveParticipants;
-    if (parts.isEmpty || parts.length < 2) {
+    if (parts.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('min_2_participants'))),
       );
@@ -191,13 +267,16 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
     final bill = Bill(
       id: const Uuid().v4(),
-      title: titleController.text,
+      title: titleController.text.trim(),
       amount: amount,
-      category: selectedCategory!,
-      date: DateTime.now(),
-      paidBy: paidByController.text,
+      category: selectedCategoryItem.id,
+      date: selectedDate,
+      paidBy: paidByController.text.trim(),
       participants: billParticipants,
       projectId: selectedProject?.id,
+      categoryIcon: selectedCategoryItem.icon,
+      currency: selectedCurrency,
+      imagePath: imagePath,
     );
 
     context.read<BillsBloc>().add(AddBillEvent(bill: bill));
@@ -205,11 +284,12 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
-  // Build
+  // Build UI
   // ────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final currencySymbol = currencySymbols[selectedCurrency] ?? selectedCurrency;
 
     return Scaffold(
       appBar: AppBar(
@@ -220,57 +300,235 @@ class _AddBillScreenState extends State<AddBillScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Project Dropdown ──────────────────────────────
-            _buildProjectDropdown(loc),
+            // ── 1. Title + Icon preview ─────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  key: const Key('selectedCategoryIconBadge'),
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    selectedCategoryItem.icon,
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: titleController,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('bill_name'),
+                      hintText: loc.translate('bill_name_example'),
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
-            // ── Bill Title ────────────────────────────────────
-            TextField(
-              controller: titleController,
-              decoration: InputDecoration(
-                labelText: loc.translate('bill_name'),
-                hintText: loc.translate('bill_name_example'),
-                border: const OutlineInputBorder(),
+            // ── 2. Icon Category Selector (12+ icons) ───────────
+            Text(
+              loc.translate('category'),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 72,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: defaultCategoryIcons.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final cat = defaultCategoryIcons[index];
+                  final isSelected = cat.id == selectedCategoryItem.id;
+                  return InkWell(
+                    key: Key('category_icon_${cat.id}'),
+                    onTap: () {
+                      setState(() {
+                        selectedCategoryItem = cat;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 64,
+                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : Theme.of(context).cardColor,
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade300,
+                          width: isSelected ? 2 : 1,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(cat.icon, style: const TextStyle(fontSize: 20)),
+                          const SizedBox(height: 2),
+                          Text(
+                            loc.translate(cat.nameKey),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 16),
 
-            // ── Amount ───────────────────────────────────────
-            TextField(
-              controller: amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                labelText: loc.translate('amount'),
-                hintText: '100000',
-                border: const OutlineInputBorder(),
-                suffixText: 'đ',
+            // ── 3. Image Upload & Preview ────────────────────────
+            Text(
+              loc.translate('image'),
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('pickGalleryButton'),
+                  onPressed: () => _pickImage(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library, size: 18),
+                  label: Text(loc.translate('gallery')),
+                ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  key: const Key('takeCameraButton'),
+                  onPressed: () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt, size: 18),
+                  label: Text(loc.translate('camera')),
+                ),
+              ],
+            ),
+            if (imagePath != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                key: const Key('imagePreview'),
+                height: 100,
+                width: 140,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.grey.shade100,
+                ),
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: File(imagePath!).existsSync()
+                          ? Image.file(
+                              File(imagePath!),
+                              fit: BoxFit.cover,
+                              width: 140,
+                              height: 100,
+                            )
+                          : Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.image, size: 36, color: Colors.grey),
+                                  Text(
+                                    imagePath!.split('/').last,
+                                    style: const TextStyle(fontSize: 10),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Colors.black54,
+                        child: IconButton(
+                          key: const Key('removeImageButton'),
+                          padding: EdgeInsets.zero,
+                          iconSize: 14,
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: _removeImage,
+                          tooltip: loc.translate('remove_image'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ],
+            const SizedBox(height: 16),
+
+            // ── 4. Amount + Currency ────────────────────────────
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: TextField(
+                    controller: amountController,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: loc.translate('amount'),
+                      hintText: '100000',
+                      border: const OutlineInputBorder(),
+                      suffixText: currencySymbol,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    key: const Key('currencyDropdown'),
+                    value: selectedCurrency,
+                    decoration: InputDecoration(
+                      labelText: loc.translate('currency'),
+                      border: const OutlineInputBorder(),
+                    ),
+                    items: widget.projectSettings.availableCurrencies
+                        .map((c) => DropdownMenuItem(
+                              value: c,
+                              child: Text('$c (${currencySymbols[c] ?? c})'),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => selectedCurrency = val);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
-            // ── Category ─────────────────────────────────────
-            DropdownButtonFormField<String>(
-              value: selectedCategory,
-              decoration: InputDecoration(
-                labelText: loc.translate('category'),
-                border: const OutlineInputBorder(),
-              ),
-              items: categories
-                  .map((cat) => DropdownMenuItem(
-                        value: cat,
-                        child: Text(loc.translate('category_$cat')),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedCategory = value;
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // ── Payer ─────────────────────────────────────────
+            // ── 5. Paid By ──────────────────────────────────────
             TextField(
               key: const Key('payerField'),
               controller: paidByController,
@@ -278,22 +536,65 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 labelText: loc.translate('payer'),
                 hintText: loc.translate('payer_hint'),
                 border: const OutlineInputBorder(),
-                // If project selected, show helper with member list
                 helperText: selectedProject != null &&
                         selectedProject!.members.isNotEmpty
                     ? selectedProject!.members.join(', ')
                     : null,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-            // ── Participants section ──────────────────────────
-            Text(
-              loc.translate('participants'),
-              style: Theme.of(context).textTheme.titleMedium,
+            // ── 6. When (Date Picker) ───────────────────────────
+            InkWell(
+              key: const Key('datePickerButton'),
+              onTap: _selectDate,
+              borderRadius: BorderRadius.circular(4),
+              child: InputDecorator(
+                decoration: InputDecoration(
+                  labelText: loc.translate('when'),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: const Icon(Icons.calendar_today),
+                ),
+                child: Text(DateFormat('yyyy-MM-dd').format(selectedDate)),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // ── 7. Split Section ────────────────────────────────
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  loc.translate('split'),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                if (_perPersonAmount > 0)
+                  Text(
+                    '${loc.translate('each_pays')}: ${_perPersonAmount.toStringAsFixed(0)} $currencySymbol',
+                    key: const Key('realtimeSplitText'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
 
+            // Project Dropdown
+            _buildProjectDropdown(loc),
+            const SizedBox(height: 12),
+
+            // Member list / Manual participants
+            Text(
+              loc.translate('participants'),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 8),
             if (selectedProject != null)
               _buildProjectMemberChips(loc)
             else
@@ -301,7 +602,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
             const SizedBox(height: 24),
 
-            // ── Save Button ───────────────────────────────────
+            // ── 8. Save Button ──────────────────────────────────
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
