@@ -41,6 +41,10 @@ class _AddBillScreenState extends State<AddBillScreen> {
   late List<CategoryIconItem> categoriesList;
   late CategoryIconItem selectedCategoryItem;
 
+  // Title FocusNode & Auto-fill control
+  late FocusNode titleFocusNode;
+  bool isTitleManuallyEdited = false;
+
   // Image path
   String? imagePath;
 
@@ -64,6 +68,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   void initState() {
     super.initState();
     titleController = TextEditingController();
+    titleFocusNode = FocusNode();
     amountController = TextEditingController();
     paidByController = TextEditingController();
     participantController = TextEditingController();
@@ -72,6 +77,10 @@ class _AddBillScreenState extends State<AddBillScreen> {
     selectedCategoryItem = categoriesList.first;
     selectedCurrency = widget.projectSettings.defaultCurrency;
     imagePath = widget.initialImagePath;
+
+    titleController.addListener(() {
+      setState(() {});
+    });
 
     amountController.addListener(() {
       setState(() {});
@@ -84,6 +93,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   @override
   void dispose() {
     titleController.dispose();
+    titleFocusNode.dispose();
     amountController.dispose();
     paidByController.dispose();
     participantController.dispose();
@@ -91,9 +101,24 @@ class _AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
+  // Category Selection & Auto-fill Title
+  // ────────────────────────────────────────
+  void _onCategorySelected(CategoryIconItem cat, AppLocalizations loc) {
+    setState(() {
+      selectedCategoryItem = cat;
+      if (!isTitleManuallyEdited) {
+        titleController.text = loc.translate(cat.nameKey);
+        titleController.selection = TextSelection.collapsed(
+          offset: titleController.text.length,
+        );
+      }
+    });
+  }
+
+  // ────────────────────────────────────────
   // Open Add Category Bottom Sheet
   // ────────────────────────────────────────
-  Future<void> _openAddCategorySheet() async {
+  Future<void> _openAddCategorySheet(AppLocalizations loc) async {
     final newCategory = await AddCategoryBottomSheet.show(
       context,
       existingCategories: categoriesList,
@@ -103,6 +128,12 @@ class _AddBillScreenState extends State<AddBillScreen> {
       setState(() {
         categoriesList.add(newCategory);
         selectedCategoryItem = newCategory;
+        if (!isTitleManuallyEdited) {
+          titleController.text = loc.translate(newCategory.nameKey);
+          titleController.selection = TextSelection.collapsed(
+            offset: titleController.text.length,
+          );
+        }
       });
     }
   }
@@ -344,12 +375,36 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextField(
+                    key: const Key('titleField'),
                     controller: titleController,
+                    focusNode: titleFocusNode,
                     decoration: InputDecoration(
                       labelText: loc.translate('bill_name'),
                       hintText: loc.translate('bill_name_example'),
                       border: const OutlineInputBorder(),
+                      suffixIcon: titleController.text.isNotEmpty
+                          ? IconButton(
+                              key: const Key('clearTitleButton'),
+                              icon: const Icon(Icons.clear),
+                              tooltip: 'Clear',
+                              onPressed: () {
+                                titleController.clear();
+                                isTitleManuallyEdited = false;
+                                titleFocusNode.requestFocus();
+                                setState(() {});
+                              },
+                            )
+                          : null,
                     ),
+                    onChanged: (text) {
+                      final currentCatName = loc.translate(selectedCategoryItem.nameKey);
+                      if (text.isEmpty) {
+                        isTitleManuallyEdited = false;
+                      } else if (text != currentCatName) {
+                        isTitleManuallyEdited = true;
+                      }
+                      setState(() {});
+                    },
                   ),
                 ),
               ],
@@ -368,7 +423,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 ),
                 TextButton.icon(
                   key: const Key('addCategoryButton'),
-                  onPressed: _openAddCategorySheet,
+                  onPressed: () => _openAddCategorySheet(loc),
                   icon: const Icon(Icons.add_circle_outline, size: 16),
                   label: Text(loc.translate('add_category')),
                   style: TextButton.styleFrom(
@@ -392,11 +447,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
 
                   return InkWell(
                     key: Key('category_icon_${cat.id}'),
-                    onTap: () {
-                      setState(() {
-                        selectedCategoryItem = cat;
-                      });
-                    },
+                    onTap: () => _onCategorySelected(cat, loc),
                     borderRadius: BorderRadius.circular(10),
                     child: Container(
                       width: 68,
