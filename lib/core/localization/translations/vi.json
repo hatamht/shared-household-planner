@@ -130,5 +130,15 @@
   "save_category": "Lưu danh mục",
   "popular_suggestions": "Gợi ý phổ biến",
   "choose_color": "Chọn màu sắc",
-  "choose_icon": "Chọn biểu tượng"
+  "choose_icon": "Chọn biểu tượng",
+  "edit_category": "Chỉnh sửa danh mục",
+  "delete_category": "Xóa danh mục?",
+  "delete_category_title": "Xóa danh mục?",
+  "delete_category_confirm_message": "Hành động này không thể hoàn tác.",
+  "delete_category_message": "Hành động này không thể hoàn tác.",
+  "confirm_delete": "Xác nhận xóa",
+  "cannot_delete_default_categories": "Không thể xóa danh mục mặc định",
+  "category_deleted": "Đã xóa danh mục",
+  "category_updated": "Đã cập nhật danh mục",
+  "category_deleted_label": "(Đã xóa)"
 }

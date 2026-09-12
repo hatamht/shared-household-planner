@@ -10,6 +10,7 @@ import '../../domain/entities/bill_participant.dart';
 import '../../domain/entities/category_icon.dart';
 import '../bloc/bills_bloc.dart';
 import '../widgets/add_category_bottom_sheet.dart';
+import '../widgets/edit_category_bottom_sheet.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/entities/project_settings.dart';
@@ -139,6 +140,65 @@ class _AddBillScreenState extends State<AddBillScreen> {
         }
       });
     }
+  }
+
+  // ────────────────────────────────────────
+  // Open Edit Category Bottom Sheet
+  // ────────────────────────────────────────
+  Future<void> _openEditCategorySheet(CategoryIconItem cat, AppLocalizations loc) async {
+    final isDefault = defaultCategoryIcons.any((d) => d.id == cat.id);
+    final result = await EditCategoryBottomSheet.show(
+      context,
+      category: cat,
+      existingCategories: categoriesList,
+      isDefaultCategory: isDefault,
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      if (result.action == CategoryEditAction.updated && result.updatedCategory != null) {
+        final updated = result.updatedCategory!;
+        final idx = categoriesList.indexWhere((c) => c.id == cat.id);
+        if (idx != -1) {
+          categoriesList[idx] = updated;
+        }
+        if (selectedCategoryItem.id == cat.id) {
+          selectedCategoryItem = updated;
+          if (!isTitleManuallyEdited) {
+            titleController.text = loc.translate(updated.nameKey);
+            titleController.selection = TextSelection.collapsed(
+              offset: titleController.text.length,
+            );
+          }
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.translate('category_updated')),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else if (result.action == CategoryEditAction.deleted) {
+        categoriesList.removeWhere((c) => c.id == cat.id);
+        if (selectedCategoryItem.id == cat.id) {
+          selectedCategoryItem = categoriesList.isNotEmpty
+              ? categoriesList.first
+              : defaultCategoryIcons.first;
+          if (!isTitleManuallyEdited) {
+            titleController.text = loc.translate(selectedCategoryItem.nameKey);
+            titleController.selection = TextSelection.collapsed(
+              offset: titleController.text.length,
+            );
+          }
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(loc.translate('category_deleted')),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    });
   }
 
   // ────────────────────────────────────────
@@ -540,38 +600,66 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   return InkWell(
                     key: Key('category_icon_${cat.id}'),
                     onTap: () => _onCategorySelected(cat, loc),
+                    onLongPress: () => _openEditCategorySheet(cat, loc),
                     borderRadius: BorderRadius.circular(12),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      width: 68,
-                      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? itemColor.withOpacity(0.2)
-                            : itemColor.withOpacity(0.06),
-                        border: Border.all(
-                          color: isSelected ? itemColor : itemColor.withOpacity(0.3),
-                          width: isSelected ? 2.5 : 1,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 68,
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? itemColor.withOpacity(0.2)
+                                : itemColor.withOpacity(0.06),
+                            border: Border.all(
+                              color: isSelected ? itemColor : itemColor.withOpacity(0.3),
+                              width: isSelected ? 2.5 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(cat.icon, style: const TextStyle(fontSize: 20)),
+                              const SizedBox(height: 2),
+                              Text(
+                                loc.translate(cat.nameKey),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  color: isSelected ? itemColor : (isDark ? Colors.white70 : Colors.black87),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(cat.icon, style: const TextStyle(fontSize: 20)),
-                          const SizedBox(height: 2),
-                          Text(
-                            loc.translate(cat.nameKey),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              color: isSelected ? itemColor : (isDark ? Colors.white70 : Colors.black87),
+                        // Pencil edit button affordance
+                        Positioned(
+                          top: 2,
+                          right: 2,
+                          child: InkWell(
+                            key: Key('edit_category_icon_${cat.id}'),
+                            onTap: () => _openEditCategorySheet(cat, loc),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: isDark ? Colors.black54 : Colors.white70,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.edit,
+                                size: 10,
+                                color: isSelected ? itemColor : (isDark ? Colors.white60 : Colors.grey.shade600),
+                              ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   );
                 },

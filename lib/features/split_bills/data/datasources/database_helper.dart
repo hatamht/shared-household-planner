@@ -124,6 +124,70 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> updateCategoryAndBills({
+    required String oldCategoryId,
+    required String newName,
+    required String newIcon,
+    required String newColorHex,
+    int? newIconCodePoint,
+  }) async {
+    final db = await database;
+    await db.update(
+      'categories',
+      {
+        'name': newName,
+        'icon': newIcon,
+        'colorHex': newColorHex,
+        if (newIconCodePoint != null) 'iconCodePoint': newIconCodePoint,
+      },
+      where: 'id = ?',
+      whereArgs: [oldCategoryId],
+    );
+    await db.update(
+      'bills',
+      {
+        'categoryIcon': newIcon,
+        'categoryColor': newColorHex,
+      },
+      where: 'category = ?',
+      whereArgs: [oldCategoryId],
+    );
+  }
+
+  Future<void> deleteCategoryAndMigrateBills({
+    required String categoryId,
+    String targetCategory = 'restaurant',
+    String targetCategoryIcon = '🍽️',
+    String targetCategoryColor = '#F44336',
+  }) async {
+    final db = await database;
+    await db.delete(
+      'categories',
+      where: 'id = ?',
+      whereArgs: [categoryId],
+    );
+    await db.update(
+      'bills',
+      {
+        'category': targetCategory,
+        'categoryIcon': targetCategoryIcon,
+        'categoryColor': targetCategoryColor,
+      },
+      where: 'category = ?',
+      whereArgs: [categoryId],
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllCategories() async {
+    final db = await database;
+    return await db.query('categories');
+  }
+
+  Future<void> insertCategory(Map<String, dynamic> categoryJson) async {
+    final db = await database;
+    await db.insert('categories', categoryJson, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
   Future<void> close() async {
     _database?.close();
     _database = null;

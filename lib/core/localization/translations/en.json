@@ -130,6 +130,16 @@
   "popular_suggestions": "Popular Suggestions",
   "choose_color": "Choose Color",
   "choose_icon": "Choose Icon",
-  "category_party_short": "Party"
+  "category_party_short": "Party",
+  "edit_category": "Edit Category",
+  "delete_category": "Delete category?",
+  "delete_category_title": "Delete category?",
+  "delete_category_confirm_message": "This action cannot be undone.",
+  "delete_category_message": "This action cannot be undone.",
+  "confirm_delete": "Confirm Delete",
+  "cannot_delete_default_categories": "Cannot delete default categories",
+  "category_deleted": "Category deleted",
+  "category_updated": "Category updated",
+  "category_deleted_label": "(Deleted)"
 }
 
