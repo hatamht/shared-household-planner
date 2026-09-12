@@ -35,10 +35,7 @@ class AppLocalizations {
 
   String translate(String key) {
     final result = _translations[key];
-    if (result == null) {
-      print('🟡 Missing translation key: "$key"');
-    }
-    return result ?? '[${key}]';
+    return result ?? key;
   }
 
   String t(String key) => translate(key);

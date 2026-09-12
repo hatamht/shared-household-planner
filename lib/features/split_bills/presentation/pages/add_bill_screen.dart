@@ -104,6 +104,13 @@ class _AddBillScreenState extends State<AddBillScreen> {
     super.dispose();
   }
 
+  String _getCategoryDisplayName(CategoryIconItem cat, AppLocalizations loc) {
+    if (defaultCategoryIcons.any((d) => d.id == cat.id)) {
+      return loc.translate(cat.nameKey);
+    }
+    return cat.nameKey;
+  }
+
   // ────────────────────────────────────────
   // Category Selection & Auto-fill Title
   // ────────────────────────────────────────
@@ -111,7 +118,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
     setState(() {
       selectedCategoryItem = cat;
       if (!isTitleManuallyEdited) {
-        titleController.text = loc.translate(cat.nameKey);
+        titleController.text = _getCategoryDisplayName(cat, loc);
         titleController.selection = TextSelection.collapsed(
           offset: titleController.text.length,
         );
@@ -133,7 +140,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
         categoriesList.add(newCategory);
         selectedCategoryItem = newCategory;
         if (!isTitleManuallyEdited) {
-          titleController.text = loc.translate(newCategory.nameKey);
+          titleController.text = _getCategoryDisplayName(newCategory, loc);
           titleController.selection = TextSelection.collapsed(
             offset: titleController.text.length,
           );
@@ -166,7 +173,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
         if (selectedCategoryItem.id == cat.id) {
           selectedCategoryItem = updated;
           if (!isTitleManuallyEdited) {
-            titleController.text = loc.translate(updated.nameKey);
+            titleController.text = _getCategoryDisplayName(updated, loc);
             titleController.selection = TextSelection.collapsed(
               offset: titleController.text.length,
             );
@@ -185,7 +192,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
               ? categoriesList.first
               : defaultCategoryIcons.first;
           if (!isTitleManuallyEdited) {
-            titleController.text = loc.translate(selectedCategoryItem.nameKey);
+            titleController.text = _getCategoryDisplayName(selectedCategoryItem, loc);
             titleController.selection = TextSelection.collapsed(
               offset: titleController.text.length,
             );
@@ -625,7 +632,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                               Text(cat.icon, style: const TextStyle(fontSize: 20)),
                               const SizedBox(height: 2),
                               Text(
-                                loc.translate(cat.nameKey),
+                                _getCategoryDisplayName(cat, loc),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(

@@ -97,12 +97,14 @@ class _EditCategoryBottomSheetState extends State<EditCategoryBottomSheet> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final loc = AppLocalizations.of(context);
-    final translated = loc.translate(widget.category.nameKey);
-    // If translated text is available and name is still the key, use translated text
-    if (translated != widget.category.nameKey &&
-        _nameController.text == widget.category.nameKey) {
-      _nameController.text = translated;
+    if (widget.isDefaultCategory) {
+      final loc = AppLocalizations.of(context);
+      final translated = loc.translate(widget.category.nameKey);
+      // If translated text is available and name is still the key, use translated text
+      if (translated != widget.category.nameKey &&
+          _nameController.text == widget.category.nameKey) {
+        _nameController.text = translated;
+      }
     }
   }
 
