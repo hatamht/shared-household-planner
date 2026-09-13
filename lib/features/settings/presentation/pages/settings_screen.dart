@@ -5,6 +5,8 @@ import '../../../../core/language/language_provider.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../split_bills/domain/entities/category_icon.dart';
+import '../../../export/domain/entities/export_options.dart';
+import '../../../export/presentation/pages/export_data_screen.dart';
 
 /// Comprehensive Settings Screen consolidating Profile, Theme, Language,
 /// Currency, Data Management, Export Options, and About information.
@@ -14,6 +16,8 @@ class SettingsScreen extends StatefulWidget {
   final void Function(String)? onCurrencyChanged;
   final void Function()? onClearCache;
   final void Function()? onResetData;
+  final void Function()? onExportCsv;
+  final void Function()? onExportPdf;
 
   const SettingsScreen({
     super.key,
@@ -22,6 +26,8 @@ class SettingsScreen extends StatefulWidget {
     this.onCurrencyChanged,
     this.onClearCache,
     this.onResetData,
+    this.onExportCsv,
+    this.onExportPdf,
   });
 
   @override
@@ -117,12 +123,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _handleExportNotice(BuildContext context, AppLocalizations loc, String type) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${loc.translate(type)}: ${loc.translate('export_coming_soon')}'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+  void _openExportScreen(BuildContext context, ExportFormat format) {
+    if (format == ExportFormat.csv && widget.onExportCsv != null) {
+      widget.onExportCsv!();
+      return;
+    }
+    if (format == ExportFormat.pdf && widget.onExportPdf != null) {
+      widget.onExportPdf!();
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ExportDataScreen(initialFormat: format),
       ),
     );
   }
@@ -411,7 +424,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text(loc.translate('export_csv'), style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(loc.translate('export_csv_desc'), style: const TextStyle(fontSize: 12)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _handleExportNotice(context, loc, 'export_csv'),
+            onTap: () => _openExportScreen(context, ExportFormat.csv),
           ),
           const Divider(height: 1),
           ListTile(
@@ -423,7 +436,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: Text(loc.translate('export_pdf'), style: const TextStyle(fontWeight: FontWeight.w600)),
             subtitle: Text(loc.translate('export_pdf_desc'), style: const TextStyle(fontSize: 12)),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _handleExportNotice(context, loc, 'export_pdf'),
+            onTap: () => _openExportScreen(context, ExportFormat.pdf),
           ),
         ],
       ),

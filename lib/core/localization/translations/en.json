@@ -187,6 +187,25 @@
   "export_coming_soon": "Export feature will be available shortly",
   "about_app": "About App",
   "app_version": "Version 1.0.0 (Build 42)",
-  "developed_by": "SimSoft Studio"
+  "developed_by": "SimSoft Studio",
+  "export_data": "Export Data",
+  "export_data_desc": "Export bills and settlement summary to CSV or PDF",
+  "export_format": "Export Format",
+  "last_month": "Last Month",
+  "custom_range": "Custom Range",
+  "start_date": "Start Date",
+  "end_date": "End Date",
+  "export_and_share": "Export & Share",
+  "export_file": "Export File",
+  "share_file": "Share File",
+  "export_success": "Exported successfully",
+  "export_failed": "Export failed",
+  "settlement_summary": "Settlement Summary",
+  "total_amount": "Total Amount",
+  "bills_count": "Total Bills",
+  "no_bills_to_export": "No bills found to export",
+  "file_saved_to": "File saved to",
+  "scope": "Scope",
+  "select_date_range": "Select Date Range"
 }
 

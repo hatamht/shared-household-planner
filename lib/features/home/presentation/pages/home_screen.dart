@@ -11,7 +11,6 @@ import 'package:shared_household_planner/features/projects/domain/entities/proje
 import 'package:shared_household_planner/features/projects/presentation/bloc/project_bloc.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/create_project_screen.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/project_detail_screen.dart';
-import 'package:shared_household_planner/features/projects/presentation/pages/project_screen.dart';
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
@@ -644,12 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return const BillsListScreen();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // TAB 2: Settings
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildSettingsTab(BuildContext context, AppLocalizations loc, bool isDark) {
-    return const SettingsScreen();
-  }
+
 
   // ─────────────────────────────────────────────────────────────────────────
   // Bottom Navigation Bar

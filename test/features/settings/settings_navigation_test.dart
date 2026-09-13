@@ -18,6 +18,7 @@ import 'package:shared_household_planner/features/projects/domain/usecases/get_a
 import 'package:shared_household_planner/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 import 'package:shared_household_planner/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:shared_household_planner/features/projects/presentation/bloc/project_bloc.dart';
+import 'package:shared_household_planner/features/export/presentation/pages/export_data_screen.dart';
 import 'package:shared_household_planner/features/settings/presentation/pages/settings_screen.dart';
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/domain/repositories/bill_repository.dart';
@@ -70,6 +71,22 @@ class _MockSettingsLoc extends AppLocalizations {
     'all_projects': 'All Projects',
     'overview': 'Overview',
     'no_stats_data': 'No expense data for this period',
+    'export_data': 'Export Data',
+    'export_format': 'Export Format',
+    'scope': 'Scope',
+    'select_date_range': 'Select Date Range',
+    'all_time': 'All Time',
+    'this_month': 'This Month',
+    'last_month': 'Last Month',
+    'custom_range': 'Custom Range',
+    'start_date': 'Start Date',
+    'end_date': 'End Date',
+    'settlement_summary': 'Settlement Summary',
+    'settlement_formula': 'Formula: net = paid - owed',
+    'bills_count': 'Total Bills',
+    'total_amount': 'Total Amount',
+    'export_and_share': 'Export & Share',
+    'export_file': 'Export File',
   };
 
   static const _vi = <String, String>{
@@ -113,6 +130,22 @@ class _MockSettingsLoc extends AppLocalizations {
     'all_projects': 'Tất cả dự án',
     'overview': 'Tổng quan',
     'no_stats_data': 'Không có dữ liệu chi tiêu trong kỳ này',
+    'export_data': 'Xuất dữ liệu',
+    'export_format': 'Định dạng xuất',
+    'scope': 'Phạm vi',
+    'select_date_range': 'Chọn khoảng thời gian',
+    'all_time': 'Tất cả',
+    'this_month': 'Tháng này',
+    'last_month': 'Tháng trước',
+    'custom_range': 'Tùy chỉnh',
+    'start_date': 'Từ ngày',
+    'end_date': 'Đến ngày',
+    'settlement_summary': 'Tổng kết quyết toán',
+    'settlement_formula': 'Công thức: net = đã trả - nợ',
+    'bills_count': 'Tổng số hóa đơn',
+    'total_amount': 'Tổng số tiền',
+    'export_and_share': 'Xuất & Chia sẻ',
+    'export_file': 'Xuất file',
   };
 
   @override
@@ -580,20 +613,18 @@ void main() {
       expect(find.byIcon(Icons.picture_as_pdf), findsOneWidget);
     });
 
-    testWidgets('48. Tapping CSV export shows feedback SnackBar', (tester) async {
+    testWidgets('48. Tapping CSV export navigates to ExportDataScreen', (tester) async {
       await pumpTestScreen(tester, buildSettingsTestApp());
       await tester.tap(find.byKey(const Key('exportCsvTile')));
-      await tester.pump();
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('Export to CSV:'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.byType(ExportDataScreen), findsOneWidget);
     });
 
-    testWidgets('49. Tapping PDF export shows feedback SnackBar', (tester) async {
+    testWidgets('49. Tapping PDF export navigates to ExportDataScreen', (tester) async {
       await pumpTestScreen(tester, buildSettingsTestApp());
       await tester.tap(find.byKey(const Key('exportPdfTile')));
-      await tester.pump();
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining('Export to PDF:'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.byType(ExportDataScreen), findsOneWidget);
     });
   });
 
