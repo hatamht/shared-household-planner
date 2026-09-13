@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -67,6 +67,11 @@ class DatabaseHelper {
             )
           ''');
         }
+        if (oldVersion < 6) {
+          await db.execute(
+            'ALTER TABLE bills ADD COLUMN imagePaths TEXT',
+          );
+        }
       },
     );
   }
@@ -85,6 +90,7 @@ class DatabaseHelper {
         categoryIcon TEXT,
         currency TEXT DEFAULT 'VND',
         imagePath TEXT,
+        imagePaths TEXT,
         categoryColor TEXT,
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       )

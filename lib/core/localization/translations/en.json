@@ -231,6 +231,25 @@
   "clear_filters": "Clear Filters",
   "apply_filters": "Apply Filters",
   "active_filters": "Active Filters",
-  "reset_filters": "Reset"
+  "reset_filters": "Reset",
+  "receipts": "Receipts",
+  "receipt_images": "Receipt Images",
+  "add_receipt": "Add Receipt",
+  "attach_receipt": "Attach Receipt",
+  "view_receipt": "View Receipt",
+  "receipt_gallery": "Receipt Gallery",
+  "receipt_count": "{count} photos",
+  "delete_receipt": "Delete Receipt",
+  "delete_receipt_confirm": "Are you sure you want to delete this receipt image?",
+  "image_compressed": "Image compressed successfully",
+  "no_receipt": "No receipt attached",
+  "storage_used": "Receipt storage used",
+  "pick_from_gallery": "Gallery",
+  "take_photo": "Take Photo",
+  "photos": "Photos",
+  "receipt_preview": "Receipt Preview",
+  "previous": "Previous",
+  "next_page": "Next",
+  "close": "Close"
 }
 

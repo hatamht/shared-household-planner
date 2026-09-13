@@ -15,6 +15,7 @@ class BillModel extends Bill {
     String? categoryIcon,
     String? currency,
     String? imagePath,
+    List<String> imagePaths = const [],
     String? categoryColor,
   }) : super(
     id: id,
@@ -28,6 +29,7 @@ class BillModel extends Bill {
     categoryIcon: categoryIcon,
     currency: currency,
     imagePath: imagePath,
+    imagePaths: imagePaths,
     categoryColor: categoryColor,
   );
 
@@ -39,6 +41,24 @@ class BillModel extends Bill {
       participantsList = jsonDecode(participantsData) as List<dynamic>;
     } else {
       participantsList = participantsData as List<dynamic>;
+    }
+
+    List<String> imagePathsList = [];
+    final rawImagePaths = json['imagePaths'];
+    if (rawImagePaths is String && rawImagePaths.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawImagePaths);
+        if (decoded is List) {
+          imagePathsList = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
+    } else if (rawImagePaths is List) {
+      imagePathsList = rawImagePaths.map((e) => e.toString()).toList();
+    }
+
+    final singleImagePath = json['imagePath'] as String?;
+    if (imagePathsList.isEmpty && singleImagePath != null && singleImagePath.isNotEmpty) {
+      imagePathsList = [singleImagePath];
     }
     
     return BillModel(
@@ -58,12 +78,14 @@ class BillModel extends Bill {
       projectId: json['projectId'] as String?,
       categoryIcon: json['categoryIcon'] as String?,
       currency: json['currency'] as String? ?? 'VND',
-      imagePath: json['imagePath'] as String?,
+      imagePath: singleImagePath ?? (imagePathsList.isNotEmpty ? imagePathsList.first : null),
+      imagePaths: imagePathsList,
       categoryColor: json['categoryColor'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
+    final paths = effectiveImagePaths;
     return {
       'id': id,
       'title': title,
@@ -81,7 +103,8 @@ class BillModel extends Bill {
       if (projectId != null) 'projectId': projectId,
       if (categoryIcon != null) 'categoryIcon': categoryIcon,
       if (currency != null) 'currency': currency,
-      if (imagePath != null) 'imagePath': imagePath,
+      if (effectiveImagePath != null) 'imagePath': effectiveImagePath,
+      if (paths.isNotEmpty) 'imagePaths': jsonEncode(paths),
       if (categoryColor != null) 'categoryColor': categoryColor,
     };
   }
@@ -99,6 +122,7 @@ class BillModel extends Bill {
       categoryIcon: bill.categoryIcon,
       currency: bill.currency,
       imagePath: bill.imagePath,
+      imagePaths: bill.imagePaths,
       categoryColor: bill.categoryColor,
     );
   }

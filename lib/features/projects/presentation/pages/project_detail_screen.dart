@@ -8,6 +8,7 @@ import '../../domain/entities/project_statistics.dart';
 import '../../domain/entities/settlement_item.dart';
 import '../../domain/usecases/calculate_settlement_usecase.dart';
 import '../bloc/project_bloc.dart';
+import '../../../split_bills/presentation/widgets/receipt_viewer_modal.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -152,7 +153,24 @@ class _BillsTab extends StatelessWidget {
           key: Key('billItem_${bill.id}'),
           margin: const EdgeInsets.symmetric(vertical: 6),
           child: ListTile(
-            leading: const CircleAvatar(child: Icon(Icons.receipt)),
+            leading: Stack(
+              children: [
+                const CircleAvatar(child: Icon(Icons.receipt)),
+                if (bill.hasReceipt)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.attach_file, size: 10, color: Colors.white),
+                    ),
+                  ),
+              ],
+            ),
             title: Text(bill.title,
                 style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(
@@ -163,6 +181,15 @@ class _BillsTab extends StatelessWidget {
                   fontWeight: FontWeight.bold, fontSize: 16),
             ),
             isThreeLine: true,
+            onTap: bill.hasReceipt
+                ? () {
+                    ReceiptViewerModal.show(
+                      context,
+                      imagePaths: bill.effectiveImagePaths,
+                      title: bill.title,
+                    );
+                  }
+                : null,
           ),
         );
       },

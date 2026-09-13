@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../split_bills/domain/entities/category_icon.dart';
 import '../../../export/domain/entities/export_options.dart';
 import '../../../export/presentation/pages/export_data_screen.dart';
+import '../../../../core/services/receipt_image_service.dart';
 
 /// Comprehensive Settings Screen consolidating Profile, Theme, Language,
 /// Currency, Data Management, Export Options, and About information.
@@ -78,6 +79,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _cacheCleared = true;
     });
+    try {
+      ReceiptImageService.clearAllReceipts();
+    } catch (_) {}
     widget.onClearCache?.call();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

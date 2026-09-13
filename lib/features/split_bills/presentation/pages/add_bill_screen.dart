@@ -8,10 +8,13 @@ import 'package:uuid/uuid.dart';
 import '../../domain/entities/bill.dart';
 import '../../domain/entities/bill_participant.dart';
 import '../../domain/entities/category_icon.dart';
+import '../../domain/repositories/bill_repository.dart';
 import '../bloc/bills_bloc.dart';
 import '../widgets/add_category_bottom_sheet.dart';
 import '../widgets/edit_category_bottom_sheet.dart';
+import '../widgets/receipt_viewer_modal.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/services/receipt_image_service.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/entities/project_settings.dart';
 import '../../../projects/presentation/bloc/project_bloc.dart';
@@ -19,20 +22,26 @@ import '../../../projects/presentation/bloc/project_bloc.dart';
 class AddBillScreen extends StatefulWidget {
   final ProjectSettings projectSettings;
   final Future<String?> Function(ImageSource source)? onPickImage;
+  final Future<List<String>> Function()? onPickMultipleImages;
   final String? initialImagePath;
+  final List<String>? initialImagePaths;
+  final Bill? billToEdit;
 
   const AddBillScreen({
     Key? key,
     this.projectSettings = const ProjectSettings(),
     this.onPickImage,
+    this.onPickMultipleImages,
     this.initialImagePath,
+    this.initialImagePaths,
+    this.billToEdit,
   }) : super(key: key);
 
   @override
-  State<AddBillScreen> createState() => _AddBillScreenState();
+  State<AddBillScreen> createState() => AddBillScreenState();
 }
 
-class _AddBillScreenState extends State<AddBillScreen> {
+class AddBillScreenState extends State<AddBillScreen> {
   late TextEditingController titleController;
   late TextEditingController amountController;
   late TextEditingController paidByController;
@@ -46,8 +55,20 @@ class _AddBillScreenState extends State<AddBillScreen> {
   late FocusNode titleFocusNode;
   bool isTitleManuallyEdited = false;
 
-  // Image path
-  String? imagePath;
+  // Image paths
+  List<String> imagePaths = [];
+  String? get imagePath => imagePaths.isNotEmpty ? imagePaths.first : null;
+  set imagePath(String? value) {
+    setState(() {
+      if (value == null) {
+        imagePaths.clear();
+      } else {
+        if (!imagePaths.contains(value)) {
+          imagePaths.add(value);
+        }
+      }
+    });
+  }
 
   // Currency
   late String selectedCurrency;
@@ -80,7 +101,29 @@ class _AddBillScreenState extends State<AddBillScreen> {
     categoriesList = List.from(defaultCategoryIcons);
     selectedCategoryItem = categoriesList.first;
     selectedCurrency = widget.projectSettings.defaultCurrency;
-    imagePath = widget.initialImagePath;
+
+    if (widget.initialImagePaths != null && widget.initialImagePaths!.isNotEmpty) {
+      imagePaths = List.from(widget.initialImagePaths!);
+    } else if (widget.initialImagePath != null) {
+      imagePaths = [widget.initialImagePath!];
+    } else if (widget.billToEdit != null) {
+      imagePaths = List.from(widget.billToEdit!.effectiveImagePaths);
+    }
+
+    if (widget.billToEdit != null) {
+      final b = widget.billToEdit!;
+      titleController.text = b.title;
+      amountController.text = b.amount.toStringAsFixed(0);
+      paidByController.text = b.paidBy;
+      selectedDate = b.date;
+      selectedCurrency = b.currency ?? widget.projectSettings.defaultCurrency;
+      final match = categoriesList.where((c) => c.id == b.category);
+      if (match.isNotEmpty) {
+        selectedCategoryItem = match.first;
+      }
+      manualParticipants = b.participants.map((p) => p.name).toList();
+      selectedParticipants = b.participants.map((p) => p.name).toSet();
+    }
 
     titleController.addListener(() {
       setState(() {});
@@ -216,7 +259,12 @@ class _AddBillScreenState extends State<AddBillScreen> {
       if (widget.onPickImage != null) {
         final path = await widget.onPickImage!(source);
         if (path != null) {
-          setState(() => imagePath = path);
+          final savedPath = await ReceiptImageService.saveReceiptFromPath(path);
+          setState(() {
+            if (!imagePaths.contains(savedPath)) {
+              imagePaths.add(savedPath);
+            }
+          });
         }
         return;
       }
@@ -228,7 +276,12 @@ class _AddBillScreenState extends State<AddBillScreen> {
         imageQuality: 85,
       );
       if (file != null) {
-        setState(() => imagePath = file.path);
+        final savedPath = await ReceiptImageService.saveReceiptFromPath(file.path);
+        setState(() {
+          if (!imagePaths.contains(savedPath)) {
+            imagePaths.add(savedPath);
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -239,8 +292,65 @@ class _AddBillScreenState extends State<AddBillScreen> {
     }
   }
 
-  void _removeImage() {
-    setState(() => imagePath = null);
+  Future<void> pickMultipleImages() => _pickMultipleImages();
+
+  Future<void> _pickMultipleImages() async {
+    try {
+      if (widget.onPickMultipleImages != null) {
+        final paths = await widget.onPickMultipleImages!();
+        for (final p in paths) {
+          final saved = await ReceiptImageService.saveReceiptFromPath(p);
+          if (!imagePaths.contains(saved)) {
+            imagePaths.add(saved);
+          }
+        }
+        setState(() {});
+        return;
+      }
+
+      if (widget.onPickImage != null) {
+        final path = await widget.onPickImage!(ImageSource.gallery);
+        if (path != null) {
+          final saved = await ReceiptImageService.saveReceiptFromPath(path);
+          if (!imagePaths.contains(saved)) {
+            imagePaths.add(saved);
+          }
+        }
+        setState(() {});
+        return;
+      }
+
+      final List<XFile> files = await _defaultPicker.pickMultiImage(
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+      if (files.isNotEmpty) {
+        for (final file in files) {
+          final saved = await ReceiptImageService.saveReceiptFromPath(file.path);
+          if (!imagePaths.contains(saved)) {
+            imagePaths.add(saved);
+          }
+        }
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking images: $e')),
+        );
+      }
+    }
+  }
+
+  void _removeImage([int? index]) {
+    setState(() {
+      if (index != null && index >= 0 && index < imagePaths.length) {
+        imagePaths.removeAt(index);
+      } else if (imagePaths.isNotEmpty) {
+        imagePaths.removeLast();
+      }
+    });
   }
 
   // ────────────────────────────────────────
@@ -369,7 +479,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
   // ────────────────────────────────────────
   // Submit
   // ────────────────────────────────────────
-  void _submitForm() {
+  void _submitForm() async {
     if (!_validateForm()) return;
 
     final amount = double.parse(amountController.text);
@@ -387,22 +497,37 @@ class _AddBillScreenState extends State<AddBillScreen> {
         .toList();
 
     final bill = Bill(
-      id: const Uuid().v4(),
+      id: widget.billToEdit?.id ?? const Uuid().v4(),
       title: titleController.text.trim(),
       amount: amount,
       category: selectedCategoryItem.id,
       date: selectedDate,
       paidBy: paidByController.text.trim(),
       participants: billParticipants,
-      projectId: selectedProject?.id,
+      projectId: selectedProject?.id ?? widget.billToEdit?.projectId,
       categoryIcon: selectedCategoryItem.icon,
       currency: selectedCurrency,
-      imagePath: imagePath,
+      imagePath: imagePaths.isNotEmpty ? imagePaths.first : null,
+      imagePaths: List.from(imagePaths),
       categoryColor: selectedCategoryItem.colorHex,
     );
 
-    context.read<BillsBloc>().add(AddBillEvent(bill: bill));
-    Navigator.pop(context);
+    if (widget.billToEdit != null) {
+      try {
+        final repo = context.read<BillRepository>();
+        await repo.update(bill);
+        if (mounted) {
+          context.read<BillsBloc>().add(const GetBillsEvent());
+        }
+      } catch (_) {
+        context.read<BillsBloc>().add(AddBillEvent(bill: bill));
+      }
+    } else {
+      context.read<BillsBloc>().add(AddBillEvent(bill: bill));
+    }
+    if (mounted) {
+      Navigator.pop(context);
+    }
   }
 
   // ────────────────────────────────────────
@@ -674,7 +799,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ── 3. Image Upload & Preview ────────────────────────
+            // ── 3. Image Upload & Preview (Receipt Images & Multi-Image Gallery) ──
             Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -682,7 +807,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
               runSpacing: 8,
               children: [
                 Text(
-                  loc.translate('image'),
+                  loc.translate('receipt_images'),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -692,7 +817,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   children: [
                     OutlinedButton.icon(
                       key: const Key('pickGalleryButton'),
-                      onPressed: () => _pickImage(ImageSource.gallery),
+                      onPressed: () => _pickMultipleImages(),
                       icon: const Icon(Icons.photo_library, size: 16),
                       label: Text(loc.translate('gallery')),
                       style: OutlinedButton.styleFrom(
@@ -719,70 +844,136 @@ class _AddBillScreenState extends State<AddBillScreen> {
                 ),
               ],
             ),
-            if (imagePath != null) ...[
+            if (imagePaths.isNotEmpty) ...[
               const SizedBox(height: 10),
-              Center(
-                child: Container(
-                  key: const Key('imagePreview'),
-                  height: 140,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: cardBorder),
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Stack(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: File(imagePath!).existsSync()
-                            ? Image.file(
-                                File(imagePath!),
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: 140,
-                              )
-                            : Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.image, size: 40, color: Colors.grey),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      imagePath!.split('/').last,
-                                      style: const TextStyle(fontSize: 11),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                      ),
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: CircleAvatar(
-                          radius: 14,
-                          backgroundColor: Colors.black.withOpacity(0.65),
-                          child: IconButton(
-                            key: const Key('removeImageButton'),
-                            padding: EdgeInsets.zero,
-                            iconSize: 16,
-                            icon: const Icon(Icons.close, color: Colors.white),
-                            onPressed: _removeImage,
-                            tooltip: loc.translate('remove_image'),
+              Container(
+                key: const Key('imagePreview'),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: cardBorder),
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${loc.translate('receipts')} (${imagePaths.length})',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
+                        TextButton.icon(
+                          key: const Key('clearAllReceiptsButton'),
+                          onPressed: () => setState(() => imagePaths.clear()),
+                          icon: const Icon(Icons.delete_sweep, size: 16, color: Colors.red),
+                          label: Text(
+                            loc.translate('delete_receipt'),
+                            style: const TextStyle(fontSize: 11, color: Colors.red),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 110,
+                      child: ListView.separated(
+                        key: const Key('receiptGalleryList'),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: imagePaths.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          final path = imagePaths[index];
+                          final file = File(path);
+                          final exists = file.existsSync();
+
+                          return GestureDetector(
+                            key: Key('receiptThumbnail_$index'),
+                            onTap: () {
+                              ReceiptViewerModal.show(
+                                context,
+                                imagePaths: imagePaths,
+                                initialIndex: index,
+                                onDelete: (idx) => _removeImage(idx),
+                              );
+                            },
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: cardBorder),
+                                    color: isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: exists
+                                        ? Image.file(file, fit: BoxFit.cover)
+                                        : Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(Icons.image, size: 32, color: Colors.grey),
+                                                const SizedBox(height: 2),
+                                                Padding(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                                  child: Text(
+                                                    path.split('/').last,
+                                                    style: const TextStyle(fontSize: 9),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Colors.black.withOpacity(0.65),
+                                    child: IconButton(
+                                      key: index == 0
+                                          ? const Key('removeImageButton')
+                                          : Key('removeImageButton_$index'),
+                                      padding: EdgeInsets.zero,
+                                      iconSize: 14,
+                                      icon: const Icon(Icons.close, color: Colors.white),
+                                      onPressed: () => _removeImage(index),
+                                      tooltip: loc.translate('remove_image'),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
