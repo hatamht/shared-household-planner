@@ -1,3 +1,4 @@
+import 'package:shared_household_planner/features/statistics/presentation/pages/statistics_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -223,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return _buildSettingsTab(context, loc, isDark);
       case 3:
-        return _buildProfileTab(context, loc, isDark);
+        return const StatisticsScreen();
       default:
         return _buildProjectsTab(context, loc, isDark);
     }
@@ -652,6 +653,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // Profile Info consolidated into Settings (AC 1 & PM note)
+        Text(
+          loc.translate('profile'),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: const Icon(Icons.person, color: Colors.white),
+            ),
+            title: Text(loc.translate('profile')),
+            subtitle: const Text('household@example.com'),
+          ),
+        ),
+        const SizedBox(height: 20),
         Text(
           loc.translate('theme_settings'),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
@@ -789,8 +808,8 @@ class _HomeScreenState extends State<HomeScreen> {
             label: loc.translate('settings'),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.person),
-            label: loc.translate('profile'),
+            icon: const Icon(Icons.insights),
+            label: loc.translate('statistics'),
           ),
         ],
       ),

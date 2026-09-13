@@ -116,6 +116,9 @@ class _MockLoc extends AppLocalizations {
     'requests': 'Requests',
     'settings': 'Settings',
     'profile': 'Profile',
+    'statistics': 'Statistics',
+    'statistics_charts': 'Statistics & Charts',
+    'no_stats_data': 'No expense data for this period',
     'split_bills': 'Split Bills',
     'all_projects': 'All Projects',
     'overview': 'Overview',
@@ -154,6 +157,9 @@ class _MockLoc extends AppLocalizations {
     'requests': 'Yêu cầu',
     'settings': 'Cài đặt',
     'profile': 'Hồ sơ',
+    'statistics': 'Thống kê',
+    'statistics_charts': 'Thống kê & Biểu đồ',
+    'no_stats_data': 'Không có dữ liệu chi tiêu trong kỳ này',
     'split_bills': 'Chia chi tiêu',
     'all_projects': 'Tất cả dự án',
     'overview': 'Tổng quan',
@@ -400,11 +406,11 @@ void main() {
       expect(nav.items[2].label, 'Settings');
     });
 
-    testWidgets('14. Tab 3 is Profile with user icon', (tester) async {
+    testWidgets('14. Tab 3 is Statistics with insights icon', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
       final nav = tester.widget<BottomNavigationBar>(find.byKey(const Key('bottomNavigationBar')));
-      expect(nav.items[3].label, 'Profile');
+      expect(nav.items[3].label, 'Statistics');
     });
 
     testWidgets('15. Default tab index is 0 (Projects)', (tester) async {
@@ -431,12 +437,12 @@ void main() {
       expect(find.text('Language'), findsOneWidget);
     });
 
-    testWidgets('18. Tapping Tab 3 switches view to Profile', (tester) async {
+    testWidgets('18. Tapping Tab 3 switches view to Statistics', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.text('Statistics'));
       await tester.pumpAndSettle();
-      expect(find.text('household@example.com'), findsOneWidget);
+      expect(find.text('Statistics & Charts'), findsOneWidget);
     });
 
     testWidgets('19. Tapping Tab 0 returns back to Projects view', (tester) async {
@@ -457,7 +463,7 @@ void main() {
       expect(nav.items[0].label, 'Dự án');
       expect(nav.items[1].label, 'Yêu cầu');
       expect(nav.items[2].label, 'Cài đặt');
-      expect(nav.items[3].label, 'Hồ sơ');
+      expect(nav.items[3].label, 'Thống kê');
     });
 
     testWidgets('21. Nav bar has fixed type', (tester) async {
@@ -682,10 +688,10 @@ void main() {
       expect(find.byKey(const Key('addProjectButton')), findsNothing);
     });
 
-    testWidgets('50. FAB is hidden on Profile tab', (tester) async {
+    testWidgets('50. FAB is hidden on Statistics tab', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.text('Statistics'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('addProjectButton')), findsNothing);
     });
@@ -992,30 +998,30 @@ void main() {
     });
   });
 
-  // ── GROUP 11: Profile Tab (Tab 3) ─────────────────────────────────────────
-  group('11. Profile Tab', () {
-    testWidgets('82. Navigating to Profile shows user avatar', (tester) async {
+  // ── GROUP 11: Tab 3 (Statistics) & Profile in Settings ───────────────────
+  group('11. Statistics Tab & Profile in Settings', () {
+    testWidgets('82. Navigating to Tab 3 shows Statistics & Charts header', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.text('Statistics'));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.person), findsWidgets);
+      expect(find.text('Statistics & Charts'), findsOneWidget);
     });
 
-    testWidgets('83. Profile shows user email', (tester) async {
+    testWidgets('83. Settings shows consolidated user profile and email', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
       expect(find.text('household@example.com'), findsOneWidget);
     });
 
-    testWidgets('84. Profile localized in Vietnamese', (tester) async {
+    testWidgets('84. Tab 3 localized in Vietnamese', (tester) async {
       await tester.pumpWidget(buildTestApp(locale: 'vi'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Hồ sơ'));
+      await tester.tap(find.text('Thống kê'));
       await tester.pumpAndSettle();
-      expect(find.text('Hồ sơ'), findsWidgets);
+      expect(find.text('Thống kê & Biểu đồ'), findsOneWidget);
     });
   });
 
@@ -1029,7 +1035,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
         await tester.tap(find.text('Settings'));
         await tester.pump(const Duration(milliseconds: 50));
-        await tester.tap(find.text('Profile'));
+        await tester.tap(find.text('Statistics'));
         await tester.pump(const Duration(milliseconds: 50));
         await tester.tap(find.text('Projects'));
         await tester.pump(const Duration(milliseconds: 50));
@@ -1207,10 +1213,10 @@ void main() {
       expect(find.byKey(const Key('bottomNavigationBar')), findsOneWidget);
     });
 
-    testWidgets('104. Tapping profile tab keeps bottom nav visible', (tester) async {
+    testWidgets('104. Tapping statistics tab keeps bottom nav visible', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Profile'));
+      await tester.tap(find.text('Statistics'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('bottomNavigationBar')), findsOneWidget);
     });

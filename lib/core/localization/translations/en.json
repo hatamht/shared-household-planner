@@ -153,6 +153,18 @@
   "total_members": "Total Members",
   "total_bills_count": "Total Bills",
   "quick_actions": "Quick Actions",
-  "overview": "Overview"
+  "overview": "Overview",
+  "statistics": "Statistics",
+  "statistics_charts": "Statistics & Charts",
+  "expense_by_category": "Expense by Category",
+  "expense_by_person": "Expense by Person",
+  "monthly_expense": "Monthly Expense",
+  "date_range": "Date Range",
+  "all_time": "All Time",
+  "this_month": "This Month",
+  "last_3_months": "Last 3 Months",
+  "average_per_person": "Average / Person",
+  "highest_spender": "Highest Spender",
+  "no_stats_data": "No expense data for this period"
 }
 
