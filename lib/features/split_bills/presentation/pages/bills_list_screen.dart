@@ -7,20 +7,61 @@ import '../widgets/stats_card.dart';
 import '../../domain/entities/bill.dart';
 import '../../domain/entities/bill_participant.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../domain/entities/bill_filter.dart';
+import '../../domain/services/bill_filter_persistence_service.dart';
+import '../widgets/bill_search_filter_bar.dart';
 import 'add_bill_screen.dart';
 
 class BillsListScreen extends StatefulWidget {
-  const BillsListScreen({Key? key}) : super(key: key);
+  final BillFilter? initialFilter;
+  final BillFilterPersistenceService? persistenceService;
+
+  const BillsListScreen({
+    Key? key,
+    this.initialFilter,
+    this.persistenceService,
+  }) : super(key: key);
 
   @override
   State<BillsListScreen> createState() => _BillsListScreenState();
 }
 
 class _BillsListScreenState extends State<BillsListScreen> {
+  late BillFilter _filter;
+  late final BillFilterPersistenceService _persistenceService;
+
   @override
   void initState() {
     super.initState();
+    _persistenceService = widget.persistenceService ?? const BillFilterPersistenceService();
+    _filter = widget.initialFilter ?? BillFilterPersistenceService.currentFilter;
+    _loadSavedFilter();
     context.read<BillsBloc>().add(const GetBillsEvent());
+  }
+
+  Future<void> _loadSavedFilter() async {
+    if (widget.initialFilter == null) {
+      final saved = await _persistenceService.loadFilter();
+      if (mounted) {
+        setState(() {
+          _filter = saved;
+        });
+      }
+    }
+  }
+
+  void _onFilterChanged(BillFilter newFilter) {
+    setState(() {
+      _filter = newFilter;
+    });
+    _persistenceService.saveFilter(newFilter);
+  }
+
+  void _onClearAllFilters() {
+    setState(() {
+      _filter = const BillFilter.initial();
+    });
+    _persistenceService.clearFilter();
   }
 
   @override
@@ -50,15 +91,37 @@ class _BillsListScreenState extends State<BillsListScreen> {
     );
   }
 
-  Widget _buildBillsList(BuildContext context, List<Bill> bills) {
-    if (bills.isEmpty) {
+  Widget _buildBillsList(BuildContext context, List<Bill> allBills) {
+    final loc = AppLocalizations.of(context);
+
+    if (allBills.isEmpty) {
       return Center(
-        child: Text(AppLocalizations.of(context).translate('no_bills')),
+        child: Text(loc.translate('no_bills')),
       );
     }
 
+    final availablePersons = allBills
+        .expand((b) => [b.paidBy, ...b.participants.map((p) => p.name)])
+        .where((name) => name.trim().isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    final availableCategories = allBills
+        .map((b) => b.category)
+        .where((cat) => cat.trim().isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    final maxBillAmount = allBills.isEmpty
+        ? 1000.0
+        : allBills.map((b) => b.amount).reduce((a, b) => a > b ? a : b);
+
+    final filteredBills = _filter.apply(allBills);
+
     Map<String, List<Bill>> groupedBills = {};
-    for (var bill in bills) {
+    for (var bill in filteredBills) {
       final monthYear = DateFormat('MMM yyyy', Localizations.localeOf(context).languageCode).format(bill.date);
       if (!groupedBills.containsKey(monthYear)) {
         groupedBills[monthYear] = [];
@@ -66,27 +129,72 @@ class _BillsListScreenState extends State<BillsListScreen> {
       groupedBills[monthYear]!.add(bill);
     }
 
-    return ListView.builder(
-      itemCount: groupedBills.keys.length,
-      itemBuilder: (context, index) {
-        final monthYear = groupedBills.keys.elementAt(index);
-        final monthBills = groupedBills[monthYear]!;
+    return Column(
+      children: [
+        BillSearchFilterBar(
+          filter: _filter,
+          resultCount: filteredBills.length,
+          availablePersons: availablePersons,
+          availableCategories: availableCategories,
+          maxBillAmount: maxBillAmount,
+          onFilterChanged: _onFilterChanged,
+          onClearAllFilters: _onClearAllFilters,
+        ),
+        Expanded(
+          child: filteredBills.isEmpty
+              ? Center(
+                  key: const Key('noMatchingBillsEmptyState'),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.search_off,
+                          size: 64,
+                          color: Theme.of(context).disabledColor,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          loc.translate('no_matching_bills'),
+                          style: Theme.of(context).textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          key: const Key('clearFiltersEmptyStateButton'),
+                          onPressed: _onClearAllFilters,
+                          icon: const Icon(Icons.clear_all),
+                          label: Text(loc.translate('clear_all_filters')),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: groupedBills.keys.length,
+                  itemBuilder: (context, index) {
+                    final monthYear = groupedBills.keys.elementAt(index);
+                    final monthBills = groupedBills[monthYear]!;
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                monthYear,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            StatsCard(bills: monthBills),
-            ...monthBills.map((bill) => BillCard(bill: bill)).toList(),
-          ],
-        );
-      },
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Text(
+                            monthYear,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        StatsCard(bills: monthBills),
+                        ...monthBills.map((bill) => BillCard(bill: bill)).toList(),
+                      ],
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
