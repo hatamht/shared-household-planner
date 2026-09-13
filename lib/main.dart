@@ -14,6 +14,8 @@ import 'features/projects/presentation/bloc/project_bloc.dart';
 import 'features/projects/presentation/pages/project_screen.dart';
 import 'features/projects/presentation/pages/create_project_screen.dart';
 import 'features/home/presentation/pages/home_screen.dart';
+import 'features/templates/domain/repositories/bill_template_repository.dart';
+import 'features/templates/presentation/bloc/bill_templates_bloc.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -25,6 +27,7 @@ void main() async {
   await setupServiceLocator();
   getIt<ProjectBloc>().add(const GetAllProjects());
   getIt<BillsBloc>().add(const GetBillsEvent());
+  getIt<BillTemplatesBloc>().add(const LoadTemplatesEvent());
   
   runApp(
     MultiProvider(
@@ -49,6 +52,9 @@ class MyApp extends StatelessWidget {
             RepositoryProvider<BillRepository>.value(
               value: getIt<BillRepository>(),
             ),
+            RepositoryProvider<BillTemplateRepository>.value(
+              value: getIt<BillTemplateRepository>(),
+            ),
           ],
           child: MultiBlocProvider(
             providers: [
@@ -57,6 +63,9 @@ class MyApp extends StatelessWidget {
               ),
               BlocProvider<ProjectBloc>.value(
                 value: getIt<ProjectBloc>(),
+              ),
+              BlocProvider<BillTemplatesBloc>.value(
+                value: getIt<BillTemplatesBloc>(),
               ),
             ],
             child: MaterialApp(

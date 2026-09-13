@@ -15,6 +15,17 @@ import 'package:shared_household_planner/features/projects/domain/usecases/get_p
 import 'package:shared_household_planner/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:shared_household_planner/features/projects/domain/usecases/delete_project_usecase.dart';
 import 'package:shared_household_planner/features/projects/presentation/bloc/project_bloc.dart';
+import 'package:shared_household_planner/features/templates/data/datasources/bill_template_local_datasource.dart';
+import 'package:shared_household_planner/features/templates/data/repositories/bill_template_repository_impl.dart';
+import 'package:shared_household_planner/features/templates/domain/repositories/bill_template_repository.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/create_template_usecase.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/delete_template_usecase.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/get_suggested_templates_usecase.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/get_templates_usecase.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/record_template_usage_usecase.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/toggle_favorite_template_usecase.dart';
+import 'package:shared_household_planner/features/templates/domain/usecases/update_template_usecase.dart';
+import 'package:shared_household_planner/features/templates/presentation/bloc/bill_templates_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -134,6 +145,77 @@ Future<void> setupServiceLocator() async {
         getProjectByIdUseCase: getIt<GetProjectByIdUseCase>(),
         updateProjectUseCase: getIt<UpdateProjectUseCase>(),
         deleteProjectUseCase: getIt<DeleteProjectUseCase>(),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────
+  // Bill Templates Feature Registration
+  // ────────────────────────────────────────
+  if (!getIt.isRegistered<BillTemplateLocalDataSource>()) {
+    getIt.registerSingleton<BillTemplateLocalDataSource>(
+      BillTemplateLocalDataSourceImpl(database),
+    );
+  }
+
+  if (!getIt.isRegistered<BillTemplateRepository>()) {
+    getIt.registerSingleton<BillTemplateRepository>(
+      BillTemplateRepositoryImpl(getIt<BillTemplateLocalDataSource>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetTemplatesUseCase>()) {
+    getIt.registerSingleton<GetTemplatesUseCase>(
+      GetTemplatesUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CreateTemplateUseCase>()) {
+    getIt.registerSingleton<CreateTemplateUseCase>(
+      CreateTemplateUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UpdateTemplateUseCase>()) {
+    getIt.registerSingleton<UpdateTemplateUseCase>(
+      UpdateTemplateUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<DeleteTemplateUseCase>()) {
+    getIt.registerSingleton<DeleteTemplateUseCase>(
+      DeleteTemplateUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ToggleFavoriteTemplateUseCase>()) {
+    getIt.registerSingleton<ToggleFavoriteTemplateUseCase>(
+      ToggleFavoriteTemplateUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<RecordTemplateUsageUseCase>()) {
+    getIt.registerSingleton<RecordTemplateUsageUseCase>(
+      RecordTemplateUsageUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetSuggestedTemplatesUseCase>()) {
+    getIt.registerSingleton<GetSuggestedTemplatesUseCase>(
+      GetSuggestedTemplatesUseCase(getIt<BillTemplateRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<BillTemplatesBloc>()) {
+    getIt.registerSingleton<BillTemplatesBloc>(
+      BillTemplatesBloc(
+        getTemplatesUseCase: getIt<GetTemplatesUseCase>(),
+        createTemplateUseCase: getIt<CreateTemplateUseCase>(),
+        updateTemplateUseCase: getIt<UpdateTemplateUseCase>(),
+        deleteTemplateUseCase: getIt<DeleteTemplateUseCase>(),
+        toggleFavoriteTemplateUseCase: getIt<ToggleFavoriteTemplateUseCase>(),
+        recordTemplateUsageUseCase: getIt<RecordTemplateUsageUseCase>(),
+        getSuggestedTemplatesUseCase: getIt<GetSuggestedTemplatesUseCase>(),
       ),
     );
   }

@@ -18,6 +18,9 @@ import '../../../../core/services/receipt_image_service.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/entities/project_settings.dart';
 import '../../../projects/presentation/bloc/project_bloc.dart';
+import '../../../templates/domain/entities/bill_template.dart';
+import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
+import '../../../templates/presentation/pages/bill_templates_screen.dart';
 
 class AddBillScreen extends StatefulWidget {
   final ProjectSettings projectSettings;
@@ -26,6 +29,8 @@ class AddBillScreen extends StatefulWidget {
   final String? initialImagePath;
   final List<String>? initialImagePaths;
   final Bill? billToEdit;
+  final BillTemplate? template;
+  final String? projectId;
 
   const AddBillScreen({
     Key? key,
@@ -35,6 +40,8 @@ class AddBillScreen extends StatefulWidget {
     this.initialImagePath,
     this.initialImagePaths,
     this.billToEdit,
+    this.template,
+    this.projectId,
   }) : super(key: key);
 
   @override
@@ -86,6 +93,7 @@ class AddBillScreenState extends State<AddBillScreen> {
 
   // Legacy free-text for non-project flow
   List<String> manualParticipants = [];
+  String? _usedTemplateId;
 
   final ImagePicker _defaultPicker = ImagePicker();
 
@@ -123,6 +131,8 @@ class AddBillScreenState extends State<AddBillScreen> {
       }
       manualParticipants = b.participants.map((p) => p.name).toList();
       selectedParticipants = b.participants.map((p) => p.name).toSet();
+    } else if (widget.template != null) {
+      _applyTemplate(widget.template!, recordUsage: false);
     }
 
     titleController.addListener(() {
@@ -134,7 +144,85 @@ class AddBillScreenState extends State<AddBillScreen> {
     });
 
     // Load all projects for the dropdown
-    context.read<ProjectBloc>().add(const GetAllProjects());
+    try {
+      context.read<ProjectBloc>().add(const GetAllProjects());
+    } catch (_) {}
+
+    // Load templates
+    try {
+      context.read<BillTemplatesBloc>().add(const LoadTemplatesEvent());
+    } catch (_) {}
+  }
+
+  void _applyTemplate(BillTemplate t, {bool recordUsage = false}) {
+    titleController.text = t.title;
+    if (t.amount > 0) {
+      amountController.text = t.amount.toStringAsFixed(0);
+    }
+    paidByController.text = t.paidBy ?? '';
+    selectedCurrency = t.currency;
+    final match = categoriesList.where((c) => c.id == t.category);
+    if (match.isNotEmpty) {
+      selectedCategoryItem = match.first;
+    } else if (t.categoryIcon != null) {
+      selectedCategoryItem = CategoryIconItem(
+        id: t.category,
+        nameKey: t.category,
+        icon: t.categoryIcon!,
+        colorHex: t.categoryColor ?? '#4CAF50',
+      );
+    }
+    manualParticipants = List.from(t.participants);
+    selectedParticipants = t.participants.toSet();
+    isTitleManuallyEdited = true;
+    _usedTemplateId = t.id;
+
+    if (recordUsage) {
+      try {
+        context.read<BillTemplatesBloc>().add(RecordTemplateUsageEvent(t.id));
+      } catch (_) {}
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _saveAsTemplate() {
+    final loc = AppLocalizations.of(context);
+    final title = titleController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.translate('bill_name_required'))),
+      );
+      return;
+    }
+
+    final amount = double.tryParse(amountController.text) ?? 0.0;
+    final participants = _effectiveParticipants;
+    final template = BillTemplate(
+      id: const Uuid().v4(),
+      title: title,
+      amount: amount,
+      category: selectedCategoryItem.id,
+      categoryIcon: selectedCategoryItem.icon,
+      categoryColor: selectedCategoryItem.colorHex,
+      currency: selectedCurrency,
+      splitMode: 'equal',
+      paidBy: paidByController.text.trim(),
+      participants: participants,
+      projectId: selectedProject?.id ?? widget.projectId,
+      createdAt: DateTime.now(),
+    );
+
+    try {
+      context.read<BillTemplatesBloc>().add(CreateTemplateEvent(template));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          key: const Key('templateSavedSnackBar'),
+          content: Text(loc.translate('template_saved_success')),
+        ),
+      );
+    } catch (_) {}
   }
 
   @override
@@ -525,6 +613,11 @@ class AddBillScreenState extends State<AddBillScreen> {
     } else {
       context.read<BillsBloc>().add(AddBillEvent(bill: bill));
     }
+    if (_usedTemplateId != null) {
+      try {
+        context.read<BillTemplatesBloc>().add(RecordTemplateUsageEvent(_usedTemplateId!));
+      } catch (_) {}
+    }
     if (mounted) {
       Navigator.pop(context);
     }
@@ -557,6 +650,14 @@ class AddBillScreenState extends State<AddBillScreen> {
           tooltip: loc.translate('cancel'),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        actions: [
+          IconButton(
+            key: const Key('saveAsTemplateAppBarButton'),
+            icon: const Icon(Icons.bookmark_add_outlined),
+            tooltip: loc.translate('save_as_template'),
+            onPressed: _saveAsTemplate,
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Divider(
@@ -571,6 +672,7 @@ class AddBillScreenState extends State<AddBillScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildQuickTemplatesSection(loc, isDark),
             // ── 0. Tab Selector Refinement ───────────────────────
             Container(
               key: const Key('transactionTypeTabs'),
@@ -1037,6 +1139,7 @@ class AddBillScreenState extends State<AddBillScreen> {
                   // Amount input right-aligned
                   Expanded(
                     child: TextField(
+                      key: const Key('amountField'),
                       controller: amountController,
                       textAlign: TextAlign.right,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1207,9 +1310,118 @@ class AddBillScreenState extends State<AddBillScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: OutlinedButton.icon(
+                key: const Key('saveAsTemplateButton'),
+                onPressed: _saveAsTemplate,
+                icon: const Icon(Icons.bookmark_add_outlined),
+                label: Text(loc.translate('save_as_template')),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickTemplatesSection(AppLocalizations loc, bool isDark) {
+    try {
+      BlocProvider.of<BillTemplatesBloc>(context);
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+
+    return BlocBuilder<BillTemplatesBloc, BillTemplatesState>(
+      builder: (context, state) {
+        if (state is BillTemplatesLoaded && state.templates.isNotEmpty) {
+          final list = state.favorites.isNotEmpty ? state.favorites : state.templates;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.bookmark_outline,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          loc.translate('quick_templates'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    TextButton(
+                      key: const Key('openTemplatesScreenButton'),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(50, 24),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BillTemplatesScreen(
+                              onSelectTemplate: (tpl) {
+                                _applyTemplate(tpl);
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        loc.translate('manage_templates'),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  key: const Key('quickTemplatesRow'),
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: list.take(6).map((t) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ActionChip(
+                          key: Key('quickTemplateChip_${t.id}'),
+                          avatar: Text(
+                            t.categoryIcon ?? '💰',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          label: Text(t.title),
+                          onPressed: () => _applyTemplate(t),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 

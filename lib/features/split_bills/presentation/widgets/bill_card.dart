@@ -1,15 +1,25 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import '../../domain/entities/bill.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../templates/domain/entities/bill_template.dart';
+import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
 import 'receipt_viewer_modal.dart';
 
 class BillCard extends StatelessWidget {
   final Bill bill;
   final VoidCallback? onTap;
+  final VoidCallback? onSaveAsTemplate;
 
-  const BillCard({Key? key, required this.bill, this.onTap}) : super(key: key);
+  const BillCard({
+    Key? key,
+    required this.bill,
+    this.onTap,
+    this.onSaveAsTemplate,
+  }) : super(key: key);
 
   String _getCategoryEmoji(String? category) {
     final categoryMap = {
@@ -192,20 +202,63 @@ class BillCard extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      '−',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        key: Key('saveAsTemplate_${bill.id}'),
+                        icon: const Icon(Icons.bookmark_add_outlined, size: 18),
+                        tooltip: loc.translate('save_as_template'),
+                        splashRadius: 16,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          if (onSaveAsTemplate != null) {
+                            onSaveAsTemplate!();
+                          } else {
+                            try {
+                              final template = BillTemplate(
+                                id: const Uuid().v4(),
+                                title: bill.title,
+                                amount: bill.amount,
+                                category: bill.category,
+                                categoryIcon: bill.categoryIcon,
+                                categoryColor: bill.categoryColor,
+                                currency: bill.currency ?? 'VND',
+                                splitMode: 'equal',
+                                paidBy: bill.paidBy,
+                                participants: bill.participants.map((p) => p.name).toList(),
+                                projectId: bill.projectId,
+                                createdAt: DateTime.now(),
+                              );
+                              BlocProvider.of<BillTemplatesBloc>(context).add(CreateTemplateEvent(template));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  key: Key('templateSaved_${bill.id}'),
+                                  content: Text(loc.translate('template_saved_success')),
+                                ),
+                              );
+                            } catch (_) {}
+                          }
+                        },
                       ),
-                    ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade100,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          '−',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

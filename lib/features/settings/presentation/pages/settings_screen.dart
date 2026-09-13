@@ -8,6 +8,7 @@ import '../../../split_bills/domain/entities/category_icon.dart';
 import '../../../export/domain/entities/export_options.dart';
 import '../../../export/presentation/pages/export_data_screen.dart';
 import '../../../../core/services/receipt_image_service.dart';
+import '../../../templates/presentation/pages/bill_templates_screen.dart';
 
 /// Comprehensive Settings Screen consolidating Profile, Theme, Language,
 /// Currency, Data Management, Export Options, and About information.
@@ -455,6 +456,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       child: Column(
         children: [
+          ListTile(
+            key: const Key('billTemplatesTile'),
+            leading: const CircleAvatar(
+              backgroundColor: Color(0xFFE0E7FF),
+              child: Icon(Icons.bookmark_outline, color: Color(0xFF4F46E5)),
+            ),
+            title: Text(loc.translate('bill_templates'), style: const TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Text(loc.translate('bill_templates_desc'), style: const TextStyle(fontSize: 12)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BillTemplatesScreen(),
+                ),
+              );
+            },
+          ),
+          const Divider(height: 1),
           ListTile(
             key: const Key('clearCacheButton'),
             leading: const CircleAvatar(
