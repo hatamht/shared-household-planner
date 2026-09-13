@@ -23,6 +23,8 @@ void main() async {
   await themeProvider.loadTheme();
   await languageProvider.loadLanguage();
   await setupServiceLocator();
+  getIt<ProjectBloc>().add(const GetAllProjects());
+  getIt<BillsBloc>().add(const GetBillsEvent());
   
   runApp(
     MultiProvider(

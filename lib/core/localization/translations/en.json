@@ -143,6 +143,16 @@
   "cannot_delete_default_categories": "Cannot delete default categories",
   "category_deleted": "Category deleted",
   "category_updated": "Category updated",
-  "category_deleted_label": "(Deleted)"
+  "category_deleted_label": "(Deleted)",
+  "requests": "Requests",
+  "profile": "Profile",
+  "add_project": "Add Project",
+  "all_projects": "All Projects",
+  "create_first_project_prompt": "Create your first project to start tracking shared expenses!",
+  "leave_project": "Leave Project",
+  "total_members": "Total Members",
+  "total_bills_count": "Total Bills",
+  "quick_actions": "Quick Actions",
+  "overview": "Overview"
 }
 

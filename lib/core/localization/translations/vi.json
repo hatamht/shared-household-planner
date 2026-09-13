@@ -143,5 +143,15 @@
   "cannot_delete_default_categories": "Không thể xóa danh mục mặc định",
   "category_deleted": "Đã xóa danh mục",
   "category_updated": "Đã cập nhật danh mục",
-  "category_deleted_label": "(Đã xóa)"
+  "category_deleted_label": "(Đã xóa)",
+  "requests": "Yêu cầu",
+  "profile": "Hồ sơ",
+  "add_project": "Thêm dự án",
+  "all_projects": "Tất cả dự án",
+  "create_first_project_prompt": "Tạo dự án đầu tiên để bắt đầu theo dõi chi tiêu chung!",
+  "leave_project": "Rời dự án",
+  "total_members": "Tổng thành viên",
+  "total_bills_count": "Tổng hóa đơn",
+  "quick_actions": "Thao tác nhanh",
+  "overview": "Tổng quan"
 }
