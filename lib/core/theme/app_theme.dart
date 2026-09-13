@@ -83,7 +83,7 @@ class AppTheme {
 
 class ThemeProvider extends ChangeNotifier {
   static const String _themeKey = 'app_theme_mode';
-  late SharedPreferences _prefs;
+  SharedPreferences? _prefs;
   bool _isDarkMode = false;
 
   ThemeProvider() {
@@ -96,20 +96,22 @@ class ThemeProvider extends ChangeNotifier {
 
   Future<void> loadTheme() async {
     _prefs = await SharedPreferences.getInstance();
-    _isDarkMode = _prefs.getBool(_themeKey) ?? false;
+    _isDarkMode = _prefs?.getBool(_themeKey) ?? false;
     notifyListeners();
   }
 
   Future<void> toggleTheme() async {
     _isDarkMode = !_isDarkMode;
-    await _prefs.setBool(_themeKey, _isDarkMode);
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs?.setBool(_themeKey, _isDarkMode);
     notifyListeners();
   }
 
   Future<void> setDarkMode(bool isDark) async {
     if (_isDarkMode != isDark) {
       _isDarkMode = isDark;
-      await _prefs.setBool(_themeKey, _isDarkMode);
+      _prefs ??= await SharedPreferences.getInstance();
+      await _prefs?.setBool(_themeKey, _isDarkMode);
       notifyListeners();
     }
   }

@@ -149,6 +149,26 @@ class _MockLoc extends AppLocalizations {
     'members': 'Members',
     'bills': 'Bills',
     'no_bills': 'No bills yet',
+    'preferences': 'Preferences',
+    'default_currency': 'Default Currency',
+    'data_management': 'Data Management',
+    'clear_cache': 'Clear Cache',
+    'cache_cleared': 'Cache cleared successfully',
+    'cache_size': 'Cache size: 1.2 MB',
+    'reset_demo_data': 'Reset Demo Data',
+    'reset_demo_data_desc': 'Restore initial sample projects and expenses',
+    'data_reset_success': 'Sample data reset successfully',
+    'export_options': 'Export Options',
+    'export_options_desc': 'Export your expenses for offline backup or sharing',
+    'export_csv': 'Export to CSV',
+    'export_pdf': 'Export to PDF',
+    'about_app': 'About App',
+    'app_version': 'Version 1.0.0 (Build 42)',
+    'developed_by': 'SimSoft Studio',
+    'account_info': 'Account Info',
+    'account_role_owner': 'Owner',
+    'account_name': 'Household Admin',
+    'edit_profile': 'Edit Profile',
   };
 
   static const _vi = <String, String>{
@@ -190,6 +210,26 @@ class _MockLoc extends AppLocalizations {
     'members': 'Thành viên',
     'bills': 'Chi tiêu',
     'no_bills': 'Chưa có chi tiêu nào',
+    'preferences': 'Tùy chọn',
+    'default_currency': 'Tiền tệ mặc định',
+    'data_management': 'Quản lý dữ liệu',
+    'clear_cache': 'Xóa bộ nhớ đệm',
+    'cache_cleared': 'Đã xóa bộ nhớ đệm thành công',
+    'cache_size': 'Dung lượng bộ nhớ đệm: 1.2 MB',
+    'reset_demo_data': 'Đặt lại dữ liệu mẫu',
+    'reset_demo_data_desc': 'Khôi phục các dự án và chi tiêu mẫu ban đầu',
+    'data_reset_success': 'Đã đặt lại dữ liệu mẫu thành công',
+    'export_options': 'Tùy chọn xuất dữ liệu',
+    'export_options_desc': 'Xuất chi tiêu để sao lưu hoặc chia sẻ',
+    'export_csv': 'Xuất file CSV',
+    'export_pdf': 'Xuất file PDF',
+    'about_app': 'Thông tin ứng dụng',
+    'app_version': 'Phiên bản 1.0.0 (Build 42)',
+    'developed_by': 'SimSoft Studio',
+    'account_info': 'Thông tin tài khoản',
+    'account_role_owner': 'Chủ hộ',
+    'account_name': 'Quản trị viên',
+    'edit_profile': 'Chỉnh sửa hồ sơ',
   };
 
   @override
@@ -399,18 +439,18 @@ void main() {
       expect(nav.items[1].label, 'Requests');
     });
 
-    testWidgets('13. Tab 2 is Settings with gear icon', (tester) async {
+    testWidgets('13. Tab 2 is Statistics with insights icon', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
       final nav = tester.widget<BottomNavigationBar>(find.byKey(const Key('bottomNavigationBar')));
-      expect(nav.items[2].label, 'Settings');
+      expect(nav.items[2].label, 'Statistics');
     });
 
-    testWidgets('14. Tab 3 is Statistics with insights icon', (tester) async {
+    testWidgets('14. Tab 3 is Settings with gear icon', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
       final nav = tester.widget<BottomNavigationBar>(find.byKey(const Key('bottomNavigationBar')));
-      expect(nav.items[3].label, 'Statistics');
+      expect(nav.items[3].label, 'Settings');
     });
 
     testWidgets('15. Default tab index is 0 (Projects)', (tester) async {
@@ -428,21 +468,20 @@ void main() {
       expect(find.byType(BillsListScreen), findsOneWidget);
     });
 
-    testWidgets('17. Tapping Tab 2 switches view to Settings', (tester) async {
-      await tester.pumpWidget(buildTestApp());
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Settings'));
-      await tester.pumpAndSettle();
-      expect(find.text('Theme Settings'), findsOneWidget);
-      expect(find.text('Language'), findsOneWidget);
-    });
-
-    testWidgets('18. Tapping Tab 3 switches view to Statistics', (tester) async {
+    testWidgets('17. Tapping Tab 2 switches view to Statistics', (tester) async {
       await tester.pumpWidget(buildTestApp());
       await tester.pumpAndSettle();
       await tester.tap(find.text('Statistics'));
       await tester.pumpAndSettle();
       expect(find.text('Statistics & Charts'), findsOneWidget);
+    });
+
+    testWidgets('18. Tapping Tab 3 switches view to Settings', (tester) async {
+      await tester.pumpWidget(buildTestApp());
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+      expect(find.text('Theme Settings'), findsOneWidget);
     });
 
     testWidgets('19. Tapping Tab 0 returns back to Projects view', (tester) async {
@@ -462,8 +501,8 @@ void main() {
       final nav = tester.widget<BottomNavigationBar>(find.byKey(const Key('bottomNavigationBar')));
       expect(nav.items[0].label, 'Dự án');
       expect(nav.items[1].label, 'Yêu cầu');
-      expect(nav.items[2].label, 'Cài đặt');
-      expect(nav.items[3].label, 'Thống kê');
+      expect(nav.items[2].label, 'Thống kê');
+      expect(nav.items[3].label, 'Cài đặt');
     });
 
     testWidgets('21. Nav bar has fixed type', (tester) async {

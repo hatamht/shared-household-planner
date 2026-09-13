@@ -1,3 +1,4 @@
+import 'package:shared_household_planner/features/settings/presentation/pages/settings_screen.dart';
 import 'package:shared_household_planner/features/statistics/presentation/pages/statistics_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -222,9 +223,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return _buildBillsTab(context, loc);
       case 2:
-        return _buildSettingsTab(context, loc, isDark);
-      case 3:
         return const StatisticsScreen();
+      case 3:
+        return const SettingsScreen();
       default:
         return _buildProjectsTab(context, loc, isDark);
     }
@@ -647,123 +648,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // TAB 2: Settings
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildSettingsTab(BuildContext context, AppLocalizations loc, bool isDark) {
-    final languageProvider = Provider.of<LanguageProvider>(context, listen: false);
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Profile Info consolidated into Settings (AC 1 & PM note)
-        Text(
-          loc.translate('profile'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: const Icon(Icons.person, color: Colors.white),
-            ),
-            title: Text(loc.translate('profile')),
-            subtitle: const Text('household@example.com'),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          loc.translate('theme_settings'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            children: [
-              RadioListTile<bool>(
-                key: const Key('settingsLightModeTile'),
-                title: Text(loc.translate('theme_light')),
-                secondary: const Icon(Icons.light_mode),
-                value: false,
-                groupValue: isDark,
-                onChanged: (_) => themeProvider.setDarkMode(false),
-              ),
-              const Divider(height: 1),
-              RadioListTile<bool>(
-                key: const Key('settingsDarkModeTile'),
-                title: Text(loc.translate('theme_dark')),
-                secondary: const Icon(Icons.dark_mode),
-                value: true,
-                groupValue: isDark,
-                onChanged: (_) => themeProvider.setDarkMode(true),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          loc.translate('language'),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Column(
-            children: [
-              RadioListTile<String>(
-                key: const Key('settingsEnglishTile'),
-                title: Text('🇬🇧 ${loc.translate("english")}'),
-                value: 'en',
-                groupValue: languageProvider.currentLocale.languageCode,
-                onChanged: (val) {
-                  if (val != null) languageProvider.setLanguage(val);
-                },
-              ),
-              const Divider(height: 1),
-              RadioListTile<String>(
-                key: const Key('settingsVietnameseTile'),
-                title: Text('🇻🇳 ${loc.translate("vietnamese")}'),
-                value: 'vi',
-                groupValue: languageProvider.currentLocale.languageCode,
-                onChanged: (val) {
-                  if (val != null) languageProvider.setLanguage(val);
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // TAB 3: Profile
-  // ─────────────────────────────────────────────────────────────────────────
-  Widget _buildProfileTab(BuildContext context, AppLocalizations loc, bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            child: const Icon(Icons.person, size: 48, color: Colors.white),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            loc.translate('profile'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'household@example.com',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).disabledColor,
-                ),
-          ),
-        ],
-      ),
-    );
+    return const SettingsScreen();
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -804,12 +689,12 @@ class _HomeScreenState extends State<HomeScreen> {
             label: loc.translate('requests'),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.settings),
-            label: loc.translate('settings'),
-          ),
-          BottomNavigationBarItem(
             icon: const Icon(Icons.insights),
             label: loc.translate('statistics'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.settings),
+            label: loc.translate('settings'),
           ),
         ],
       ),
