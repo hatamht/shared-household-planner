@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -110,6 +110,20 @@ class DatabaseHelper {
               status TEXT NOT NULL DEFAULT 'pending',
               note TEXT,
               createdAt TEXT NOT NULL
+            )
+          ''');
+        }
+        if (oldVersion < 10) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS requests (
+              id TEXT PRIMARY KEY,
+              projectId TEXT NOT NULL,
+              title TEXT NOT NULL,
+              description TEXT,
+              status TEXT NOT NULL DEFAULT 'pending',
+              createdAt TEXT NOT NULL,
+              updatedAt TEXT,
+              FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE
             )
           ''');
         }
@@ -202,6 +216,19 @@ class DatabaseHelper {
         status TEXT NOT NULL DEFAULT 'pending',
         note TEXT,
         createdAt TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS requests (
+        id TEXT PRIMARY KEY,
+        projectId TEXT NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT,
+        status TEXT NOT NULL DEFAULT 'pending',
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT,
+        FOREIGN KEY (projectId) REFERENCES projects(id) ON DELETE CASCADE
       )
     ''');
   }

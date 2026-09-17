@@ -31,7 +31,11 @@ import 'package:shared_household_planner/features/settlement/data/repositories/s
 import 'package:shared_household_planner/features/settlement/domain/repositories/settlement_repository.dart';
 import 'package:shared_household_planner/features/settlement/domain/usecases/settlement_usecases.dart';
 import 'package:shared_household_planner/features/settlement/presentation/bloc/settlement_bloc.dart';
-
+import 'package:shared_household_planner/features/requests/data/datasources/request_local_datasource.dart';
+import 'package:shared_household_planner/features/requests/data/repositories/request_repository_impl.dart';
+import 'package:shared_household_planner/features/requests/domain/repositories/request_repository.dart';
+import 'package:shared_household_planner/features/requests/domain/usecases/request_usecases.dart';
+import 'package:shared_household_planner/features/requests/presentation/bloc/request_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -286,6 +290,70 @@ Future<void> setupServiceLocator() async {
         deleteSettlementLogUseCase: getIt<DeleteSettlementLogUseCase>(),
         markAsPaidUseCase: getIt<MarkAsPaidUseCase>(),
         undoMarkAsPaidUseCase: getIt<UndoMarkAsPaidUseCase>(),
+      ),
+    );
+  }
+
+  // Register RequestLocalDataSource
+  if (!getIt.isRegistered<RequestLocalDataSource>()) {
+    getIt.registerSingleton<RequestLocalDataSource>(
+      RequestLocalDataSourceImpl(database),
+    );
+  }
+
+  // Register RequestRepository
+  if (!getIt.isRegistered<RequestRepository>()) {
+    getIt.registerSingleton<RequestRepository>(
+      RequestRepositoryImpl(getIt<RequestLocalDataSource>()),
+    );
+  }
+
+  // Register Request UseCases
+  if (!getIt.isRegistered<GetAllRequestsUseCase>()) {
+    getIt.registerSingleton<GetAllRequestsUseCase>(
+      GetAllRequestsUseCase(getIt<RequestRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetRequestsByProjectIdUseCase>()) {
+    getIt.registerSingleton<GetRequestsByProjectIdUseCase>(
+      GetRequestsByProjectIdUseCase(getIt<RequestRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CreateRequestUseCase>()) {
+    getIt.registerSingleton<CreateRequestUseCase>(
+      CreateRequestUseCase(getIt<RequestRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UpdateRequestUseCase>()) {
+    getIt.registerSingleton<UpdateRequestUseCase>(
+      UpdateRequestUseCase(getIt<RequestRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<DeleteRequestUseCase>()) {
+    getIt.registerSingleton<DeleteRequestUseCase>(
+      DeleteRequestUseCase(getIt<RequestRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetRequestCountUseCase>()) {
+    getIt.registerSingleton<GetRequestCountUseCase>(
+      GetRequestCountUseCase(getIt<RequestRepository>()),
+    );
+  }
+
+  // Register RequestBloc
+  if (!getIt.isRegistered<RequestBloc>()) {
+    getIt.registerSingleton<RequestBloc>(
+      RequestBloc(
+        getAllRequestsUseCase: getIt<GetAllRequestsUseCase>(),
+        getRequestsByProjectIdUseCase: getIt<GetRequestsByProjectIdUseCase>(),
+        createRequestUseCase: getIt<CreateRequestUseCase>(),
+        updateRequestUseCase: getIt<UpdateRequestUseCase>(),
+        deleteRequestUseCase: getIt<DeleteRequestUseCase>(),
       ),
     );
   }

@@ -11,6 +11,7 @@ import '../../../split_bills/presentation/widgets/receipt_viewer_modal.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../settlement/presentation/widgets/add_settlement_dialog.dart';
 import '../../../settlement/presentation/bloc/settlement_bloc.dart';
+import '../../../requests/presentation/pages/request_list_screen.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -69,6 +70,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text(project.name),
+        actions: [
+          IconButton(
+            key: const Key('projectRequestsButton'),
+            icon: const Icon(Icons.assignment_outlined),
+            tooltip: loc.translate('requests'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => RequestListScreen(initialProjectId: project.id),
+                ),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: [
