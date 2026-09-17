@@ -93,6 +93,7 @@ class AddBillScreenState extends State<AddBillScreen> {
   Project? selectedProject;
   List<String> projectMembers = [];
   Set<String> selectedParticipants = {};
+  bool _hasUserExplicitlySelectedProject = false;
 
   // Legacy free-text for non-project flow
   List<String> manualParticipants = [];
@@ -213,7 +214,26 @@ class AddBillScreenState extends State<AddBillScreen> {
 
     // Load all projects for the dropdown
     try {
-      context.read<ProjectBloc>().add(const GetAllProjects());
+      final projectBloc = context.read<ProjectBloc>();
+      projectBloc.add(const GetAllProjects());
+      if (projectBloc.state is ProjectLoaded) {
+        final targetId = widget.billToEdit?.projectId ?? widget.projectId;
+        if (targetId != null) {
+          final found = (projectBloc.state as ProjectLoaded)
+              .projects
+              .where((p) => p.id == targetId);
+          if (found.isNotEmpty) {
+            selectedProject = found.first;
+            projectMembers = List.from(selectedProject!.members);
+            if (widget.billToEdit == null && selectedParticipants.isEmpty) {
+              selectedParticipants = Set.from(selectedProject!.members);
+              if (selectedProject!.members.isNotEmpty && paidByController.text.isEmpty) {
+                paidByController.text = selectedProject!.members.first;
+              }
+            }
+          }
+        }
+      }
     } catch (_) {}
 
     // Load templates
@@ -280,7 +300,9 @@ class AddBillScreenState extends State<AddBillScreen> {
       splitMode: _splitMode,
       paidBy: paidByController.text.trim(),
       participants: participants,
-      projectId: selectedProject?.id ?? widget.projectId,
+      projectId: _hasUserExplicitlySelectedProject
+          ? selectedProject?.id
+          : (selectedProject?.id ?? widget.billToEdit?.projectId ?? widget.projectId),
       createdAt: DateTime.now(),
     );
 
@@ -542,12 +564,15 @@ class AddBillScreenState extends State<AddBillScreen> {
   // Project selection handler
   // ────────────────────────────────────────
   void _onProjectSelected(Project? project) {
+    _hasUserExplicitlySelectedProject = true;
     setState(() {
       selectedProject = project;
       if (project == null) {
+        if (manualParticipants.isEmpty && selectedParticipants.isNotEmpty) {
+          manualParticipants.addAll(selectedParticipants);
+        }
         projectMembers = [];
         selectedParticipants = {};
-        paidByController.clear();
       } else {
         projectMembers = List.from(project.members);
         selectedParticipants = Set.from(project.members);
@@ -561,6 +586,7 @@ class AddBillScreenState extends State<AddBillScreen> {
           );
         }
       }
+      _syncParticipantControllers();
     });
   }
 
@@ -588,7 +614,10 @@ class AddBillScreenState extends State<AddBillScreen> {
     if (selectedProject != null) {
       return selectedParticipants.toList();
     }
-    return manualParticipants;
+    if (manualParticipants.isNotEmpty) {
+      return manualParticipants;
+    }
+    return selectedParticipants.toList();
   }
 
   // ────────────────────────────────────────
@@ -746,7 +775,9 @@ class AddBillScreenState extends State<AddBillScreen> {
       date: selectedDate,
       paidBy: paidByController.text.trim(),
       participants: billParticipants,
-      projectId: selectedProject?.id ?? widget.billToEdit?.projectId,
+      projectId: _hasUserExplicitlySelectedProject
+          ? selectedProject?.id
+          : (selectedProject?.id ?? widget.billToEdit?.projectId ?? widget.projectId),
       categoryIcon: selectedCategoryItem.icon,
       currency: selectedCurrency,
       imagePath: imagePaths.isNotEmpty ? imagePaths.first : null,
@@ -754,6 +785,16 @@ class AddBillScreenState extends State<AddBillScreen> {
       categoryColor: selectedCategoryItem.colorHex,
       splitMode: _splitMode,
     );
+
+    final billsBloc = context.read<BillsBloc>();
+    BillTemplatesBloc? templatesBloc;
+    try {
+      templatesBloc = context.read<BillTemplatesBloc>();
+    } catch (_) {}
+    BillRepository? billRepo;
+    try {
+      billRepo = context.read<BillRepository>();
+    } catch (_) {}
 
     if (_saveSplitModeAsDefault) {
       try {
@@ -765,22 +806,17 @@ class AddBillScreenState extends State<AddBillScreen> {
     }
 
     if (widget.billToEdit != null) {
-      try {
-        final repo = context.read<BillRepository>();
-        await repo.update(bill);
-        if (mounted) {
-          context.read<BillsBloc>().add(const GetBillsEvent());
-        }
-      } catch (_) {
-        context.read<BillsBloc>().add(AddBillEvent(bill: bill));
+      if (billRepo != null) {
+        await billRepo.update(bill);
+        billsBloc.add(const GetBillsEvent());
+      } else {
+        billsBloc.add(AddBillEvent(bill: bill));
       }
     } else {
-      context.read<BillsBloc>().add(AddBillEvent(bill: bill));
+      billsBloc.add(AddBillEvent(bill: bill));
     }
-    if (_usedTemplateId != null) {
-      try {
-        context.read<BillTemplatesBloc>().add(RecordTemplateUsageEvent(_usedTemplateId!));
-      } catch (_) {}
+    if (_usedTemplateId != null && templatesBloc != null) {
+      templatesBloc.add(RecordTemplateUsageEvent(_usedTemplateId!));
     }
     if (mounted) {
       Navigator.pop(context);
@@ -1677,16 +1713,51 @@ class AddBillScreenState extends State<AddBillScreen> {
   // Project Dropdown widget
   // ────────────────────────────────────────
   Widget _buildProjectDropdown(AppLocalizations loc) {
-    return BlocBuilder<ProjectBloc, ProjectState>(
+    return BlocConsumer<ProjectBloc, ProjectState>(
+      listener: (context, state) {
+        if (state is ProjectLoaded && !_hasUserExplicitlySelectedProject) {
+          final targetId = widget.billToEdit?.projectId ?? widget.projectId;
+          if (targetId != null) {
+            final matching = state.projects.where((p) => p.id == targetId).firstOrNull;
+            if (matching != null && selectedProject?.id != matching.id) {
+              setState(() {
+                selectedProject = matching;
+                projectMembers = List.from(matching.members);
+                if (widget.billToEdit == null && selectedParticipants.isEmpty) {
+                  selectedParticipants = Set.from(matching.members);
+                  if (matching.members.isNotEmpty && paidByController.text.isEmpty) {
+                    paidByController.text = matching.members.first;
+                  }
+                  _syncParticipantControllers();
+                }
+              });
+            }
+          }
+        }
+      },
       builder: (context, state) {
         List<Project> projects = [];
         if (state is ProjectLoaded) {
           projects = state.projects;
         }
 
+        Project? dropdownVal = selectedProject;
+        if (dropdownVal != null) {
+          dropdownVal = projects.where((p) => p.id == dropdownVal!.id).firstOrNull ?? dropdownVal;
+        } else if (!_hasUserExplicitlySelectedProject) {
+          final targetId = widget.billToEdit?.projectId ?? widget.projectId;
+          if (targetId != null) {
+            dropdownVal = projects.where((p) => p.id == targetId).firstOrNull;
+          }
+        }
+
+        if (dropdownVal != null && !projects.any((p) => p == dropdownVal)) {
+          dropdownVal = null;
+        }
+
         return DropdownButtonFormField<Project?>(
           key: const Key('projectDropdown'),
-          value: selectedProject,
+          value: dropdownVal,
           decoration: InputDecoration(
             labelText: loc.translate('select_project'),
             border: const OutlineInputBorder(),
@@ -1881,13 +1952,6 @@ class AddBillScreenState extends State<AddBillScreen> {
     );
   }
 
-
-  // ────────────────────────────────────────
-  // Project member toggle chips (legacy support)
-  // ────────────────────────────────────────
-  Widget _buildProjectMemberChips(AppLocalizations loc) {
-    return _buildProjectMemberCards(loc, currencySymbols[selectedCurrency] ?? selectedCurrency);
-  }
 
 
   // ────────────────────────────────────────

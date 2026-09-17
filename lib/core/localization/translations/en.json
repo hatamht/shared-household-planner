@@ -61,6 +61,8 @@
   "category_shopping": "Shopping",
   "category_health": "Health",
   "category_other": "Other",
+  "project": "Project",
+  "linked_project": "Linked Project",
   "projects": "Projects",
   "create_project": "Create Project",
   "edit_project": "Edit Project",

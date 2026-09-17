@@ -9,14 +9,17 @@ import '../../domain/entities/split_mode.dart';
 import '../widgets/receipt_viewer_modal.dart';
 import '../../../templates/domain/entities/bill_template.dart';
 import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
+import '../../../projects/presentation/bloc/project_bloc.dart';
 import 'add_bill_screen.dart';
 
 class BillDetailScreen extends StatelessWidget {
   final Bill bill;
+  final String? projectName;
 
   const BillDetailScreen({
     Key? key,
     required this.bill,
+    this.projectName,
   }) : super(key: key);
 
   String _formatAmount(double amount, String currency) {
@@ -65,7 +68,10 @@ class BillDetailScreen extends StatelessWidget {
   void _navigateToEdit(BuildContext context) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AddBillScreen(billToEdit: bill),
+        builder: (_) => AddBillScreen(
+          billToEdit: bill,
+          projectId: bill.projectId,
+        ),
       ),
     );
   }
@@ -76,7 +82,12 @@ class BillDetailScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final currency = bill.currency ?? 'VND';
     final locale = Localizations.localeOf(context).languageCode;
-    final dateFormat = DateFormat('dd MMMM yyyy', locale);
+    DateFormat dateFormat;
+    try {
+      dateFormat = DateFormat('dd MMMM yyyy', locale);
+    } catch (_) {
+      dateFormat = DateFormat('dd MMMM yyyy');
+    }
     final splitMode = bill.splitModeEnum;
 
     Color catColor;
@@ -176,6 +187,7 @@ class BillDetailScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
+                              _buildProjectBadge(context, loc, isDark),
                             ],
                           ),
                         ),
@@ -482,6 +494,66 @@ class BillDetailScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildProjectBadge(BuildContext context, AppLocalizations loc, bool isDark) {
+    if (bill.projectId == null || bill.projectId!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Builder(
+      builder: (context) {
+        String displayName = projectName ?? bill.projectId!;
+        try {
+          final projectBloc = BlocProvider.of<ProjectBloc>(context, listen: true);
+          final state = projectBloc.state;
+          if (state is ProjectInitial) {
+            projectBloc.add(const GetAllProjects());
+          } else if (state is ProjectLoaded) {
+            final match = state.projects.where((p) => p.id == bill.projectId).firstOrNull;
+            if (match != null) {
+              displayName = match.name;
+            }
+          }
+        } catch (_) {}
+
+        return Container(
+          key: const Key('billDetailProject'),
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF2C3E50) : const Color(0xFFEBF5FB),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isDark ? Colors.blueGrey.shade700 : const Color(0xFFAED6F1),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.folder_outlined,
+                size: 15,
+                color: isDark ? Colors.lightBlueAccent : const Color(0xFF2980B9),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  '${loc.translate('project')}: $displayName',
+                  key: const Key('billDetailProjectName'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.lightBlueAccent : const Color(0xFF2980B9),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
