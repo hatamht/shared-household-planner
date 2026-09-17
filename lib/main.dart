@@ -16,6 +16,9 @@ import 'features/projects/presentation/pages/create_project_screen.dart';
 import 'features/home/presentation/pages/home_screen.dart';
 import 'features/templates/domain/repositories/bill_template_repository.dart';
 import 'features/templates/presentation/bloc/bill_templates_bloc.dart';
+import 'features/settlement/domain/repositories/settlement_repository.dart';
+import 'features/settlement/presentation/bloc/settlement_bloc.dart';
+import 'features/settlement/presentation/pages/payment_history_screen.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -28,6 +31,7 @@ void main() async {
   getIt<ProjectBloc>().add(const GetAllProjects());
   getIt<BillsBloc>().add(const GetBillsEvent());
   getIt<BillTemplatesBloc>().add(const LoadTemplatesEvent());
+  getIt<SettlementBloc>().add(const LoadSettlementsEvent());
   
   runApp(
     MultiProvider(
@@ -55,6 +59,9 @@ class MyApp extends StatelessWidget {
             RepositoryProvider<BillTemplateRepository>.value(
               value: getIt<BillTemplateRepository>(),
             ),
+            RepositoryProvider<SettlementRepository>.value(
+              value: getIt<SettlementRepository>(),
+            ),
           ],
           child: MultiBlocProvider(
             providers: [
@@ -66,6 +73,9 @@ class MyApp extends StatelessWidget {
               ),
               BlocProvider<BillTemplatesBloc>.value(
                 value: getIt<BillTemplatesBloc>(),
+              ),
+              BlocProvider<SettlementBloc>.value(
+                value: getIt<SettlementBloc>(),
               ),
             ],
             child: MaterialApp(
@@ -88,6 +98,7 @@ class MyApp extends StatelessWidget {
                 '/add-bill': (context) => const AddBillScreen(),
                 '/projects': (context) => const ProjectScreen(),
                 '/create-project': (context) => const CreateProjectScreen(),
+                '/payment-history': (context) => const PaymentHistoryScreen(),
               },
             ),
           ),

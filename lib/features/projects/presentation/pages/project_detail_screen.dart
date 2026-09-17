@@ -7,8 +7,10 @@ import '../../domain/entities/project.dart';
 import '../../domain/entities/project_statistics.dart';
 import '../../domain/entities/settlement_item.dart';
 import '../../domain/usecases/calculate_settlement_usecase.dart';
-import '../bloc/project_bloc.dart';
 import '../../../split_bills/presentation/widgets/receipt_viewer_modal.dart';
+import '../../../settlement/presentation/pages/payment_history_screen.dart';
+import '../../../settlement/presentation/widgets/add_settlement_dialog.dart';
+import '../../../settlement/presentation/bloc/settlement_bloc.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -226,6 +228,24 @@ class _SettlementTab extends StatelessWidget {
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              key: const Key('projectPaymentHistoryButton'),
+              icon: const Icon(Icons.history),
+              label: Text(loc.translate('payment_history')),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PaymentHistoryScreen(
+                      projectId: project.id,
+                      projectName: project.name,
+                      projectMembers: project.members,
+                    ),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       );
@@ -234,12 +254,34 @@ class _SettlementTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text(
-          loc.translate('settlement'),
-          style: Theme.of(context).textTheme.titleLarge,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              loc.translate('settlement'),
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            ElevatedButton.icon(
+              key: const Key('projectPaymentHistoryButton'),
+              icon: const Icon(Icons.history, size: 18),
+              label: Text(loc.translate('payment_history')),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PaymentHistoryScreen(
+                      projectId: project.id,
+                      projectName: project.name,
+                      projectMembers: project.members,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         const SizedBox(height: 12),
-        ...stats!.settlements.map((item) => _SettlementCard(item: item)),
+        ...stats!.settlements.map((item) => _SettlementCard(project: project, item: item)),
         const SizedBox(height: 24),
         // Net balance section
         Text(
@@ -283,9 +325,10 @@ class _SettlementTab extends StatelessWidget {
 }
 
 class _SettlementCard extends StatelessWidget {
+  final Project project;
   final SettlementItem item;
 
-  const _SettlementCard({required this.item});
+  const _SettlementCard({required this.project, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -296,40 +339,79 @@ class _SettlementCard extends StatelessWidget {
       color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.3),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            CircleAvatar(
-              child: Text(item.from.isNotEmpty ? item.from[0].toUpperCase() : '?'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: RichText(
-                text: TextSpan(
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  children: [
-                    TextSpan(
-                        text: item.from,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    TextSpan(text: ' ${loc.translate('owes')} '),
-                    TextSpan(
-                        text: item.to,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ],
+            Row(
+              children: [
+                CircleAvatar(
+                  child: Text(item.from.isNotEmpty ? item.from[0].toUpperCase() : '?'),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      children: [
+                        TextSpan(
+                            text: item.from,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        TextSpan(text: ' ${loc.translate('owes')} '),
+                        TextSpan(
+                            text: item.to,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                ),
+                Text(
+                  '${_formatAmount(item.amount)}đ',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.red),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward, size: 16),
+                const SizedBox(width: 4),
+                CircleAvatar(
+                  child: Text(item.to.isNotEmpty ? item.to[0].toUpperCase() : '?'),
+                ),
+              ],
             ),
-            Text(
-              '${_formatAmount(item.amount)}đ',
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.red),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.arrow_forward, size: 16),
-            const SizedBox(width: 4),
-            CircleAvatar(
-              child: Text(item.to.isNotEmpty ? item.to[0].toUpperCase() : '?'),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  key: Key('recordSettlementPayment_${item.from}_${item.to}'),
+                  icon: const Icon(Icons.payment, size: 16, color: Colors.green),
+                  label: Text(
+                    loc.translate('record_payment'),
+                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    AddSettlementDialog.show(
+                      context,
+                      projectId: project.id,
+                      availableMembers: project.members,
+                      initialPayer: item.from,
+                      initialPayee: item.to,
+                      initialAmount: item.amount,
+                      onSave: (log) {
+                        try {
+                          context.read<SettlementBloc>().add(CreateSettlementEvent(log));
+                        } catch (_) {}
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(loc.translate('settlement_recorded_success')),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
           ],
         ),

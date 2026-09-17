@@ -16,6 +16,7 @@ class PdfGenerator {
     String? dateRangeLabel,
     String currencySymbol = '€',
     bool includeSettlement = true,
+    dynamic settlementLogs,
   }) async {
     final pdf = pw.Document(
       title: projectName ?? 'Household Expense Report',
@@ -241,6 +242,45 @@ class PdfGenerator {
                     2: pw.Alignment.centerRight,
                   },
                 ),
+              if (settlementLogs != null && settlementLogs is Iterable && settlementLogs.isNotEmpty) ...[
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  'Payment History & Settlement Audit Trail',
+                  style: pw.TextStyle(
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blueGrey800,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.TableHelper.fromTextArray(
+                  border: const pw.TableBorder(
+                    horizontalInside: pw.BorderSide(color: PdfColors.grey200, width: 0.5),
+                    bottom: pw.BorderSide(color: PdfColors.blueGrey300, width: 1),
+                  ),
+                  headerStyle: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                  headerDecoration: const pw.BoxDecoration(
+                    color: PdfColors.teal700,
+                  ),
+                  cellStyle: const pw.TextStyle(fontSize: 8),
+                  cellPadding: const pw.EdgeInsets.symmetric(horizontal: 5, vertical: 4),
+                  headers: ['Date', 'Payer', 'Payee', 'Amount', 'Status', 'Note'],
+                  data: settlementLogs.map((log) {
+                    return [
+                      dateFormat.format(log.date as DateTime),
+                      log.payer.toString(),
+                      log.payee.toString(),
+                      '$currencySymbol${numberFormat.format(log.amount)}',
+                      log.status.toString().split('.').last.toUpperCase(),
+                      (log.note as String?) ?? '',
+                    ];
+                  }).toList(),
+                ),
+              ],
             ],
           ];
         },

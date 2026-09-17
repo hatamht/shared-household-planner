@@ -26,6 +26,12 @@ import 'package:shared_household_planner/features/templates/domain/usecases/reco
 import 'package:shared_household_planner/features/templates/domain/usecases/toggle_favorite_template_usecase.dart';
 import 'package:shared_household_planner/features/templates/domain/usecases/update_template_usecase.dart';
 import 'package:shared_household_planner/features/templates/presentation/bloc/bill_templates_bloc.dart';
+import 'package:shared_household_planner/features/settlement/data/datasources/settlement_local_datasource.dart';
+import 'package:shared_household_planner/features/settlement/data/repositories/settlement_repository_impl.dart';
+import 'package:shared_household_planner/features/settlement/domain/repositories/settlement_repository.dart';
+import 'package:shared_household_planner/features/settlement/domain/usecases/settlement_usecases.dart';
+import 'package:shared_household_planner/features/settlement/presentation/bloc/settlement_bloc.dart';
+
 
 final getIt = GetIt.instance;
 
@@ -216,6 +222,70 @@ Future<void> setupServiceLocator() async {
         toggleFavoriteTemplateUseCase: getIt<ToggleFavoriteTemplateUseCase>(),
         recordTemplateUsageUseCase: getIt<RecordTemplateUsageUseCase>(),
         getSuggestedTemplatesUseCase: getIt<GetSuggestedTemplatesUseCase>(),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────
+  // Settlement Logs Feature Registration
+  // ────────────────────────────────────────
+  if (!getIt.isRegistered<SettlementLocalDataSource>()) {
+    getIt.registerSingleton<SettlementLocalDataSource>(
+      SettlementLocalDataSourceImpl(database),
+    );
+  }
+
+  if (!getIt.isRegistered<SettlementRepository>()) {
+    getIt.registerSingleton<SettlementRepository>(
+      SettlementRepositoryImpl(getIt<SettlementLocalDataSource>()),
+    );
+  }
+
+  if (!getIt.isRegistered<GetSettlementLogsUseCase>()) {
+    getIt.registerSingleton<GetSettlementLogsUseCase>(
+      GetSettlementLogsUseCase(getIt<SettlementRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CreateSettlementLogUseCase>()) {
+    getIt.registerSingleton<CreateSettlementLogUseCase>(
+      CreateSettlementLogUseCase(getIt<SettlementRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UpdateSettlementLogUseCase>()) {
+    getIt.registerSingleton<UpdateSettlementLogUseCase>(
+      UpdateSettlementLogUseCase(getIt<SettlementRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<DeleteSettlementLogUseCase>()) {
+    getIt.registerSingleton<DeleteSettlementLogUseCase>(
+      DeleteSettlementLogUseCase(getIt<SettlementRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<MarkAsPaidUseCase>()) {
+    getIt.registerSingleton<MarkAsPaidUseCase>(
+      MarkAsPaidUseCase(getIt<SettlementRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UndoMarkAsPaidUseCase>()) {
+    getIt.registerSingleton<UndoMarkAsPaidUseCase>(
+      UndoMarkAsPaidUseCase(getIt<SettlementRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SettlementBloc>()) {
+    getIt.registerSingleton<SettlementBloc>(
+      SettlementBloc(
+        getSettlementLogsUseCase: getIt<GetSettlementLogsUseCase>(),
+        createSettlementLogUseCase: getIt<CreateSettlementLogUseCase>(),
+        updateSettlementLogUseCase: getIt<UpdateSettlementLogUseCase>(),
+        deleteSettlementLogUseCase: getIt<DeleteSettlementLogUseCase>(),
+        markAsPaidUseCase: getIt<MarkAsPaidUseCase>(),
+        undoMarkAsPaidUseCase: getIt<UndoMarkAsPaidUseCase>(),
       ),
     );
   }

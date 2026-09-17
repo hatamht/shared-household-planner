@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -98,6 +98,21 @@ class DatabaseHelper {
             "ALTER TABLE bills ADD COLUMN splitMode TEXT DEFAULT 'equal'",
           );
         }
+        if (oldVersion < 9) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS settlement_logs (
+              id TEXT PRIMARY KEY,
+              projectId TEXT,
+              payer TEXT NOT NULL,
+              payee TEXT NOT NULL,
+              amount REAL NOT NULL,
+              date TEXT NOT NULL,
+              status TEXT NOT NULL DEFAULT 'pending',
+              note TEXT,
+              createdAt TEXT NOT NULL
+            )
+          ''');
+        }
       },
     );
   }
@@ -172,6 +187,20 @@ class DatabaseHelper {
         isFavorite INTEGER DEFAULT 0,
         usageCount INTEGER DEFAULT 0,
         lastUsedAt TEXT,
+        createdAt TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS settlement_logs (
+        id TEXT PRIMARY KEY,
+        projectId TEXT,
+        payer TEXT NOT NULL,
+        payee TEXT NOT NULL,
+        amount REAL NOT NULL,
+        date TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        note TEXT,
         createdAt TEXT NOT NULL
       )
     ''');

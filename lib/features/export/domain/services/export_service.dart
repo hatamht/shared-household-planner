@@ -60,6 +60,7 @@ class ExportService {
     required List<Bill> bills,
     required ExportFilter filter,
     String currencySymbol = '€',
+    dynamic settlementLogs,
   }) async {
     try {
       final filteredBills = filter.filterBills(bills);
@@ -79,6 +80,7 @@ class ExportService {
         final csvString = csvGenerator.generate(
           bills: filteredBills,
           includeSettlement: true,
+          settlementLogs: settlementLogs,
         );
         await file.writeAsString(csvString);
       } else {
@@ -88,6 +90,7 @@ class ExportService {
           dateRangeLabel: filter.dateRange.name,
           currencySymbol: currencySymbol,
           includeSettlement: true,
+          settlementLogs: settlementLogs,
         );
         await file.writeAsBytes(pdfBytes);
       }
@@ -113,11 +116,13 @@ class ExportService {
     required List<Bill> bills,
     required ExportFilter filter,
     String currencySymbol = '€',
+    dynamic settlementLogs,
   }) async {
     final exportRes = await exportToFile(
       bills: bills,
       filter: filter,
       currencySymbol: currencySymbol,
+      settlementLogs: settlementLogs,
     );
 
     if (!exportRes.success || exportRes.filePath == null) {

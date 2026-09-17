@@ -10,6 +10,7 @@ class CsvGenerator {
   String generate({
     required List<Bill> bills,
     bool includeSettlement = true,
+    dynamic settlementLogs,
   }) {
     final buffer = StringBuffer();
     final dateFormat = DateFormat('yyyy-MM-dd');
@@ -46,6 +47,22 @@ class CsvGenerator {
           final amount = item.amount.toStringAsFixed(2);
           buffer.writeln('$from,$to,$amount');
         }
+      }
+    }
+
+    // ── 4. Payment History & Settlement Logs ──────────────────────────────────
+    if (settlementLogs != null && settlementLogs is Iterable && settlementLogs.isNotEmpty) {
+      buffer.writeln();
+      buffer.writeln('# Payment History & Settlement Log');
+      buffer.writeln('Date,Payer,Payee,Amount,Status,Note');
+      for (final log in settlementLogs) {
+        final dateStr = dateFormat.format(log.date as DateTime);
+        final payer = _escape(log.payer as String);
+        final payee = _escape(log.payee as String);
+        final amountStr = (log.amount as num).toStringAsFixed(2);
+        final statusStr = _escape(log.status.toString().split('.').last);
+        final noteStr = _escape((log.note as String?) ?? '');
+        buffer.writeln('$dateStr,$payer,$payee,$amountStr,$statusStr,$noteStr');
       }
     }
 
