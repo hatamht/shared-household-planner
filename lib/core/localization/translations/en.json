@@ -296,6 +296,14 @@
   "bill_detail": "Bill Details",
   "split_breakdown": "Split Breakdown",
   "save_split_mode_as_default": "Save split mode as default for this category",
-  "default_split_mode_saved": "Default split mode saved"
+  "default_split_mode_saved": "Default split mode saved",
+  "today": "Today",
+  "fast_description_hint": "Lunch, taxi, coffee...",
+  "fast_split_equal_label": "Paid by {payer} · split equally",
+  "fast_camera_hint": "Use full form to attach receipt",
+  "fast_more_hint": "Switch to full form for advanced options",
+  "more": "More",
+  "you": "You",
+  "description": "Description"
 }
 

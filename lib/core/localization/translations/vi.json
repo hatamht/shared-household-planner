@@ -296,5 +296,13 @@
   "bill_detail": "Chi tiết hóa đơn",
   "split_breakdown": "Chi tiết chia tiền",
   "save_split_mode_as_default": "Lưu cách chia làm mặc định cho danh mục này",
-  "default_split_mode_saved": "Đã lưu cách chia mặc định"
+  "default_split_mode_saved": "Đã lưu cách chia mặc định",
+  "today": "Hôm nay",
+  "fast_description_hint": "Ăn trưa, taxi, cà phê...",
+  "fast_split_equal_label": "{payer} trả · chia đều",
+  "fast_camera_hint": "Dùng form đầy đủ để đính kèm hóa đơn",
+  "fast_more_hint": "Chuyển sang form đầy đủ để xem thêm tùy chọn",
+  "more": "Thêm",
+  "you": "Bạn",
+  "description": "Mô tả"
 }
