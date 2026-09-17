@@ -21,6 +21,9 @@ import '../../../projects/presentation/bloc/project_bloc.dart';
 import '../../../templates/domain/entities/bill_template.dart';
 import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
 import '../../../templates/presentation/pages/bill_templates_screen.dart';
+import '../../domain/entities/split_mode.dart';
+import '../../domain/services/smart_split_calculator.dart';
+import '../../domain/services/default_split_mode_service.dart';
 
 class AddBillScreen extends StatefulWidget {
   final ProjectSettings projectSettings;
@@ -95,7 +98,49 @@ class AddBillScreenState extends State<AddBillScreen> {
   List<String> manualParticipants = [];
   String? _usedTemplateId;
 
+  // Split Mode state
+  String _splitMode = 'equal';
+  final Map<String, TextEditingController> _percentageControllers = {};
+  final Map<String, TextEditingController> _sharesControllers = {};
+  final Map<String, TextEditingController> _customAmountControllers = {};
+  bool _saveSplitModeAsDefault = false;
+
   final ImagePicker _defaultPicker = ImagePicker();
+
+  void _syncParticipantControllers() {
+    final participants = _effectiveParticipants;
+    final count = participants.length;
+    final evenPercentages = SmartSplitCalculator.distributePercentagesEvenly(count);
+
+    for (int i = 0; i < participants.length; i++) {
+      final name = participants[i];
+      if (!_percentageControllers.containsKey(name)) {
+        final pct = i < evenPercentages.length ? evenPercentages[i] : 0.0;
+        _percentageControllers[name] = TextEditingController(
+          text: pct % 1 == 0 ? pct.toInt().toString() : pct.toString(),
+        );
+      }
+      if (!_sharesControllers.containsKey(name)) {
+        _sharesControllers[name] = TextEditingController(text: '1');
+      }
+      if (!_customAmountControllers.containsKey(name)) {
+        final perPerson = count > 0 ? _currentAmount / count : 0.0;
+        _customAmountControllers[name] = TextEditingController(
+          text: perPerson % 1 == 0 ? perPerson.toInt().toString() : perPerson.toStringAsFixed(1),
+        );
+      }
+    }
+  }
+
+  void _checkDefaultSplitMode() async {
+    final defaultMode = await DefaultSplitModeService.instance.getDefaultSplitModeForCategory(selectedCategoryItem.id);
+    if (defaultMode != null && mounted) {
+      setState(() {
+        _splitMode = defaultMode;
+        _syncParticipantControllers();
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -131,8 +176,31 @@ class AddBillScreenState extends State<AddBillScreen> {
       }
       manualParticipants = b.participants.map((p) => p.name).toList();
       selectedParticipants = b.participants.map((p) => p.name).toSet();
+      _splitMode = b.splitMode;
+      for (final p in b.participants) {
+        if (p.percentage != null) {
+          final pct = p.percentage!;
+          _percentageControllers[p.name] = TextEditingController(
+            text: pct % 1 == 0 ? pct.toInt().toString() : pct.toString(),
+          );
+        }
+        if (p.shares != null) {
+          final sh = p.shares!;
+          _sharesControllers[p.name] = TextEditingController(
+            text: sh % 1 == 0 ? sh.toInt().toString() : sh.toString(),
+          );
+        }
+        final amt = p.amount;
+        _customAmountControllers[p.name] = TextEditingController(
+          text: amt % 1 == 0 ? amt.toInt().toString() : amt.toStringAsFixed(1),
+        );
+      }
+      _syncParticipantControllers();
     } else if (widget.template != null) {
       _applyTemplate(widget.template!, recordUsage: false);
+    } else {
+      _syncParticipantControllers();
+      _checkDefaultSplitMode();
     }
 
     titleController.addListener(() {
@@ -174,6 +242,8 @@ class AddBillScreenState extends State<AddBillScreen> {
     }
     manualParticipants = List.from(t.participants);
     selectedParticipants = t.participants.toSet();
+    _splitMode = t.splitMode;
+    _syncParticipantControllers();
     isTitleManuallyEdited = true;
     _usedTemplateId = t.id;
 
@@ -207,7 +277,7 @@ class AddBillScreenState extends State<AddBillScreen> {
       categoryIcon: selectedCategoryItem.icon,
       categoryColor: selectedCategoryItem.colorHex,
       currency: selectedCurrency,
-      splitMode: 'equal',
+      splitMode: _splitMode,
       paidBy: paidByController.text.trim(),
       participants: participants,
       projectId: selectedProject?.id ?? widget.projectId,
@@ -232,6 +302,15 @@ class AddBillScreenState extends State<AddBillScreen> {
     amountController.dispose();
     paidByController.dispose();
     participantController.dispose();
+    for (final c in _percentageControllers.values) {
+      c.dispose();
+    }
+    for (final c in _sharesControllers.values) {
+      c.dispose();
+    }
+    for (final c in _customAmountControllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -255,6 +334,9 @@ class AddBillScreenState extends State<AddBillScreen> {
         );
       }
     });
+    if (widget.billToEdit == null) {
+      _checkDefaultSplitMode();
+    }
   }
 
   // ────────────────────────────────────────
@@ -490,6 +572,7 @@ class AddBillScreenState extends State<AddBillScreen> {
       setState(() {
         manualParticipants.add(participantController.text.trim());
         participantController.clear();
+        _syncParticipantControllers();
       });
     }
   }
@@ -497,6 +580,7 @@ class AddBillScreenState extends State<AddBillScreen> {
   void _removeManualParticipant(int index) {
     setState(() {
       manualParticipants.removeAt(index);
+      _syncParticipantControllers();
     });
   }
 
@@ -561,6 +645,45 @@ class AddBillScreenState extends State<AddBillScreen> {
       return false;
     }
 
+    final mode = SplitMode.fromString(_splitMode);
+    if (mode == SplitMode.percentage) {
+      final pMap = <String, double>{};
+      for (final name in parts) {
+        pMap[name] = double.tryParse(_percentageControllers[name]?.text.trim() ?? '') ?? 0.0;
+      }
+      final res = SmartSplitCalculator.validatePercentage(pMap);
+      if (!res.isValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.translate(res.errorMessageKey!))),
+        );
+        return false;
+      }
+    } else if (mode == SplitMode.shares) {
+      final sMap = <String, double>{};
+      for (final name in parts) {
+        sMap[name] = double.tryParse(_sharesControllers[name]?.text.trim() ?? '') ?? 0.0;
+      }
+      final res = SmartSplitCalculator.validateShares(sMap);
+      if (!res.isValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.translate(res.errorMessageKey!))),
+        );
+        return false;
+      }
+    } else if (mode == SplitMode.custom) {
+      final cMap = <String, double>{};
+      for (final name in parts) {
+        cMap[name] = double.tryParse(_customAmountControllers[name]?.text.trim() ?? '') ?? 0.0;
+      }
+      final res = SmartSplitCalculator.validateCustom(amount, cMap);
+      if (!res.isValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(loc.translate(res.errorMessageKey!))),
+        );
+        return false;
+      }
+    }
+
     return true;
   }
 
@@ -572,17 +695,48 @@ class AddBillScreenState extends State<AddBillScreen> {
 
     final amount = double.parse(amountController.text);
     final parts = _effectiveParticipants;
-    final perPerson = amount / parts.length;
+    final mode = SplitMode.fromString(_splitMode);
 
-    final billParticipants = parts
-        .map(
-          (name) => BillParticipant(
-            participantId: const Uuid().v4(),
-            name: name,
-            amount: perPerson,
-          ),
-        )
-        .toList();
+    List<BillParticipant> billParticipants;
+    switch (mode) {
+      case SplitMode.percentage:
+        final pMap = <String, double>{};
+        for (final name in parts) {
+          pMap[name] = double.tryParse(_percentageControllers[name]?.text.trim() ?? '') ?? 0.0;
+        }
+        billParticipants = SmartSplitCalculator.calculatePercentage(
+          totalAmount: amount,
+          percentages: pMap,
+        );
+        break;
+      case SplitMode.shares:
+        final sMap = <String, double>{};
+        for (final name in parts) {
+          sMap[name] = double.tryParse(_sharesControllers[name]?.text.trim() ?? '') ?? 0.0;
+        }
+        billParticipants = SmartSplitCalculator.calculateShares(
+          totalAmount: amount,
+          shares: sMap,
+        );
+        break;
+      case SplitMode.custom:
+        final cMap = <String, double>{};
+        for (final name in parts) {
+          cMap[name] = double.tryParse(_customAmountControllers[name]?.text.trim() ?? '') ?? 0.0;
+        }
+        billParticipants = SmartSplitCalculator.calculateCustom(
+          totalAmount: amount,
+          customAmounts: cMap,
+        );
+        break;
+      case SplitMode.equal:
+      default:
+        billParticipants = SmartSplitCalculator.calculateEqual(
+          totalAmount: amount,
+          participantNames: parts,
+        );
+        break;
+    }
 
     final bill = Bill(
       id: widget.billToEdit?.id ?? const Uuid().v4(),
@@ -598,7 +752,17 @@ class AddBillScreenState extends State<AddBillScreen> {
       imagePath: imagePaths.isNotEmpty ? imagePaths.first : null,
       imagePaths: List.from(imagePaths),
       categoryColor: selectedCategoryItem.colorHex,
+      splitMode: _splitMode,
     );
+
+    if (_saveSplitModeAsDefault) {
+      try {
+        await DefaultSplitModeService.instance.setDefaultSplitModeForCategory(
+          selectedCategoryItem.id,
+          _splitMode,
+        );
+      } catch (_) {}
+    }
 
     if (widget.billToEdit != null) {
       try {
@@ -801,11 +965,14 @@ class AddBillScreenState extends State<AddBillScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  loc.translate('category'),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                Expanded(
+                  child: Text(
+                    loc.translate('category'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 TextButton.icon(
                   key: const Key('addCategoryButton'),
@@ -1247,7 +1414,7 @@ class AddBillScreenState extends State<AddBillScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── 6. Split Section (Cards with Avatars & Checkboxes) ─
+            // ── 6. Split Section (Split Mode selection & Member lists) ─
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1257,7 +1424,7 @@ class AddBillScreenState extends State<AddBillScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                 ),
-                if (_perPersonAmount > 0)
+                if (_splitMode == 'equal' && _perPersonAmount > 0)
                   Text(
                     '${loc.translate('each_pays')}: ${_formatAmount(_perPersonAmount)} $currencySymbol',
                     key: const Key('realtimeSplitText'),
@@ -1269,6 +1436,10 @@ class AddBillScreenState extends State<AddBillScreen> {
               ],
             ),
             const SizedBox(height: 8),
+
+            // Split Mode Radio Group
+            _buildSplitModeRadioGroup(loc, isDark),
+            const SizedBox(height: 12),
 
             // Project Dropdown
             _buildProjectDropdown(loc),
@@ -1287,7 +1458,29 @@ class AddBillScreenState extends State<AddBillScreen> {
             else
               _buildManualParticipants(loc),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+
+            // Dynamic Split Breakdown Inputs for Percentage, Shares, and Custom modes
+            if (_effectiveParticipants.isNotEmpty && _splitMode != 'equal')
+              _buildSplitModeInputs(loc, isDark, currencySymbol),
+
+            // Save default split mode checkbox
+            CheckboxListTile(
+              key: const Key('saveDefaultSplitModeCheckbox'),
+              value: _saveSplitModeAsDefault,
+              onChanged: (val) {
+                setState(() {
+                  _saveSplitModeAsDefault = val ?? false;
+                });
+              },
+              title: Text(
+                loc.translate('save_split_mode_as_default'),
+                style: const TextStyle(fontSize: 13),
+              ),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            const SizedBox(height: 16),
 
             // ── 7. Save Button ──────────────────────────────────
             SizedBox(
@@ -1708,6 +1901,7 @@ class AddBillScreenState extends State<AddBillScreen> {
           children: [
             Expanded(
               child: TextField(
+                key: const Key('participantNameField'),
                 controller: participantController,
                 decoration: InputDecoration(
                   labelText: loc.translate('participant_name'),
@@ -1739,5 +1933,365 @@ class AddBillScreenState extends State<AddBillScreen> {
           ),
       ],
     );
+  }
+
+  // ────────────────────────────────────────
+  // Split Mode Radio Group
+  // ────────────────────────────────────────
+  Widget _buildSplitModeRadioGroup(AppLocalizations loc, bool isDark) {
+    return Container(
+      key: const Key('splitModeRadioGroup'),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF242424) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+        ),
+      ),
+      child: Column(
+        children: SplitMode.values.map((mode) {
+          final isSelected = _splitMode == mode.value;
+          return RadioListTile<String>(
+            key: Key('splitModeRadio_${mode.value}'),
+            value: mode.value,
+            groupValue: _splitMode,
+            dense: true,
+            visualDensity: const VisualDensity(horizontal: 0, vertical: -2),
+            title: Row(
+              children: [
+                Icon(
+                  mode.icon,
+                  size: 18,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    mode.getLocalizedName(loc),
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            onChanged: (val) {
+              if (val != null) {
+                setState(() {
+                  _splitMode = val;
+                  _syncParticipantControllers();
+                });
+              }
+            },
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────
+  // Dynamic Split Mode Inputs
+  // ────────────────────────────────────────
+  Widget _buildSplitModeInputs(AppLocalizations loc, bool isDark, String currencySymbol) {
+    _syncParticipantControllers();
+    final parts = _effectiveParticipants;
+    final mode = SplitMode.fromString(_splitMode);
+
+    switch (mode) {
+      case SplitMode.percentage:
+        double currentSum = 0;
+        for (final name in parts) {
+          currentSum += double.tryParse(_percentageControllers[name]?.text.trim() ?? '') ?? 0.0;
+        }
+        final is100 = (currentSum - 100.0).abs() <= 0.01;
+
+        return Card(
+          key: const Key('percentageInputsSection'),
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${loc.translate('total_percentage')}: ${currentSum.toStringAsFixed(1)}% / 100%',
+                      key: const Key('totalPercentageText'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: is100 ? Colors.green : Colors.deepOrange,
+                      ),
+                    ),
+                    TextButton.icon(
+                      key: const Key('distributePercentagesEvenlyButton'),
+                      onPressed: () {
+                        final even = SmartSplitCalculator.distributePercentagesEvenly(parts.length);
+                        setState(() {
+                          for (int i = 0; i < parts.length; i++) {
+                            final name = parts[i];
+                            final val = i < even.length ? even[i] : 0.0;
+                            _percentageControllers[name]?.text =
+                                val % 1 == 0 ? val.toInt().toString() : val.toString();
+                          }
+                        });
+                      },
+                      icon: const Icon(Icons.auto_fix_high, size: 16),
+                      label: Text(loc.translate('distribute_evenly'), style: const TextStyle(fontSize: 12)),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                ...parts.map((name) {
+                  final pct = double.tryParse(_percentageControllers[name]?.text.trim() ?? '') ?? 0.0;
+                  final calculated = _currentAmount > 0 ? (_currentAmount * (pct / 100.0)) : 0.0;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 40,
+                            child: TextField(
+                              key: Key('percentageInput_$name'),
+                              controller: _percentageControllers[name],
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: const InputDecoration(
+                                suffixText: '%',
+                                contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            '${_formatAmount(calculated)} $currencySymbol',
+                            key: Key('calculatedAmount_$name'),
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+
+      case SplitMode.shares:
+        double totalShares = 0;
+        for (final name in parts) {
+          totalShares += double.tryParse(_sharesControllers[name]?.text.trim() ?? '') ?? 0.0;
+        }
+
+        return Card(
+          key: const Key('sharesInputsSection'),
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${loc.translate('total_shares')}: ${totalShares % 1 == 0 ? totalShares.toInt() : totalShares.toStringAsFixed(1)}',
+                      key: const Key('totalSharesText'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: totalShares > 0 ? Theme.of(context).colorScheme.primary : Colors.deepOrange,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                ...parts.map((name) {
+                  final sh = double.tryParse(_sharesControllers[name]?.text.trim() ?? '') ?? 0.0;
+                  final fraction = totalShares > 0 ? (sh / totalShares) : 0.0;
+                  final calculated = _currentAmount * fraction;
+                  final pct = fraction * 100.0;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                        IconButton(
+                          key: Key('sharesMinus_$name'),
+                          icon: const Icon(Icons.remove_circle_outline, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            final cur = double.tryParse(_sharesControllers[name]?.text.trim() ?? '') ?? 1.0;
+                            if (cur > 0) {
+                              final next = cur - 1;
+                              _sharesControllers[name]?.text =
+                                  next % 1 == 0 ? next.toInt().toString() : next.toString();
+                              setState(() {});
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 4),
+                        SizedBox(
+                          width: 45,
+                          height: 38,
+                          child: TextField(
+                            key: Key('sharesInput_$name'),
+                            controller: _sharesControllers[name],
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          key: Key('sharesPlus_$name'),
+                          icon: const Icon(Icons.add_circle_outline, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            final cur = double.tryParse(_sharesControllers[name]?.text.trim() ?? '') ?? 0.0;
+                            final next = cur + 1;
+                            _sharesControllers[name]?.text =
+                                next % 1 == 0 ? next.toInt().toString() : next.toString();
+                            setState(() {});
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 3,
+                          child: Text(
+                            '${_formatAmount(calculated)} $currencySymbol\n(${pct.toStringAsFixed(1)}%)',
+                            key: Key('calculatedAmount_$name'),
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+
+      case SplitMode.custom:
+        double totalCustom = 0;
+        for (final name in parts) {
+          totalCustom += double.tryParse(_customAmountControllers[name]?.text.trim() ?? '') ?? 0.0;
+        }
+        final remaining = _currentAmount - totalCustom;
+        final isBalanced = remaining.abs() <= 0.01;
+
+        return Card(
+          key: const Key('customInputsSection'),
+          margin: const EdgeInsets.only(bottom: 12),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${loc.translate('remaining_amount')}: ${_formatAmount(remaining)} $currencySymbol',
+                      key: const Key('remainingAmountText'),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: isBalanced ? Colors.green : Colors.deepOrange,
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                ...parts.map((name) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: SizedBox(
+                            height: 40,
+                            child: TextField(
+                              key: Key('customAmountInput_$name'),
+                              controller: _customAmountControllers[name],
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
+                                suffixText: currencySymbol,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                border: const OutlineInputBorder(),
+                              ),
+                              onChanged: (_) => setState(() {}),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton(
+                          key: Key('fillRemainingButton_$name'),
+                          icon: const Icon(Icons.all_inclusive, size: 20),
+                          tooltip: loc.translate('fill_remaining'),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            final cur = double.tryParse(_customAmountControllers[name]?.text.trim() ?? '') ?? 0.0;
+                            final newVal = cur + remaining;
+                            if (newVal >= 0) {
+                              _customAmountControllers[name]?.text =
+                                  newVal % 1 == 0 ? newVal.toInt().toString() : newVal.toStringAsFixed(1);
+                              setState(() {});
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+
+      case SplitMode.equal:
+      default:
+        return const SizedBox.shrink();
+    }
   }
 }

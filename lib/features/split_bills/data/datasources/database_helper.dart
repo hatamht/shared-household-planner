@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -93,6 +93,11 @@ class DatabaseHelper {
             )
           ''');
         }
+        if (oldVersion < 8) {
+          await db.execute(
+            "ALTER TABLE bills ADD COLUMN splitMode TEXT DEFAULT 'equal'",
+          );
+        }
       },
     );
   }
@@ -113,6 +118,7 @@ class DatabaseHelper {
         imagePath TEXT,
         imagePaths TEXT,
         categoryColor TEXT,
+        splitMode TEXT DEFAULT 'equal',
         createdAt TEXT DEFAULT CURRENT_TIMESTAMP
       )
     ''');

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'bill_participant.dart';
 import 'category_icon.dart';
+import 'split_mode.dart';
 
 class Bill extends Equatable {
   final String id;
@@ -16,6 +17,7 @@ class Bill extends Equatable {
   final String? imagePath;
   final List<String> imagePaths;
   final String? categoryColor;
+  final String splitMode;
 
   const Bill({
     required this.id,
@@ -31,7 +33,11 @@ class Bill extends Equatable {
     this.imagePath,
     this.imagePaths = const [],
     this.categoryColor,
+    this.splitMode = 'equal',
   });
+
+  /// SplitMode enum representation
+  SplitMode get splitModeEnum => SplitMode.fromString(splitMode);
 
   /// Effective color: returns categoryColor if present, or fallback from defaultCategoryIcons, or default gray
   String get effectiveCategoryColor {
@@ -65,6 +71,40 @@ class Bill extends Equatable {
   /// Count of attached receipt images
   int get receiptCount => effectiveImagePaths.length;
 
+  Bill copyWith({
+    String? id,
+    String? title,
+    double? amount,
+    String? category,
+    DateTime? date,
+    String? paidBy,
+    List<BillParticipant>? participants,
+    String? projectId,
+    String? categoryIcon,
+    String? currency,
+    String? imagePath,
+    List<String>? imagePaths,
+    String? categoryColor,
+    String? splitMode,
+  }) {
+    return Bill(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      category: category ?? this.category,
+      date: date ?? this.date,
+      paidBy: paidBy ?? this.paidBy,
+      participants: participants ?? this.participants,
+      projectId: projectId ?? this.projectId,
+      categoryIcon: categoryIcon ?? this.categoryIcon,
+      currency: currency ?? this.currency,
+      imagePath: imagePath ?? this.imagePath,
+      imagePaths: imagePaths ?? this.imagePaths,
+      categoryColor: categoryColor ?? this.categoryColor,
+      splitMode: splitMode ?? this.splitMode,
+    );
+  }
+
   @override
   List<Object?> get props => [
         id,
@@ -80,5 +120,6 @@ class Bill extends Equatable {
         imagePath,
         imagePaths,
         categoryColor,
+        splitMode,
       ];
 }

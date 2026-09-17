@@ -8,6 +8,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../templates/domain/entities/bill_template.dart';
 import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
 import 'receipt_viewer_modal.dart';
+import '../pages/bill_detail_screen.dart';
 
 class BillCard extends StatelessWidget {
   final Bill bill;
@@ -65,6 +66,12 @@ class BillCard extends StatelessWidget {
             onTap!();
           } else if (hasReceipt) {
             _openReceiptModal(context);
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => BillDetailScreen(bill: bill),
+              ),
+            );
           }
         },
         child: Padding(
@@ -103,6 +110,25 @@ class BillCard extends StatelessWidget {
                                 color: Colors.grey,
                               ),
                         ),
+                        if (bill.splitMode != 'equal') ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            key: Key('splitModeChip_${bill.id}'),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              bill.splitModeEnum.getLocalizedName(loc),
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
                         if (hasReceipt) ...[
                           const SizedBox(width: 8),
                           Icon(
@@ -206,6 +232,22 @@ class BillCard extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
+                        key: Key('viewBillDetail_${bill.id}'),
+                        icon: const Icon(Icons.info_outline, size: 18),
+                        tooltip: loc.translate('bill_detail'),
+                        splashRadius: 16,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => BillDetailScreen(bill: bill),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 6),
+                      IconButton(
                         key: Key('saveAsTemplate_${bill.id}'),
                         icon: const Icon(Icons.bookmark_add_outlined, size: 18),
                         tooltip: loc.translate('save_as_template'),
@@ -225,7 +267,7 @@ class BillCard extends StatelessWidget {
                                 categoryIcon: bill.categoryIcon,
                                 categoryColor: bill.categoryColor,
                                 currency: bill.currency ?? 'VND',
-                                splitMode: 'equal',
+                                splitMode: bill.splitMode,
                                 paidBy: bill.paidBy,
                                 participants: bill.participants.map((p) => p.name).toList(),
                                 projectId: bill.projectId,

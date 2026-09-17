@@ -17,6 +17,7 @@ class BillModel extends Bill {
     String? imagePath,
     List<String> imagePaths = const [],
     String? categoryColor,
+    String splitMode = 'equal',
   }) : super(
     id: id,
     title: title,
@@ -31,6 +32,7 @@ class BillModel extends Bill {
     imagePath: imagePath,
     imagePaths: imagePaths,
     categoryColor: categoryColor,
+    splitMode: splitMode,
   );
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
@@ -69,11 +71,17 @@ class BillModel extends Bill {
       date: DateTime.parse(json['date'] as String),
       paidBy: json['paidBy'] as String,
       participants: participantsList
-          .map((p) => BillParticipant(
-            participantId: p['participantId'] as String,
-            name: p['name'] as String,
-            amount: (p['amount'] as num).toDouble(),
-          ))
+          .map((p) {
+            if (p is BillParticipant) return p;
+            final map = p as Map<String, dynamic>;
+            return BillParticipant(
+              participantId: map['participantId'] as String,
+              name: map['name'] as String,
+              amount: (map['amount'] as num).toDouble(),
+              percentage: map['percentage'] != null ? (map['percentage'] as num).toDouble() : null,
+              shares: map['shares'] != null ? (map['shares'] as num).toDouble() : null,
+            );
+          })
           .toList(),
       projectId: json['projectId'] as String?,
       categoryIcon: json['categoryIcon'] as String?,
@@ -81,6 +89,7 @@ class BillModel extends Bill {
       imagePath: singleImagePath ?? (imagePathsList.isNotEmpty ? imagePathsList.first : null),
       imagePaths: imagePathsList,
       categoryColor: json['categoryColor'] as String?,
+      splitMode: json['splitMode'] as String? ?? 'equal',
     );
   }
 
@@ -98,6 +107,8 @@ class BillModel extends Bill {
             'participantId': p.participantId,
             'name': p.name,
             'amount': p.amount,
+            if (p.percentage != null) 'percentage': p.percentage,
+            if (p.shares != null) 'shares': p.shares,
           })
           .toList(),
       if (projectId != null) 'projectId': projectId,
@@ -106,6 +117,7 @@ class BillModel extends Bill {
       if (effectiveImagePath != null) 'imagePath': effectiveImagePath,
       if (paths.isNotEmpty) 'imagePaths': jsonEncode(paths),
       if (categoryColor != null) 'categoryColor': categoryColor,
+      'splitMode': splitMode,
     };
   }
 
@@ -124,6 +136,42 @@ class BillModel extends Bill {
       imagePath: bill.imagePath,
       imagePaths: bill.imagePaths,
       categoryColor: bill.categoryColor,
+      splitMode: bill.splitMode,
+    );
+  }
+
+  @override
+  BillModel copyWith({
+    String? id,
+    String? title,
+    double? amount,
+    String? category,
+    DateTime? date,
+    String? paidBy,
+    List<BillParticipant>? participants,
+    String? projectId,
+    String? categoryIcon,
+    String? currency,
+    String? imagePath,
+    List<String>? imagePaths,
+    String? categoryColor,
+    String? splitMode,
+  }) {
+    return BillModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      amount: amount ?? this.amount,
+      category: category ?? this.category,
+      date: date ?? this.date,
+      paidBy: paidBy ?? this.paidBy,
+      participants: participants ?? this.participants,
+      projectId: projectId ?? this.projectId,
+      categoryIcon: categoryIcon ?? this.categoryIcon,
+      currency: currency ?? this.currency,
+      imagePath: imagePath ?? this.imagePath,
+      imagePaths: imagePaths ?? this.imagePaths,
+      categoryColor: categoryColor ?? this.categoryColor,
+      splitMode: splitMode ?? this.splitMode,
     );
   }
 }
