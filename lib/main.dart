@@ -19,10 +19,6 @@ import 'features/templates/presentation/bloc/bill_templates_bloc.dart';
 import 'features/settlement/domain/repositories/settlement_repository.dart';
 import 'features/settlement/presentation/bloc/settlement_bloc.dart';
 import 'features/settlement/presentation/pages/payment_history_screen.dart';
-import 'features/requests/domain/repositories/request_repository.dart';
-import 'features/requests/presentation/bloc/request_bloc.dart';
-import 'features/requests/presentation/bloc/request_event.dart';
-import 'features/requests/presentation/pages/request_list_screen.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -36,7 +32,6 @@ void main() async {
   getIt<BillsBloc>().add(const GetBillsEvent());
   getIt<BillTemplatesBloc>().add(const LoadTemplatesEvent());
   getIt<SettlementBloc>().add(const LoadSettlementsEvent());
-  getIt<RequestBloc>().add(const LoadRequestsEvent());
   
   runApp(
     MultiProvider(
@@ -67,9 +62,6 @@ class MyApp extends StatelessWidget {
             RepositoryProvider<SettlementRepository>.value(
               value: getIt<SettlementRepository>(),
             ),
-            RepositoryProvider<RequestRepository>.value(
-              value: getIt<RequestRepository>(),
-            ),
           ],
           child: MultiBlocProvider(
             providers: [
@@ -84,9 +76,6 @@ class MyApp extends StatelessWidget {
               ),
               BlocProvider<SettlementBloc>.value(
                 value: getIt<SettlementBloc>(),
-              ),
-              BlocProvider<RequestBloc>.value(
-                value: getIt<RequestBloc>(),
               ),
             ],
             child: MaterialApp(
@@ -110,7 +99,6 @@ class MyApp extends StatelessWidget {
                 '/projects': (context) => const ProjectScreen(),
                 '/create-project': (context) => const CreateProjectScreen(),
                 '/payment-history': (context) => const PaymentHistoryScreen(),
-                '/requests': (context) => const RequestListScreen(),
               },
             ),
           ),

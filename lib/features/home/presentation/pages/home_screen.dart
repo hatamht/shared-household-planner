@@ -13,11 +13,6 @@ import 'package:shared_household_planner/features/projects/presentation/pages/pr
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
-import 'package:shared_household_planner/features/requests/presentation/bloc/request_bloc.dart';
-import 'package:shared_household_planner/features/requests/presentation/bloc/request_event.dart';
-import 'package:shared_household_planner/features/requests/presentation/bloc/request_state.dart';
-import 'package:shared_household_planner/features/requests/presentation/pages/request_list_screen.dart';
-import 'package:shared_household_planner/features/requests/presentation/widgets/create_request_bottom_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,7 +23,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTabIndex = 0;
-  int _requestsSubTabIndex = 0;
 
   @override
   void initState() {
@@ -41,9 +35,6 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
     try {
       context.read<BillsBloc>().add(const GetBillsEvent());
-    } catch (_) {}
-    try {
-      context.read<RequestBloc>().add(const LoadRequestsEvent());
     } catch (_) {}
   }
 
@@ -101,19 +92,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => CreateProjectScreen(project: project),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                key: Key('viewProjectRequests_${project.id}'),
-                leading: const Icon(Icons.assignment_outlined),
-                title: Text(loc.translate('requests')),
-                onTap: () {
-                  Navigator.of(bottomSheetCtx).pop();
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => RequestListScreen(initialProjectId: project.id),
                     ),
                   );
                 },
@@ -232,14 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: const Icon(Icons.add),
             )
-          : (_currentTabIndex == 1 && _requestsSubTabIndex == 1
-              ? FloatingActionButton(
-                  key: const Key('addRequestFab'),
-                  tooltip: loc.translate('create_request'),
-                  onPressed: () => CreateRequestBottomSheet.show(context),
-                  child: const Icon(Icons.add),
-                )
-              : null),
+          : null,
     );
   }
 
@@ -570,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Card(
         key: Key('projectCard_${project.id}'),
         elevation: 2,
-        margin: const EdgeInsets.symmetric(vertical: 4),
+        margin: const EdgeInsets.symmetric(vertical: 6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         child: InkWell(
@@ -584,13 +555,13 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           onLongPress: () => _showProjectContextMenu(context, project),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 // Project Icon / Circle Avatar
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
                     color: avatarColor,
                     shape: BoxShape.circle,
@@ -607,12 +578,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     initial,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
 
                 // Title and Stats
                 Expanded(
@@ -622,64 +593,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         project.name,
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              statsText,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontSize: 12,
-                                  ),
+                      const SizedBox(height: 4),
+                      Text(
+                        statsText,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 12,
                             ),
-                          ),
-                          Builder(
-                            builder: (context) {
-                              int requestCount = 0;
-                              try {
-                                final reqState = context.watch<RequestBloc>().state;
-                                if (reqState is RequestLoaded) {
-                                  requestCount = reqState.countForProject(project.id);
-                                }
-                              } catch (_) {}
-
-                              return Container(
-                                key: Key('projectRequestBadge_${project.id}'),
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: isDark ? const Color(0xFF2C3E50) : const Color(0xFFEBF5FB),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.assignment_outlined,
-                                      size: 11,
-                                      color: isDark ? Colors.lightBlueAccent : const Color(0xFF2980B9),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      '$requestCount ${loc.translate('requests')}',
-                                      key: Key('projectRequestCount_${project.id}'),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.lightBlueAccent : const Color(0xFF2980B9),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ],
                       ),
                       if (project.description != null && project.description!.isNotEmpty) ...[
                         const SizedBox(height: 2),
@@ -714,42 +639,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // TAB 1: Requests / Bills
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildBillsTab(BuildContext context, AppLocalizations loc) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<int>(
-              key: const Key('requestsTabSegmentedButton'),
-              segments: [
-                ButtonSegment<int>(
-                  value: 0,
-                  icon: const Icon(Icons.receipt_long),
-                  label: Text(loc.translate('bills')),
-                ),
-                ButtonSegment<int>(
-                  value: 1,
-                  icon: const Icon(Icons.assignment_outlined),
-                  label: Text(loc.translate('requests')),
-                ),
-              ],
-              selected: {_requestsSubTabIndex},
-              onSelectionChanged: (newSelection) {
-                setState(() {
-                  _requestsSubTabIndex = newSelection.first;
-                });
-              },
-            ),
-          ),
-        ),
-        Expanded(
-          child: _requestsSubTabIndex == 0
-              ? const BillsListScreen()
-              : const RequestListScreen(showAppBar: false, hideFab: true),
-        ),
-      ],
-    );
+    return const BillsListScreen();
   }
 
 
