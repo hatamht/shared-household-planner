@@ -345,7 +345,7 @@ void main() {
       pb.close();
     });
 
-    testWidgets('1.9 Project selector hidden if projects is empty and requireProject is false', (tester) async {
+    testWidgets('1.9 Project selector is always visible even when projects is empty', (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -354,7 +354,8 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(requireProject: false), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('projectSelector')), findsNothing);
+      expect(find.byKey(const Key('projectSelector')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const Key('selectedProjectName')), matchRoot: true, matching: find.text('No Project Selected')), findsOneWidget);
       pb.close();
     });
 
@@ -1355,7 +1356,8 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(requireProject: false), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('projectSelector')), findsNothing);
+      expect(find.byKey(const Key('projectSelector')), findsOneWidget);
+      expect(find.descendant(of: find.byKey(const Key('selectedProjectName')), matchRoot: true, matching: find.text('No Project Selected')), findsOneWidget);
       pb.close();
     });
 

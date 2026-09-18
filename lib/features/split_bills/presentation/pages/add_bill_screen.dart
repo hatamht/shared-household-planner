@@ -951,13 +951,13 @@ class AddBillScreenState extends State<AddBillScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildQuickTemplatesSection(loc, isDark),
             _buildTopProjectSelector(context, loc, isDark),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
             // ── 0. Tab Selector Refinement ───────────────────────
             Container(
               key: const Key('transactionTypeTabs'),
@@ -976,14 +976,14 @@ class AddBillScreenState extends State<AddBillScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
 
             // ── 1. Title Section (CEO Clarification) ─────────────
             // LEFT: Circular badge with category icon + brand color
             // CENTER: Title input field (auto-filled)
             // RIGHT: Camera icon button + Clear (X) button
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(16),
@@ -1080,7 +1080,7 @@ class AddBillScreenState extends State<AddBillScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
 
             // ── 2. Category Selector (Horizontal chips & + button) ──
             Row(
@@ -1107,9 +1107,9 @@ class AddBillScreenState extends State<AddBillScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             SizedBox(
-              height: 74,
+              height: 62,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: categoriesList.length,
@@ -1129,8 +1129,8 @@ class AddBillScreenState extends State<AddBillScreen> {
                       children: [
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
-                          width: 68,
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                          width: 66,
+                          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? itemColor.withOpacity(0.2)
@@ -1144,7 +1144,7 @@ class AddBillScreenState extends State<AddBillScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(cat.icon, style: const TextStyle(fontSize: 20)),
+                              Text(cat.icon, style: const TextStyle(fontSize: 18)),
                               const SizedBox(height: 2),
                               Text(
                                 _getCategoryDisplayName(cat, loc),
@@ -1187,7 +1187,7 @@ class AddBillScreenState extends State<AddBillScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
 
             // ── 3. Image Upload & Preview (Receipt Images & Multi-Image Gallery) ──
             Wrap(
@@ -1281,14 +1281,14 @@ class AddBillScreenState extends State<AddBillScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     SizedBox(
-                      height: 110,
+                      height: 80,
                       child: ListView.separated(
                         key: const Key('receiptGalleryList'),
                         scrollDirection: Axis.horizontal,
                         itemCount: imagePaths.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
                         itemBuilder: (context, index) {
                           final path = imagePaths[index];
                           final file = File(path);
@@ -1307,8 +1307,8 @@ class AddBillScreenState extends State<AddBillScreen> {
                             child: Stack(
                               children: [
                                 Container(
-                                  width: 100,
-                                  height: 100,
+                                  width: 76,
+                                  height: 76,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(color: cardBorder),
@@ -1322,13 +1322,13 @@ class AddBillScreenState extends State<AddBillScreen> {
                                             child: Column(
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                                const Icon(Icons.image, size: 32, color: Colors.grey),
+                                                const Icon(Icons.image, size: 28, color: Colors.grey),
                                                 const SizedBox(height: 2),
                                                 Padding(
                                                   padding: const EdgeInsets.symmetric(horizontal: 4),
                                                   child: Text(
                                                     path.split('/').last,
-                                                    style: const TextStyle(fontSize: 9),
+                                                    style: const TextStyle(fontSize: 8),
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
                                                     textAlign: TextAlign.center,
@@ -1367,7 +1367,7 @@ class AddBillScreenState extends State<AddBillScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
 
             // ── 4. Amount + Currency Section ─────────────────────
             Container(
@@ -1959,10 +1959,6 @@ class AddBillScreenState extends State<AddBillScreen> {
           projects = state.projects;
         }
 
-        if (projects.isEmpty && !widget.requireProject && widget.billToEdit == null) {
-          return const SizedBox.shrink();
-        }
-
         Project? dropdownVal = selectedProject;
         if (dropdownVal != null) {
           dropdownVal = projects.where((p) => p.id == dropdownVal!.id).firstOrNull ?? dropdownVal;
@@ -1982,16 +1978,16 @@ class AddBillScreenState extends State<AddBillScreen> {
 
         return Container(
           key: const Key('projectSelector'),
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.only(bottom: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: cardBg,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(color: cardBorder),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-                blurRadius: 8,
+                blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -2002,18 +1998,18 @@ class AddBillScreenState extends State<AddBillScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.folder_outlined,
                       color: Theme.of(context).colorScheme.primary,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2021,17 +2017,17 @@ class AddBillScreenState extends State<AddBillScreen> {
                         Text(
                           loc.translate('select_project'),
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 1),
                         Text(
                           selectedProject?.name ?? loc.translate('no_project_selected'),
                           key: const Key('selectedProjectName'),
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: FontWeight.bold,
                           ),
                           maxLines: 1,
@@ -2043,9 +2039,10 @@ class AddBillScreenState extends State<AddBillScreen> {
                   OutlinedButton.icon(
                     key: const Key('projectSelectorButton'),
                     onPressed: () => _openProjectPickerBottomSheet(context, loc, projects),
-                    icon: const Icon(Icons.swap_horiz, size: 16),
-                    label: Text(loc.translate('choose_project')),
+                    icon: const Icon(Icons.swap_horiz, size: 14),
+                    label: Text(loc.translate('choose_project'), style: const TextStyle(fontSize: 12)),
                     style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                       visualDensity: VisualDensity.compact,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -2054,14 +2051,14 @@ class AddBillScreenState extends State<AddBillScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 4),
               // Dropdown field for direct dropdown picking and test backward-compatibility
               DropdownButtonFormField<Project?>(
                 key: const Key('projectDropdown'),
                 value: dropdownVal,
                 isExpanded: true,
                 decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
