@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/bill.dart';
@@ -34,6 +35,7 @@ class AddBillScreen extends StatefulWidget {
   final Bill? billToEdit;
   final BillTemplate? template;
   final String? projectId;
+  final bool requireProject;
 
   const AddBillScreen({
     Key? key,
@@ -45,6 +47,7 @@ class AddBillScreen extends StatefulWidget {
     this.billToEdit,
     this.template,
     this.projectId,
+    this.requireProject = false,
   }) : super(key: key);
 
   @override
@@ -212,16 +215,15 @@ class AddBillScreenState extends State<AddBillScreen> {
       setState(() {});
     });
 
-    // Load all projects for the dropdown
+    // Load all projects for the dropdown & project selector
     try {
       final projectBloc = context.read<ProjectBloc>();
       projectBloc.add(const GetAllProjects());
       if (projectBloc.state is ProjectLoaded) {
+        final state = projectBloc.state as ProjectLoaded;
         final targetId = widget.billToEdit?.projectId ?? widget.projectId;
         if (targetId != null) {
-          final found = (projectBloc.state as ProjectLoaded)
-              .projects
-              .where((p) => p.id == targetId);
+          final found = state.projects.where((p) => p.id == targetId);
           if (found.isNotEmpty) {
             selectedProject = found.first;
             projectMembers = List.from(selectedProject!.members);
@@ -232,6 +234,8 @@ class AddBillScreenState extends State<AddBillScreen> {
               }
             }
           }
+        } else if (widget.billToEdit == null) {
+          _resolveDefaultProject(state.projects);
         }
       }
     } catch (_) {}
@@ -561,10 +565,67 @@ class AddBillScreenState extends State<AddBillScreen> {
   }
 
   // ────────────────────────────────────────
-  // Project selection handler
+  // Project selection handler & persistence
   // ────────────────────────────────────────
+  static const String _lastSelectedProjectPrefKey = 'last_selected_project_id';
+
+  void _saveLastSelectedProjectId(String id) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_lastSelectedProjectPrefKey, id);
+    } catch (_) {}
+  }
+
+  Future<void> _resolveDefaultProject(List<Project> projects) async {
+    if (!mounted || projects.isEmpty || selectedProject != null || widget.billToEdit != null) {
+      return;
+    }
+
+    if (widget.projectId != null) {
+      final match = projects.where((p) => p.id == widget.projectId).firstOrNull;
+      if (match != null) {
+        _applyProject(match);
+        return;
+      }
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedId = prefs.getString(_lastSelectedProjectPrefKey);
+      if (savedId != null) {
+        final match = projects.where((p) => p.id == savedId).firstOrNull;
+        if (match != null) {
+          _applyProject(match);
+          return;
+        }
+      }
+    } catch (_) {}
+
+    if (projects.isNotEmpty) {
+      _applyProject(projects.first);
+    }
+  }
+
+  void _applyProject(Project project) {
+    if (!mounted) return;
+    setState(() {
+      selectedProject = project;
+      projectMembers = List.from(project.members);
+      if (widget.billToEdit == null && (selectedParticipants.isEmpty || !_hasUserExplicitlySelectedProject)) {
+        selectedParticipants = Set.from(project.members);
+        if (project.members.isNotEmpty && paidByController.text.isEmpty) {
+          paidByController.text = project.members.first;
+        }
+      }
+      _syncParticipantControllers();
+    });
+  }
+
   void _onProjectSelected(Project? project) {
     _hasUserExplicitlySelectedProject = true;
+    if (project != null) {
+      _saveLastSelectedProjectId(project.id);
+    }
     setState(() {
       selectedProject = project;
       if (project == null) {
@@ -636,6 +697,28 @@ class AddBillScreenState extends State<AddBillScreen> {
   // ────────────────────────────────────────
   bool _validateForm() {
     final loc = AppLocalizations.of(context);
+
+    // AC 7: Cannot add bill without selecting project
+    bool hasAvailableProjects = false;
+    try {
+      final projectBloc = context.read<ProjectBloc>();
+      if (projectBloc.state is ProjectLoaded) {
+        hasAvailableProjects = (projectBloc.state as ProjectLoaded).projects.isNotEmpty;
+      }
+    } catch (_) {}
+
+    if (widget.requireProject || (hasAvailableProjects && widget.billToEdit == null)) {
+      if (selectedProject == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            key: const Key('projectRequiredSnackBar'),
+            content: Text(loc.translate('project_required')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return false;
+      }
+    }
 
     if (titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -873,6 +956,8 @@ class AddBillScreenState extends State<AddBillScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildQuickTemplatesSection(loc, isDark),
+            _buildTopProjectSelector(context, loc, isDark),
+            const SizedBox(height: 16),
             // ── 0. Tab Selector Refinement ───────────────────────
             Container(
               key: const Key('transactionTypeTabs'),
@@ -1477,9 +1562,6 @@ class AddBillScreenState extends State<AddBillScreen> {
             _buildSplitModeRadioGroup(loc, isDark),
             const SizedBox(height: 12),
 
-            // Project Dropdown
-            _buildProjectDropdown(loc),
-            const SizedBox(height: 12),
 
             // Member list / Manual participants
             Text(
@@ -1710,9 +1792,143 @@ class AddBillScreenState extends State<AddBillScreen> {
 
 
   // ────────────────────────────────────────
-  // Project Dropdown widget
+  // Top Project Selector & Picker (AC 1, AC 2, AC 3)
   // ────────────────────────────────────────
-  Widget _buildProjectDropdown(AppLocalizations loc) {
+  void _openProjectPickerBottomSheet(
+    BuildContext context,
+    AppLocalizations loc,
+    List<Project> projects,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Column(
+              key: const Key('projectPickerBottomSheet'),
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    key: const Key('projectPickerDragHandle'),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Text(
+                      loc.translate('select_project_modal_title'),
+                      key: const Key('projectPickerTitle'),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      key: const Key('projectPickerCloseButton'),
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(bottomSheetContext).pop(),
+                    ),
+                  ],
+                ),
+                const Divider(),
+                if (projects.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        loc.translate('project_no_members'),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        ListTile(
+                          key: const Key('projectPickerItem_none'),
+                          leading: CircleAvatar(
+                            backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+                            child: const Icon(Icons.clear, size: 18),
+                          ),
+                          title: Text(loc.translate('no_project')),
+                          selected: selectedProject == null,
+                          trailing: selectedProject == null
+                              ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+                              : null,
+                          onTap: () {
+                            _onProjectSelected(null);
+                            Navigator.of(bottomSheetContext).pop();
+                          },
+                        ),
+                        ...projects.map((p) {
+                          final isSelected = selectedProject?.id == p.id;
+                          return ListTile(
+                            key: Key('projectPickerItem_${p.id}'),
+                            leading: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? Theme.of(context).colorScheme.primary
+                                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                              child: Icon(
+                                Icons.folder,
+                                color: isSelected
+                                    ? Colors.white
+                                    : (isDark ? Colors.white70 : Colors.black54),
+                              ),
+                            ),
+                            title: Text(
+                              p.name,
+                              key: Key('projectItem_${p.id}'),
+                              style: TextStyle(
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                            subtitle: Text('${p.members.length} members'),
+                            trailing: isSelected
+                                ? Icon(
+                                    Icons.check_circle,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  )
+                                : null,
+                            onTap: () {
+                              _onProjectSelected(p);
+                              Navigator.of(bottomSheetContext).pop();
+                            },
+                          );
+                        }),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopProjectSelector(
+    BuildContext context,
+    AppLocalizations loc,
+    bool isDark,
+  ) {
     return BlocConsumer<ProjectBloc, ProjectState>(
       listener: (context, state) {
         if (state is ProjectLoaded && !_hasUserExplicitlySelectedProject) {
@@ -1732,6 +1948,8 @@ class AddBillScreenState extends State<AddBillScreen> {
                 }
               });
             }
+          } else if (selectedProject == null && widget.billToEdit == null) {
+            _resolveDefaultProject(state.projects);
           }
         }
       },
@@ -1739,6 +1957,10 @@ class AddBillScreenState extends State<AddBillScreen> {
         List<Project> projects = [];
         if (state is ProjectLoaded) {
           projects = state.projects;
+        }
+
+        if (projects.isEmpty && !widget.requireProject && widget.billToEdit == null) {
+          return const SizedBox.shrink();
         }
 
         Project? dropdownVal = selectedProject;
@@ -1755,27 +1977,113 @@ class AddBillScreenState extends State<AddBillScreen> {
           dropdownVal = null;
         }
 
-        return DropdownButtonFormField<Project?>(
-          key: const Key('projectDropdown'),
-          value: dropdownVal,
-          decoration: InputDecoration(
-            labelText: loc.translate('select_project'),
-            border: const OutlineInputBorder(),
-            prefixIcon: const Icon(Icons.folder_open),
-          ),
-          items: [
-            DropdownMenuItem<Project?>(
-              value: null,
-              child: Text(loc.translate('no_project')),
-            ),
-            ...projects.map(
-              (p) => DropdownMenuItem<Project?>(
-                value: p,
-                child: Text(p.name),
+        final cardBg = isDark ? const Color(0xFF242424) : Colors.white;
+        final cardBorder = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
+
+        return Container(
+          key: const Key('projectSelector'),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-            ),
-          ],
-          onChanged: _onProjectSelected,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.folder_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          loc.translate('select_project'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          selectedProject?.name ?? loc.translate('no_project_selected'),
+                          key: const Key('selectedProjectName'),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    key: const Key('projectSelectorButton'),
+                    onPressed: () => _openProjectPickerBottomSheet(context, loc, projects),
+                    icon: const Icon(Icons.swap_horiz, size: 16),
+                    label: Text(loc.translate('choose_project')),
+                    style: OutlinedButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Dropdown field for direct dropdown picking and test backward-compatibility
+              DropdownButtonFormField<Project?>(
+                key: const Key('projectDropdown'),
+                value: dropdownVal,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  isDense: true,
+                  hintText: loc.translate('select_project'),
+                ),
+                items: [
+                  DropdownMenuItem<Project?>(
+                    value: null,
+                    child: Text(loc.translate('no_project')),
+                  ),
+                  ...projects.map(
+                    (p) => DropdownMenuItem<Project?>(
+                      value: p,
+                      child: Text(p.name),
+                    ),
+                  ),
+                ],
+                onChanged: _onProjectSelected,
+              ),
+            ],
+          ),
         );
       },
     );

@@ -339,6 +339,10 @@
   "amount_must_be_positive": "Amount must be greater than zero",
   "settlement_details": "Settlement Details",
   "who_paid_whom": "{payer} paid {payee}",
-  "export_payment_history": "Export Payment History"
+  "export_payment_history": "Export Payment History",
+  "project_required": "Please select a project",
+  "select_project_modal_title": "Select Project",
+  "no_project_selected": "No Project Selected",
+  "choose_project": "Choose Project"
 }
 

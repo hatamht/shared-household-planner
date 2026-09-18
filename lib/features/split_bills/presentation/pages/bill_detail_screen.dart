@@ -518,25 +518,29 @@ class BillDetailScreen extends StatelessWidget {
           }
         } catch (_) {}
 
-        return Container(
-          key: const Key('billDetailProject'),
-          margin: const EdgeInsets.only(top: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF2C3E50) : const Color(0xFFEBF5FB),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isDark ? Colors.blueGrey.shade700 : const Color(0xFFAED6F1),
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.folder_outlined,
-                size: 15,
-                color: isDark ? Colors.lightBlueAccent : const Color(0xFF2980B9),
+        return Semantics(
+          label: 'project_badge',
+          child: Container(
+            key: const Key('billDetailProject'),
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2C3E50) : const Color(0xFFEBF5FB),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDark ? Colors.blueGrey.shade700 : const Color(0xFFAED6F1),
               ),
+            ),
+            child: Row(
+              key: const Key('projectBadge'),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.folder_outlined,
+                  key: const Key('billProjectBadgeIcon'),
+                  size: 15,
+                  color: isDark ? Colors.lightBlueAccent : const Color(0xFF2980B9),
+                ),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
@@ -552,8 +556,9 @@ class BillDetailScreen extends StatelessWidget {
               ),
             ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 }

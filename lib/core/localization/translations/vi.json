@@ -339,5 +339,9 @@
   "amount_must_be_positive": "Số tiền phải lớn hơn 0",
   "settlement_details": "Chi tiết quyết toán",
   "who_paid_whom": "{payer} đã trả cho {payee}",
-  "export_payment_history": "Xuất lịch sử thanh toán"
+  "export_payment_history": "Xuất lịch sử thanh toán",
+  "project_required": "Vui lòng chọn dự án",
+  "select_project_modal_title": "Chọn dự án",
+  "no_project_selected": "Chưa chọn dự án",
+  "choose_project": "Chọn dự án"
 }
