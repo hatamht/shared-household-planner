@@ -84,10 +84,17 @@ class AddBillScreen extends StatefulWidget {
   State<AddBillScreen> createState() => AddBillScreenState();
 }
 
-class AddBillScreenState extends State<AddBillScreen> {
+class AddBillScreenState extends State<AddBillScreen>
+    with TickerProviderStateMixin {
   late bool _isCompactMode;
   bool get isCompactMode => _isCompactMode;
   FocusNode get descriptionFocusNode => titleFocusNode;
+
+  // ── Animation controllers for Compact ↔ Full mode transition ──
+  late AnimationController _modeAnimController;
+  late Animation<double> _compactFade;     // 1.0 in compact → 0.0 in full
+  late Animation<double> _fullFade;        // 0.0 in compact → 1.0 in full
+  late Animation<double> _expandIconTurn; // 0.0 → 0.5 (180° rotate)
 
   late TextEditingController titleController;
   late TextEditingController amountController;
@@ -243,6 +250,21 @@ class AddBillScreenState extends State<AddBillScreen> {
 
     _isCompactMode = widget.initialCompactMode ?? (widget.billToEdit == null && widget.template == null);
 
+    // ── Set up Compact ↔ Full mode animation (300ms easeInOut) ──
+    _modeAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: _isCompactMode ? 0.0 : 1.0, // 0=compact, 1=full
+    );
+    final curvedAnim = CurvedAnimation(
+      parent: _modeAnimController,
+      curve: Curves.easeInOut,
+      reverseCurve: Curves.easeInOut,
+    );
+    _compactFade = Tween<double>(begin: 1.0, end: 0.0).animate(curvedAnim);
+    _fullFade    = Tween<double>(begin: 0.0, end: 1.0).animate(curvedAnim);
+    _expandIconTurn = Tween<double>(begin: 0.0, end: 0.5).animate(curvedAnim);
+
     if (_isCompactMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -381,12 +403,26 @@ class AddBillScreenState extends State<AddBillScreen> {
     for (final c in _customAmountControllers.values) {
       c.dispose();
     }
+    _modeAnimController.dispose();
     super.dispose();
   }
 
   // ────────────────────────────────────────
   // Two-Mode Layout Helpers (Compact Mode)
   // ────────────────────────────────────────
+
+  /// Animated expand: Compact → Full (300ms easeInOut)
+  Future<void> _switchToFullMode() async {
+    setState(() => _isCompactMode = false);
+    await _modeAnimController.forward();
+  }
+
+  /// Animated collapse: Full → Compact (300ms easeInOut)
+  Future<void> _switchToCompactMode() async {
+    setState(() => _isCompactMode = true);
+    await _modeAnimController.reverse();
+  }
+
   bool get _canSave {
     final hasProject = _hasUserExplicitlySelectedProject
         ? selectedProject != null
@@ -978,6 +1014,7 @@ class AddBillScreenState extends State<AddBillScreen> {
 
   Widget _buildCompactSecondaryBar(AppLocalizations loc, Color categoryColor, bool isDark) {
     return SingleChildScrollView(
+      key: const Key('compactSecondaryBar'),
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
@@ -1010,16 +1047,15 @@ class AddBillScreenState extends State<AddBillScreen> {
             onTap: () => _pickImage(ImageSource.camera),
           ),
           const SizedBox(width: 8),
-          // Expand Button
+          // Expand Button (animated rotating icon)
           _buildCompactChip(
             key: const Key('expandToFullModeButton'),
-            icon: Icon(Icons.tune, size: 16, color: categoryColor),
+            icon: RotationTransition(
+              turns: _expandIconTurn,
+              child: Icon(Icons.tune, size: 16, color: categoryColor),
+            ),
             label: loc.translate('expand'),
-            onTap: () {
-              setState(() {
-                _isCompactMode = false;
-              });
-            },
+            onTap: _switchToFullMode,
           ),
         ],
       ),
@@ -1071,11 +1107,7 @@ class AddBillScreenState extends State<AddBillScreen> {
               foregroundColor: categoryColor,
               visualDensity: VisualDensity.compact,
             ),
-            onPressed: () {
-              setState(() {
-                _isCompactMode = true;
-              });
-            },
+            onPressed: _switchToCompactMode,
           ),
         ],
       ),
@@ -1727,41 +1759,60 @@ class AddBillScreenState extends State<AddBillScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildTopProjectSelector(context, loc, isDark),
-            if (_isCompactMode) ...[
-              const SizedBox(height: 12),
-              _buildCompactDescriptionField(loc, categoryColor, isDark),
-              const SizedBox(height: 12),
-              _buildCompactAmountField(loc, categoryColor, isDark),
-              const SizedBox(height: 12),
-              _buildCompactSecondaryBar(loc, categoryColor, isDark),
-              const SizedBox(height: 12),
-              _buildCompactSplitChip(loc, categoryColor, isDark),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  key: const Key('saveProjectButton'),
-                  onPressed: _canSave ? _submitForm : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: categoryColor,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 2,
-                  ),
-                  child: Text(
-                    loc.translate('save_bill'),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ] else ...[
-              const SizedBox(height: 6),
-              _buildCollapseBar(loc, categoryColor, isDark),
-              _buildQuickTemplatesSection(loc, isDark),
-              const SizedBox(height: 6),
+            // ── Animated mode sections ──────────────────────────
+            // Compact content slides/fades out while Full content slides/fades in
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _isCompactMode
+                  ? FadeTransition(
+                      opacity: _compactFade,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 12),
+                          _buildCompactDescriptionField(loc, categoryColor, isDark),
+                          const SizedBox(height: 12),
+                          _buildCompactAmountField(loc, categoryColor, isDark),
+                          const SizedBox(height: 12),
+                          _buildCompactSecondaryBar(loc, categoryColor, isDark),
+                          const SizedBox(height: 12),
+                          _buildCompactSplitChip(loc, categoryColor, isDark),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              key: const Key('saveProjectButton'),
+                              onPressed: _canSave ? _submitForm : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: categoryColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 2,
+                              ),
+                              child: Text(
+                                loc.translate('save_bill'),
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    )
+                  : FadeTransition(
+                      opacity: _fullFade,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 6),
+                          _buildCollapseBar(loc, categoryColor, isDark),
+                          _buildQuickTemplatesSection(loc, isDark),
+                          const SizedBox(height: 6),
             // ── 0. Tab Selector Refinement ───────────────────────
             Container(
               key: const Key('transactionTypeTabs'),
@@ -2441,12 +2492,17 @@ class AddBillScreenState extends State<AddBillScreen> {
                 ),
               ),
             ),
-          ],
-        ],
-      ),
-    ),
-  );
-}
+                         ],     // full FT Column children
+                       ),       // full FT Column
+                     ),         // full FadeTransition
+            ),                  // AnimatedSize
+          ],     // outer Column children
+        ),       // outer Column
+      ),         // SingleChildScrollView
+    );                          // return Scaffold
+  }
+
+
 
   Widget _buildQuickTemplatesSection(AppLocalizations loc, bool isDark) {
     try {
