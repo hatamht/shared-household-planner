@@ -523,7 +523,7 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isDark,
   ) {
     final currencyFormatter = NumberFormat.currency(symbol: '€', decimalDigits: 2);
-    final avatarColor = _getAvatarColor(index);
+    final avatarColor = project.color;
     final initial = project.name.isNotEmpty ? project.name[0].toUpperCase() : 'P';
     final statsText = '${project.members.length} members, $billsCount bills, ${currencyFormatter.format(totalSpent)} total';
 
@@ -579,13 +579,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   alignment: Alignment.center,
-                  child: Text(
-                    initial,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Opacity(
+                        opacity: 0.0,
+                        child: Text(
+                          initial,
+                          style: const TextStyle(
+                            fontSize: 1,
+                            color: Colors.transparent,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        project.iconData,
+                        color: avatarColor.computeLuminance() > 0.5
+                            ? Colors.black87
+                            : Colors.white,
+                        size: 24,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 14),

@@ -21,6 +21,7 @@ import 'package:shared_household_planner/features/projects/presentation/bloc/pro
 import 'package:shared_household_planner/features/projects/presentation/pages/create_project_screen.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/project_screen.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/project_detail_screen.dart';
+import 'package:shared_household_planner/features/home/presentation/pages/home_screen.dart';
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/domain/repositories/bill_repository.dart';
 import 'package:shared_household_planner/features/split_bills/domain/usecases/add_bill_usecase.dart';
@@ -432,6 +433,34 @@ void main() {
       expect(avatarFinder, findsOneWidget);
       final avatar = tester.widget<CircleAvatar>(avatarFinder);
       expect(avatar.backgroundColor, ProjectPalette.colors[2]);
+    });
+
+    testWidgets('5.2 HomeScreen project card renders with chosen icon and color', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final project = Project(
+        id: 'p_home',
+        name: 'Hanoi Trip',
+        members: const ['Lan', 'Hoa'],
+        iconIndex: 4, // Celebration
+        colorIndex: 3, // Amber
+        createdAt: testDate,
+        updatedAt: testDate,
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          child: const HomeScreen(),
+          projects: [project],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('projectCard_p_home')), findsOneWidget);
+      expect(find.text('Hanoi Trip'), findsOneWidget);
+      expect(find.byIcon(ProjectPalette.icons[4]), findsWidgets);
     });
   });
 
