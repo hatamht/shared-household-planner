@@ -358,6 +358,8 @@
   "compact_mode": "Compact Mode",
   "full_mode": "Full Mode",
   "select_project_first": "Select project first",
-  "more": "More"
+  "more": "More",
+  "add_expense_button": "Add Expense",
+  "create_first_bill": "Create Expense"
 }
 

@@ -4,9 +4,11 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../features/split_bills/domain/entities/bill.dart';
 import '../../../../features/split_bills/domain/repositories/bill_repository.dart';
 import '../../domain/entities/project.dart';
+import '../../domain/entities/project_settings.dart';
 import '../../domain/entities/project_statistics.dart';
 import '../../domain/entities/settlement_item.dart';
 import '../../domain/usecases/calculate_settlement_usecase.dart';
+import '../../../split_bills/presentation/pages/add_bill_screen.dart';
 import '../../../split_bills/presentation/widgets/receipt_viewer_modal.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../settlement/presentation/widgets/add_settlement_dialog.dart';
@@ -18,10 +20,10 @@ class ProjectDetailScreen extends StatefulWidget {
   const ProjectDetailScreen({super.key, required this.project});
 
   @override
-  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+  State<ProjectDetailScreen> createState() => ProjectDetailScreenState();
 }
 
-class _ProjectDetailScreenState extends State<ProjectDetailScreen>
+class ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Future<_ProjectDetailData> _dataFuture;
@@ -31,6 +33,30 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _dataFuture = _loadData();
+  }
+
+  void refreshData() {
+    if (mounted) {
+      setState(() {
+        _dataFuture = _loadData();
+      });
+    }
+  }
+
+  Future<void> _navigateToAddBill() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddBillScreen(
+          projectId: widget.project.id,
+          projectName: widget.project.name,
+          projectSettings: ProjectSettings(
+            members: widget.project.members,
+          ),
+        ),
+      ),
+    );
+    refreshData();
   }
 
   @override
@@ -78,6 +104,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        key: const Key('addExpenseFromProjectButton'),
+        onPressed: _navigateToAddBill,
+        icon: const Icon(Icons.add),
+        label: Text(loc.translate('add_expense_button')),
+        tooltip: loc.translate('add_expense_button'),
+      ),
       body: FutureBuilder<_ProjectDetailData>(
         future: _dataFuture,
         builder: (context, snapshot) {
@@ -91,7 +124,11 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
           return TabBarView(
             controller: _tabController,
             children: [
-              _BillsTab(project: project, bills: data.bills),
+              _BillsTab(
+                project: project,
+                bills: data.bills,
+                onAddBill: _navigateToAddBill,
+              ),
               _SettlementTab(
                   project: project, stats: data.stats),
               _StatisticsTab(
@@ -119,8 +156,13 @@ class _ProjectDetailData {
 class _BillsTab extends StatelessWidget {
   final Project project;
   final List<Bill> bills;
+  final VoidCallback onAddBill;
 
-  const _BillsTab({required this.project, required this.bills});
+  const _BillsTab({
+    required this.project,
+    required this.bills,
+    required this.onAddBill,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +180,16 @@ class _BillsTab extends StatelessWidget {
               loc.translate('no_bills_in_project'),
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            KeyedSubtree(
+              key: const Key('inlineAddBillButton'),
+              child: ElevatedButton.icon(
+                key: const Key('emptyStateAddExpenseButton'),
+                onPressed: onAddBill,
+                icon: const Icon(Icons.add),
+                label: Text(loc.translate('create_first_bill')),
+              ),
             ),
           ],
         ),

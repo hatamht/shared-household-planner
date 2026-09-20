@@ -315,6 +315,28 @@ class AddBillScreenState extends State<AddBillScreen>
       }
     } catch (_) {}
 
+    if (widget.projectId != null) {
+      if (selectedProject == null && widget.projectName != null) {
+        selectedProject = Project(
+          id: widget.projectId!,
+          name: widget.projectName!,
+          members: widget.projectSettings.members,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+      }
+      if (projectMembers.isEmpty && widget.projectSettings.members.isNotEmpty) {
+        projectMembers = List.from(widget.projectSettings.members);
+      }
+      if (widget.billToEdit == null && selectedParticipants.isEmpty && widget.projectSettings.members.isNotEmpty) {
+        selectedParticipants = Set.from(widget.projectSettings.members);
+        if (projectMembers.isNotEmpty && paidByController.text.isEmpty) {
+          paidByController.text = projectMembers.first;
+        }
+        _syncParticipantControllers();
+      }
+    }
+
     // Load templates
     try {
       context.read<BillTemplatesBloc>().add(const LoadTemplatesEvent());
@@ -2928,7 +2950,7 @@ class AddBillScreenState extends State<AddBillScreen>
           final targetId = widget.billToEdit?.projectId ?? widget.projectId;
           if (targetId != null) {
             final matching = state.projects.where((p) => p.id == targetId).firstOrNull;
-            if (matching != null && selectedProject?.id != matching.id) {
+            if (matching != null && (selectedProject?.id != matching.id || projectMembers.isEmpty)) {
               setState(() {
                 selectedProject = matching;
                 projectMembers = List.from(matching.members);

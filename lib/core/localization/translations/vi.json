@@ -358,5 +358,7 @@
   "compact_mode": "Chế độ thu gọn",
   "full_mode": "Chế độ đầy đủ",
   "select_project_first": "Chọn dự án trước",
-  "more": "Thêm"
+  "more": "Thêm",
+  "add_expense_button": "Tạo yêu cầu chi tiêu",
+  "create_first_bill": "Tạo chi tiêu"
 }

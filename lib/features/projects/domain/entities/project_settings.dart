@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 class ProjectSettings extends Equatable {
   final String defaultCurrency;
   final List<String> availableCurrencies;
+  final List<String> members;
 
   const ProjectSettings({
     this.defaultCurrency = 'VND',
@@ -16,8 +17,9 @@ class ProjectSettings extends Equatable {
       'SGD',
       'THB',
     ],
+    this.members = const [],
   });
 
   @override
-  List<Object?> get props => [defaultCurrency, availableCurrencies];
+  List<Object?> get props => [defaultCurrency, availableCurrencies, members];
 }
