@@ -4,6 +4,8 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../domain/entities/project.dart';
 import '../bloc/project_bloc.dart';
 
+import '../../domain/entities/project_palette.dart';
+
 class CreateProjectScreen extends StatefulWidget {
   final Project? project;
 
@@ -23,25 +25,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   bool _isLoading = false;
 
   // Icon & Color palette options
-  static const List<IconData> projectIcons = [
-    Icons.apartment_rounded,
-    Icons.home_rounded,
-    Icons.flight_takeoff_rounded,
-    Icons.restaurant_rounded,
-    Icons.celebration_rounded,
-    Icons.school_rounded,
-    Icons.work_rounded,
-    Icons.shopping_bag_rounded,
-  ];
-
-  static const List<Color> projectColors = [
-    Color(0xFF3F51B5), // Indigo
-    Color(0xFF009688), // Teal
-    Color(0xFFFF5722), // Deep Orange
-    Color(0xFFFFB300), // Amber
-    Color(0xFF9C27B0), // Purple
-    Color(0xFF2196F3), // Blue
-  ];
+  static const List<IconData> projectIcons = ProjectPalette.icons;
+  static const List<Color> projectColors = ProjectPalette.colors;
 
   int _selectedIconIndex = 0;
   int _selectedColorIndex = 0;
@@ -56,6 +41,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
     _descriptionController = TextEditingController(text: widget.project?.description ?? '');
     if (widget.project != null) {
       _members.addAll(widget.project!.members);
+      _selectedIconIndex = widget.project!.iconIndex.clamp(0, projectIcons.length - 1);
+      _selectedColorIndex = widget.project!.colorIndex.clamp(0, projectColors.length - 1);
     }
   }
 
@@ -122,6 +109,8 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
           ? null
           : _descriptionController.text.trim(),
       members: List.unmodifiable(_members),
+      iconIndex: _selectedIconIndex,
+      colorIndex: _selectedColorIndex,
       createdAt: isEditing ? widget.project!.createdAt : now,
       updatedAt: now,
     );

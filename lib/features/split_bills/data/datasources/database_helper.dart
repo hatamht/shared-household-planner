@@ -22,7 +22,7 @@ class DatabaseHelper {
 
     return openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _createTables,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -32,6 +32,8 @@ class DatabaseHelper {
               name TEXT NOT NULL,
               description TEXT,
               members TEXT NOT NULL,
+              iconIndex INTEGER DEFAULT 0,
+              colorIndex INTEGER DEFAULT 0,
               createdAt TEXT NOT NULL,
               updatedAt TEXT NOT NULL
             )
@@ -113,6 +115,14 @@ class DatabaseHelper {
             )
           ''');
         }
+        if (oldVersion < 10) {
+          await db.execute(
+            'ALTER TABLE projects ADD COLUMN iconIndex INTEGER DEFAULT 0',
+          );
+          await db.execute(
+            'ALTER TABLE projects ADD COLUMN colorIndex INTEGER DEFAULT 0',
+          );
+        }
       },
     );
   }
@@ -156,6 +166,8 @@ class DatabaseHelper {
         name TEXT NOT NULL,
         description TEXT,
         members TEXT NOT NULL,
+        iconIndex INTEGER DEFAULT 0,
+        colorIndex INTEGER DEFAULT 0,
         createdAt TEXT NOT NULL,
         updatedAt TEXT NOT NULL
       )

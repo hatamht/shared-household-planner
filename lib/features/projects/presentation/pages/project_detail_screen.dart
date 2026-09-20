@@ -91,15 +91,44 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
     final project = widget.project;
+    final isBright = project.color.computeLuminance() > 0.5;
+    final onProjectColor = isBright ? Colors.black87 : Colors.white;
+    final onProjectColorSubtle = isBright ? Colors.black54 : Colors.white70;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(project.name),
+        title: Row(
+          children: [
+            Icon(project.iconData, size: 22, color: onProjectColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                project.name,
+                style: TextStyle(color: onProjectColor, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        iconTheme: IconThemeData(color: onProjectColor),
+        backgroundColor: project.color,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                project.color,
+                project.color.withOpacity(0.85),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
+          labelColor: onProjectColor,
+          unselectedLabelColor: onProjectColorSubtle,
+          indicatorColor: onProjectColor,
           tabs: [
             Tab(key: const Key('billsTab'), text: loc.translate('bills_tab')),
             Tab(key: const Key('settlementTab'), text: loc.translate('settlement_tab')),

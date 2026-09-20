@@ -7,6 +7,8 @@ class ProjectModel extends Project {
     required super.name,
     super.description,
     required super.members,
+    super.iconIndex = 0,
+    super.colorIndex = 0,
     required super.createdAt,
     required super.updatedAt,
   });
@@ -28,6 +30,8 @@ class ProjectModel extends Project {
       name: json['name'] as String,
       description: json['description'] as String?,
       members: membersList,
+      iconIndex: (json['iconIndex'] as num?)?.toInt() ?? 0,
+      colorIndex: (json['colorIndex'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -39,6 +43,8 @@ class ProjectModel extends Project {
       'name': name,
       'description': description,
       'members': members,
+      'iconIndex': iconIndex,
+      'colorIndex': colorIndex,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -50,6 +56,8 @@ class ProjectModel extends Project {
       'name': name,
       'description': description,
       'members': jsonEncode(members),
+      'iconIndex': iconIndex,
+      'colorIndex': colorIndex,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -61,6 +69,8 @@ class ProjectModel extends Project {
       name: project.name,
       description: project.description,
       members: project.members,
+      iconIndex: project.iconIndex,
+      colorIndex: project.colorIndex,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     );

@@ -104,8 +104,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
                   child: ListTile(
                     key: Key('projectItem_${project.id}'),
                     leading: CircleAvatar(
-                      child: Text(
-                        project.name.isNotEmpty ? project.name[0].toUpperCase() : 'P',
+                      backgroundColor: project.color,
+                      child: Icon(
+                        project.iconData,
+                        color: project.color.computeLuminance() > 0.5
+                            ? Colors.black87
+                            : Colors.white,
                       ),
                     ),
                     title: Text(

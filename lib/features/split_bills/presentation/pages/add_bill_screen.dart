@@ -2895,25 +2895,54 @@ class AddBillScreenState extends State<AddBillScreen>
                         ),
                         ...projects.map((p) {
                           final isSelected = selectedProject?.id == p.id;
+                          final isBright = p.color.computeLuminance() > 0.5;
+                          final iconColor = isBright ? Colors.black87 : Colors.white;
                           return ListTile(
                             key: Key('projectPickerItem_${p.id}'),
                             leading: CircleAvatar(
-                              backgroundColor: isSelected
-                                  ? Theme.of(context).colorScheme.primary
-                                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),
+                              backgroundColor: p.color,
                               child: Icon(
-                                Icons.folder,
-                                color: isSelected
-                                    ? Colors.white
-                                    : (isDark ? Colors.white70 : Colors.black54),
+                                p.iconData,
+                                color: iconColor,
+                                size: 18,
                               ),
                             ),
-                            title: Text(
-                              p.name,
-                              key: Key('projectItem_${p.id}'),
-                              style: TextStyle(
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    p.name,
+                                    key: Key('projectItem_${p.id}'),
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  key: Key('projectPickerColorChip_${p.id}'),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: p.color.withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: p.color.withOpacity(0.4)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: p.color,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(p.iconData, size: 12, color: p.color),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                             subtitle: Text('${p.members.length} members'),
                             trailing: isSelected
@@ -3015,12 +3044,16 @@ class AddBillScreenState extends State<AddBillScreen>
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                      color: selectedProject != null
+                          ? selectedProject!.color.withOpacity(0.15)
+                          : Theme.of(context).colorScheme.primary.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       Icons.folder_outlined,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: selectedProject != null
+                          ? selectedProject!.color
+                          : Theme.of(context).colorScheme.primary,
                       size: 18,
                     ),
                   ),
@@ -3038,17 +3071,56 @@ class AddBillScreenState extends State<AddBillScreen>
                           ),
                         ),
                         const SizedBox(height: 1),
-                        Text(
-                          selectedProject?.name ??
-                              widget.projectName ??
-                              loc.translate('no_project_selected'),
-                          key: const Key('selectedProjectName'),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                selectedProject?.name ??
+                                    widget.projectName ??
+                                    loc.translate('no_project_selected'),
+                                key: const Key('selectedProjectName'),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (selectedProject != null) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                key: const Key('projectSelectorColorChip'),
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: selectedProject!.color.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: selectedProject!.color.withOpacity(0.4),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: selectedProject!.color,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      selectedProject!.iconData,
+                                      size: 12,
+                                      color: selectedProject!.color,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ],
                     ),
