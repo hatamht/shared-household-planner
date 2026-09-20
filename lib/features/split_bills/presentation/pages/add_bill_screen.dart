@@ -25,6 +25,8 @@ import '../../../templates/presentation/pages/bill_templates_screen.dart';
 import '../../domain/entities/split_mode.dart';
 import '../../domain/services/smart_split_calculator.dart';
 import '../../domain/services/default_split_mode_service.dart';
+import '../../domain/services/calculator_evaluator.dart';
+import '../widgets/calculator_keyboard.dart';
 
 // ─── Category keyword maps for silent auto-detection ───
 const Map<String, List<String>> autoCategoryKeywords = {
@@ -100,6 +102,13 @@ class AddBillScreenState extends State<AddBillScreen>
   late TextEditingController amountController;
   late TextEditingController paidByController;
   late TextEditingController participantController;
+
+  bool _showCalculator = false;
+  void _toggleCalculator() {
+    setState(() {
+      _showCalculator = !_showCalculator;
+    });
+  }
 
   // Category list & current selection
   late List<CategoryIconItem> categoriesList;
@@ -357,7 +366,7 @@ class AddBillScreenState extends State<AddBillScreen>
       return;
     }
 
-    final amount = double.tryParse(amountController.text) ?? 0.0;
+    final amount = _currentAmount;
     final participants = _effectiveParticipants;
     final template = BillTemplate(
       id: const Uuid().v4(),
@@ -428,8 +437,7 @@ class AddBillScreenState extends State<AddBillScreen>
         ? selectedProject != null
         : (selectedProject != null ||
             (widget.projectId != null && widget.projectId!.isNotEmpty));
-    final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
-    return hasProject && amount > 0;
+    return hasProject && _currentAmount > 0;
   }
 
   bool get _isToday {
@@ -973,42 +981,106 @@ class AddBillScreenState extends State<AddBillScreen>
   }
 
   Widget _buildCompactAmountField(AppLocalizations loc, Color categoryColor, bool isDark) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Text(
-            selectedCurrency,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: categoryColor,
+    final text = amountController.text.trim();
+    final hasOp = CalculatorEvaluator.hasOperator(text);
+    final evalResult = CalculatorEvaluator.evaluate(text);
+    final canEval = evalResult != null && !evalResult.isNaN && !evalResult.isInfinite;
+    final hasError = hasOp && !canEval && text.isNotEmpty;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: hasError
+                  ? Colors.redAccent
+                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              key: const Key('compactAmountField'),
-              controller: amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                hintText: '0',
-                hintStyle: TextStyle(
-                  color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Text(
+                selectedCurrency,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: categoryColor,
                 ),
-                border: InputBorder.none,
-                isDense: true,
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      key: const Key('compactAmountField'),
+                      controller: amountController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                      decoration: InputDecoration(
+                        hintText: '0',
+                        hintStyle: TextStyle(
+                          color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                      ),
+                      onSubmitted: (val) {
+                        final evaluated = CalculatorEvaluator.evaluate(val);
+                        if (evaluated != null) {
+                          amountController.text = CalculatorEvaluator.formatResult(evaluated);
+                        }
+                      },
+                    ),
+                    if (hasOp && canEval)
+                      Text(
+                        '= ${CalculatorEvaluator.formatResult(evalResult)}',
+                        key: const Key('compactAmountCalcPreview'),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: categoryColor,
+                        ),
+                      )
+                    else if (hasError)
+                      Text(
+                        loc.translate('invalid_expression'),
+                        key: const Key('compactAmountCalcError'),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.redAccent,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              IconButton(
+                key: const Key('toggleCalculatorButton'),
+                icon: Icon(
+                  _showCalculator ? Icons.keyboard_hide : Icons.calculate_outlined,
+                  color: categoryColor,
+                ),
+                tooltip: loc.translate('calculator'),
+                onPressed: _toggleCalculator,
+              ),
+            ],
+          ),
+        ),
+        if (_showCalculator) ...[
+          const SizedBox(height: 8),
+          CalculatorKeyboard(
+            controller: amountController,
+            accentColor: categoryColor,
           ),
         ],
-      ),
+      ],
     );
   }
 
@@ -1457,8 +1529,12 @@ class AddBillScreenState extends State<AddBillScreen>
 
   // ────────────────────────────────────────
   // Real-time Split Calculation
-  // ────────────────────────────────────────
-  double get _currentAmount => double.tryParse(amountController.text) ?? 0.0;
+  double get _currentAmount {
+    final text = amountController.text.trim();
+    final direct = double.tryParse(text);
+    if (direct != null) return direct;
+    return CalculatorEvaluator.evaluate(text) ?? 0.0;
+  }
 
   double get _perPersonAmount {
     final count = _effectiveParticipants.length;
@@ -1523,8 +1599,13 @@ class AddBillScreenState extends State<AddBillScreen>
       return false;
     }
 
-    final amount = double.tryParse(amountController.text);
-    if (amount == null || amount <= 0) {
+    final evalResult = CalculatorEvaluator.evaluate(amountController.text.trim());
+    if (evalResult != null) {
+      amountController.text = CalculatorEvaluator.formatResult(evalResult);
+    }
+
+    final amount = double.tryParse(amountController.text) ?? _currentAmount;
+    if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('amount_must_be_positive'))),
       );
@@ -1594,7 +1675,7 @@ class AddBillScreenState extends State<AddBillScreen>
   void _submitForm() async {
     if (!_validateForm()) return;
 
-    final amount = double.parse(amountController.text);
+    final amount = double.tryParse(amountController.text) ?? _currentAmount;
     final parts = _effectiveParticipants;
     final mode = SplitMode.fromString(_splitMode);
 
@@ -2281,32 +2362,83 @@ class AddBillScreenState extends State<AddBillScreen>
 
                   // Amount input right-aligned
                   Expanded(
-                    child: TextField(
-                      key: const Key('amountField'),
-                      controller: amountController,
-                      textAlign: TextAlign.right,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: loc.translate('amount'),
-                        hintText: '100,000',
-                        border: InputBorder.none,
-                        suffixText: currencySymbol,
-                        suffixStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          key: const Key('amountField'),
+                          controller: amountController,
+                          textAlign: TextAlign.right,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: loc.translate('amount'),
+                            hintText: '100,000',
+                            border: InputBorder.none,
+                            suffixText: currencySymbol,
+                            suffixStyle: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                          onSubmitted: (val) {
+                            final evaluated = CalculatorEvaluator.evaluate(val);
+                            if (evaluated != null) {
+                              amountController.text = CalculatorEvaluator.formatResult(evaluated);
+                            }
+                          },
                         ),
-                      ),
+                        if (CalculatorEvaluator.hasOperator(amountController.text.trim()) &&
+                            CalculatorEvaluator.canEvaluate(amountController.text.trim()))
+                          Text(
+                            '= ${CalculatorEvaluator.formatResult(CalculatorEvaluator.evaluate(amountController.text.trim())!)}',
+                            key: const Key('fullAmountCalcPreview'),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          )
+                        else if (CalculatorEvaluator.hasOperator(amountController.text.trim()) &&
+                            !CalculatorEvaluator.canEvaluate(amountController.text.trim()) &&
+                            amountController.text.trim().isNotEmpty)
+                          Text(
+                            loc.translate('invalid_expression'),
+                            key: const Key('fullAmountCalcError'),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.redAccent,
+                            ),
+                          ),
+                      ],
                     ),
+                  ),
+                  IconButton(
+                    key: const Key('fullToggleCalculatorButton'),
+                    icon: Icon(
+                      _showCalculator ? Icons.keyboard_hide : Icons.calculate_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    tooltip: loc.translate('calculator'),
+                    onPressed: _toggleCalculator,
                   ),
                 ],
               ),
             ),
+            if (_showCalculator) ...[
+              const SizedBox(height: 8),
+              CalculatorKeyboard(
+                controller: amountController,
+                accentColor: categoryColor,
+              ),
+            ],
             const SizedBox(height: 16),
 
             // ── 5. Paid By & When (Two-column layout) ─────────────
