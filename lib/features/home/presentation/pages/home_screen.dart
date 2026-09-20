@@ -15,7 +15,8 @@ import 'package:shared_household_planner/features/split_bills/presentation/bloc/
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool showAppBar;
+  const HomeScreen({super.key, this.showAppBar = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -157,45 +158,49 @@ class _HomeScreenState extends State<HomeScreen> {
         (Theme.of(context).brightness == Brightness.dark);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          loc.translate('app_name'),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        elevation: 0.5,
-        actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.language),
-            tooltip: loc.translate('language'),
-            onSelected: (String code) {
-              languageProvider?.setLanguage(code);
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'en',
-                child: Text('🇬🇧 ${loc.translate("english")}'),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: Text(
+                loc.translate('app_name'),
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
-              PopupMenuItem(
-                value: 'vi',
-                child: Text('🇻🇳 ${loc.translate("vietnamese")}'),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: IconButton(
-              key: const Key('themeToggleButton'),
-              icon: Icon(
-                isDark ? Icons.light_mode : Icons.dark_mode,
-                color: Theme.of(context).appBarTheme.foregroundColor ?? Colors.white,
-              ),
-              tooltip: isDark ? loc.translate('light_mode') : loc.translate('dark_mode'),
-              onPressed: () => themeProvider?.toggleTheme(),
-            ),
-          ),
-        ],
-      ),
-      body: _buildCurrentTab(context, loc, isDark),
+              elevation: 0.5,
+              actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.language),
+                  tooltip: loc.translate('language'),
+                  onSelected: (String code) {
+                    languageProvider?.setLanguage(code);
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: 'en',
+                      child: Text('🇬🇧 ${loc.translate("english")}'),
+                    ),
+                    PopupMenuItem(
+                      value: 'vi',
+                      child: Text('🇻🇳 ${loc.translate("vietnamese")}'),
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: IconButton(
+                    key: const Key('themeToggleButton'),
+                    icon: Icon(
+                      isDark ? Icons.light_mode : Icons.dark_mode,
+                      color: Theme.of(context).appBarTheme.foregroundColor ?? Colors.white,
+                    ),
+                    tooltip: isDark ? loc.translate('light_mode') : loc.translate('dark_mode'),
+                    onPressed: () => themeProvider?.toggleTheme(),
+                  ),
+                ),
+              ],
+            )
+          : null,
+      body: widget.showAppBar
+          ? _buildCurrentTab(context, loc, isDark)
+          : SafeArea(child: _buildCurrentTab(context, loc, isDark)),
       bottomNavigationBar: _buildBottomNavigationBar(context, loc, isDark),
       floatingActionButton: _currentTabIndex == 0
           ? FloatingActionButton(

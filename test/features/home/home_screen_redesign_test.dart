@@ -327,7 +327,7 @@ Widget buildTestApp({
       ],
       child: MaterialApp(
         theme: tp.currentTheme,
-        home: const HomeScreen(),
+        home: const HomeScreen(showAppBar: true),
         routes: {
           '/projects': (_) => const ProjectScreen(),
           '/create-project': (_) => const CreateProjectScreen(),

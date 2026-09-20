@@ -119,7 +119,7 @@ Widget _buildApp({
           value: bloc,
           child: MaterialApp(
             theme: tp.currentTheme,
-            home: home ?? const HomeScreen(),
+            home: home ?? const HomeScreen(showAppBar: true),
             routes: {
               '/projects': (_) => const ProjectScreen(),
             },

@@ -262,7 +262,7 @@ Widget buildTestApp({
     bBloc.emit(const BillsLoaded(bills: []));
   }
 
-  Widget effectiveChild = child ?? const HomeScreen();
+  Widget effectiveChild = child ?? const HomeScreen(showAppBar: true);
   if (effectiveChild is AddBillScreen && effectiveChild.initialCompactMode == null) {
     effectiveChild = AddBillScreen(
       key: effectiveChild.key,
