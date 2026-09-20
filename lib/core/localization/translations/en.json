@@ -370,6 +370,8 @@
   "receipt": "Receipt",
   "account_name": "Household Admin",
   "status": "Status",
-  "items": "items"
+  "items": "items",
+  "last_active_project": "Last Active Project",
+  "auto_restoring_project": "Restoring last project..."
 }
 

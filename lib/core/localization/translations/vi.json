@@ -370,5 +370,7 @@
   "receipt": "Biên lai",
   "account_name": "Quản trị viên",
   "status": "Trạng thái",
-  "items": "mục"
+  "items": "mục",
+  "last_active_project": "Dự án hoạt động gần nhất",
+  "auto_restoring_project": "Đang mở lại dự án gần nhất..."
 }

@@ -14,6 +14,7 @@ import '../../../split_bills/presentation/widgets/receipt_viewer_modal.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../settlement/presentation/widgets/add_settlement_dialog.dart';
 import '../../../settlement/presentation/bloc/settlement_bloc.dart';
+import '../../domain/services/last_active_project_service.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -34,6 +35,7 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _dataFuture = _loadData();
+    LastActiveProjectService.instance.setLastActiveProjectId(widget.project.id);
   }
 
   void refreshData() {

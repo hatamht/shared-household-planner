@@ -10,13 +10,20 @@ import 'package:shared_household_planner/features/projects/domain/entities/proje
 import 'package:shared_household_planner/features/projects/presentation/bloc/project_bloc.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/create_project_screen.dart';
 import 'package:shared_household_planner/features/projects/presentation/pages/project_detail_screen.dart';
+import 'package:shared_household_planner/features/projects/domain/repositories/project_repository.dart';
+import 'package:shared_household_planner/features/projects/domain/services/last_active_project_service.dart';
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool showAppBar;
-  const HomeScreen({super.key, this.showAppBar = false});
+  final bool autoRestoreLastProject;
+  const HomeScreen({
+    super.key,
+    this.showAppBar = false,
+    this.autoRestoreLastProject = true,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -24,10 +31,62 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentTabIndex = 0;
+  bool _hasCheckedAutoRestore = false;
 
   @override
   void initState() {
     super.initState();
+    if (widget.autoRestoreLastProject) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkAndAutoRestoreProject();
+      });
+    }
+  }
+
+  Future<void> _checkAndAutoRestoreProject() async {
+    if (!mounted || _hasCheckedAutoRestore) return;
+    _hasCheckedAutoRestore = true;
+
+    final lastActiveId = await LastActiveProjectService.instance.getLastActiveProjectId();
+    if (lastActiveId == null || lastActiveId.isEmpty || !mounted) return;
+
+    List<Project> projects = [];
+    try {
+      final projectBloc = context.read<ProjectBloc>();
+      if (projectBloc.state is ProjectLoaded) {
+        projects = (projectBloc.state as ProjectLoaded).projects;
+      } else {
+        final nextState = await projectBloc.stream
+            .firstWhere((s) => s is ProjectLoaded || s is ProjectError)
+            .timeout(const Duration(milliseconds: 1500));
+        if (nextState is ProjectLoaded) {
+          projects = nextState.projects;
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    Project? matchingProject = projects.where((p) => p.id == lastActiveId).firstOrNull;
+    if (matchingProject == null) {
+      try {
+        final projectRepo = context.read<ProjectRepository>();
+        final repoResult = await projectRepo.getById(lastActiveId);
+        repoResult.fold((_) {}, (p) => matchingProject = p);
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+
+    if (matchingProject != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ProjectDetailScreen(project: matchingProject!),
+        ),
+      );
+    } else {
+      await LastActiveProjectService.instance.clearLastActiveProjectId();
+    }
   }
 
   void _refreshData() {

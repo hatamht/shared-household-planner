@@ -14,6 +14,7 @@ import 'package:shared_household_planner/features/projects/domain/usecases/get_a
 import 'package:shared_household_planner/features/projects/domain/usecases/get_project_by_id_usecase.dart';
 import 'package:shared_household_planner/features/projects/domain/usecases/update_project_usecase.dart';
 import 'package:shared_household_planner/features/projects/domain/usecases/delete_project_usecase.dart';
+import 'package:shared_household_planner/features/projects/domain/services/last_active_project_service.dart';
 import 'package:shared_household_planner/features/projects/presentation/bloc/project_bloc.dart';
 import 'package:shared_household_planner/features/templates/data/datasources/bill_template_local_datasource.dart';
 import 'package:shared_household_planner/features/templates/data/repositories/bill_template_repository_impl.dart';
@@ -287,6 +288,12 @@ Future<void> setupServiceLocator() async {
         markAsPaidUseCase: getIt<MarkAsPaidUseCase>(),
         undoMarkAsPaidUseCase: getIt<UndoMarkAsPaidUseCase>(),
       ),
+    );
+  }
+
+  if (!getIt.isRegistered<LastActiveProjectService>()) {
+    getIt.registerSingleton<LastActiveProjectService>(
+      LastActiveProjectService.instance,
     );
   }
 }

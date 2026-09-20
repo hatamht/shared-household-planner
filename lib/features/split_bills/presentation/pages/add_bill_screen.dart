@@ -18,6 +18,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/services/receipt_image_service.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/domain/entities/project_settings.dart';
+import '../../../projects/domain/services/last_active_project_service.dart';
 import '../../../projects/presentation/bloc/project_bloc.dart';
 import '../../../templates/domain/entities/bill_template.dart';
 import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
@@ -1807,6 +1808,10 @@ class AddBillScreenState extends State<AddBillScreen>
     }
     if (_usedTemplateId != null && templatesBloc != null) {
       templatesBloc.add(RecordTemplateUsageEvent(_usedTemplateId!));
+    }
+    final billProjectId = bill.projectId;
+    if (billProjectId != null && billProjectId.isNotEmpty) {
+      LastActiveProjectService.instance.setLastActiveProjectId(billProjectId);
     }
     if (mounted) {
       Navigator.pop(context);

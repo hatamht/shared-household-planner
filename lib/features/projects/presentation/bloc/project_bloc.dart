@@ -7,6 +7,7 @@ import '../../domain/usecases/get_all_projects_usecase.dart';
 import '../../domain/usecases/get_project_by_id_usecase.dart';
 import '../../domain/usecases/update_project_usecase.dart';
 import '../../domain/usecases/delete_project_usecase.dart';
+import '../../domain/services/last_active_project_service.dart';
 
 part 'project_event.dart';
 part 'project_state.dart';
@@ -83,6 +84,7 @@ class ProjectBloc extends Bloc<ProjectEvent, ProjectState> {
     DeleteProject event,
     Emitter<ProjectState> emit,
   ) async {
+    await LastActiveProjectService.instance.onProjectDeleted(event.id);
     emit(const ProjectLoading());
     final result = await deleteProjectUseCase(DeleteProjectParams(id: event.id));
     await result.fold(

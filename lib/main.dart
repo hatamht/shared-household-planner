@@ -10,6 +10,7 @@ import 'features/split_bills/domain/repositories/bill_repository.dart';
 import 'features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'features/split_bills/presentation/pages/bills_list_screen.dart';
 import 'features/split_bills/presentation/pages/add_bill_screen.dart';
+import 'features/projects/domain/repositories/project_repository.dart';
 import 'features/projects/presentation/bloc/project_bloc.dart';
 import 'features/projects/presentation/pages/project_screen.dart';
 import 'features/projects/presentation/pages/create_project_screen.dart';
@@ -53,6 +54,9 @@ class MyApp extends StatelessWidget {
       builder: (context, themeProvider, languageProvider, _) {
         return MultiRepositoryProvider(
           providers: [
+            RepositoryProvider<ProjectRepository>.value(
+              value: getIt<ProjectRepository>(),
+            ),
             RepositoryProvider<BillRepository>.value(
               value: getIt<BillRepository>(),
             ),
