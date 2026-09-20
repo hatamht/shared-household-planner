@@ -321,6 +321,9 @@ class _BillTemplatesScreenState extends State<BillTemplatesScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
           tabs: [
             Tab(key: const Key('allTemplatesTab'), text: loc.translate('all')),
             Tab(

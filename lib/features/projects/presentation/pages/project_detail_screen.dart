@@ -97,6 +97,9 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
         title: Text(project.name),
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
           tabs: [
             Tab(key: const Key('billsTab'), text: loc.translate('bills_tab')),
             Tab(key: const Key('settlementTab'), text: loc.translate('settlement_tab')),

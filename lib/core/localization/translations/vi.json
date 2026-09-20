@@ -360,5 +360,13 @@
   "select_project_first": "Chọn dự án trước",
   "more": "Thêm",
   "add_expense_button": "Tạo yêu cầu chi tiêu",
-  "create_first_bill": "Tạo chi tiêu"
+  "create_first_bill": "Tạo chi tiêu",
+  "bill_name_hint": "VD: Ăn tối cùng bạn bè",
+  "deselect_all": "Bỏ chọn tất cả",
+  "select_all": "Chọn tất cả",
+  "done": "Xong",
+  "receipt": "Biên lai",
+  "account_name": "Quản trị viên",
+  "status": "Trạng thái",
+  "items": "mục"
 }

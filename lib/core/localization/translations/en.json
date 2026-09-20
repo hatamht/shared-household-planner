@@ -360,6 +360,14 @@
   "select_project_first": "Select project first",
   "more": "More",
   "add_expense_button": "Add Expense",
-  "create_first_bill": "Create Expense"
+  "create_first_bill": "Create Expense",
+  "bill_name_hint": "e.g. Dinner with friends",
+  "deselect_all": "Deselect All",
+  "select_all": "Select All",
+  "done": "Done",
+  "receipt": "Receipt",
+  "account_name": "Household Admin",
+  "status": "Status",
+  "items": "items"
 }
 

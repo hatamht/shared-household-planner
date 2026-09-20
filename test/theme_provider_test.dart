@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_household_planner/core/theme/app_theme.dart';
@@ -46,6 +47,15 @@ void main() {
       final provider = ThemeProvider();
       await provider.loadTheme();
       expect(provider.isDarkMode, true);
+    });
+
+    test('AppTheme lightTheme and darkTheme should have contrasting tabBarTheme', () {
+      expect(AppTheme.lightTheme.tabBarTheme.labelColor, Colors.white);
+      expect(AppTheme.lightTheme.tabBarTheme.unselectedLabelColor, Colors.white.withOpacity(0.7));
+      expect(AppTheme.lightTheme.tabBarTheme.indicatorColor, Colors.white);
+
+      expect(AppTheme.darkTheme.tabBarTheme.labelColor, Colors.white);
+      expect(AppTheme.darkTheme.tabBarTheme.unselectedLabelColor, Colors.white.withOpacity(0.6));
     });
   });
 }

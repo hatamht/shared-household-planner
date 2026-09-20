@@ -12,6 +12,14 @@ class AppTheme {
       foregroundColor: Colors.white,
       elevation: 0,
     ),
+    tabBarTheme: TabBarTheme(
+      labelColor: Colors.white,
+      unselectedLabelColor: Colors.white.withOpacity(0.7),
+      indicatorColor: Colors.white,
+      indicatorSize: TabBarIndicatorSize.tab,
+      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
+    ),
     colorScheme: ColorScheme.light(
       primary: const Color(0xFF6366F1),
       secondary: const Color(0xFF8B5CF6),
@@ -50,6 +58,14 @@ class AppTheme {
       backgroundColor: Colors.grey[850],
       foregroundColor: Colors.white,
       elevation: 0,
+    ),
+    tabBarTheme: TabBarTheme(
+      labelColor: Colors.white,
+      unselectedLabelColor: Colors.white.withOpacity(0.6),
+      indicatorColor: const Color(0xFF818CF8),
+      indicatorSize: TabBarIndicatorSize.tab,
+      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
     ),
     colorScheme: ColorScheme.dark(
       primary: const Color(0xFF818CF8),
