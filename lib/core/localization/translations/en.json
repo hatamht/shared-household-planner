@@ -115,6 +115,8 @@
   "icon": "Icon",
   "image": "Image",
   "currency": "Currency",
+  "project_currency": "Project Currency",
+  "select_currency": "Select Currency",
   "paid_by": "Paid By",
   "when": "When",
   "split": "Split",

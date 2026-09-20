@@ -115,6 +115,8 @@
   "icon": "Biểu tượng",
   "image": "Hình ảnh",
   "currency": "Tiền tệ",
+  "project_currency": "Tiền tệ dự án",
+  "select_currency": "Chọn loại tiền tệ",
   "paid_by": "Người trả",
   "when": "Thời gian",
   "split": "Chia tiền",

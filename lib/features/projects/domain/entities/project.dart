@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'project_palette.dart';
+import '../../../split_bills/domain/entities/category_icon.dart';
 
 class Project extends Equatable {
   final String id;
@@ -9,6 +10,7 @@ class Project extends Equatable {
   final List<String> members;
   final int iconIndex;
   final int colorIndex;
+  final String currency;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -19,12 +21,31 @@ class Project extends Equatable {
     required this.members,
     this.iconIndex = 0,
     this.colorIndex = 0,
+    this.currency = 'VND',
     required this.createdAt,
     required this.updatedAt,
   });
 
   IconData get iconData => ProjectPalette.getIcon(iconIndex);
   Color get color => ProjectPalette.getColor(colorIndex);
+
+  String get currencySymbol {
+    final upper = currency.toUpperCase();
+    switch (upper) {
+      case 'VND':
+        return '₫';
+      case 'USD':
+        return '\$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      case 'JPY':
+        return '¥';
+      default:
+        return currencySymbols[upper] ?? (currency.isEmpty ? '₫' : currency);
+    }
+  }
 
   Project copyWith({
     String? id,
@@ -33,6 +54,7 @@ class Project extends Equatable {
     List<String>? members,
     int? iconIndex,
     int? colorIndex,
+    String? currency,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -43,6 +65,7 @@ class Project extends Equatable {
       members: members ?? this.members,
       iconIndex: iconIndex ?? this.iconIndex,
       colorIndex: colorIndex ?? this.colorIndex,
+      currency: currency ?? this.currency,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -56,6 +79,7 @@ class Project extends Equatable {
         members,
         iconIndex,
         colorIndex,
+        currency,
         createdAt,
         updatedAt,
       ];

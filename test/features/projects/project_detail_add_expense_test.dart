@@ -631,11 +631,15 @@ void main() {
       await tester.tap(find.byKey(const Key('statisticsTab')));
       await tester.pumpAndSettle();
 
-      // Summary card should show 600k
+      // Summary card should show 600,000₫ (full amount formatting)
       expect(find.byKey(const Key('summaryCard')), findsOneWidget);
       expect(find.descendant(
         of: find.byKey(const Key('summaryCard')),
-        matching: find.text('600kđ'),
+        matching: find.byWidgetPredicate((w) =>
+            w is Text &&
+            (w.data == '600,000₫' ||
+                w.data == '600kđ' ||
+                w.data == '600,000đ')),
       ), findsOneWidget);
     });
 

@@ -112,9 +112,36 @@ class _ProjectScreenState extends State<ProjectScreen> {
                             : Colors.white,
                       ),
                     ),
-                    title: Text(
-                      project.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    title: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            project.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          key: Key('projectCurrencyBadge_${project.id}'),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: project.color.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: project.color.withOpacity(0.35),
+                            ),
+                          ),
+                          child: Text(
+                            '${project.currency} (${project.currencySymbol})',
+                            key: Key('projectCurrencyText_${project.id}'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: project.color,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

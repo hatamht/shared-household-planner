@@ -9,6 +9,7 @@ class ProjectModel extends Project {
     required super.members,
     super.iconIndex = 0,
     super.colorIndex = 0,
+    super.currency = 'VND',
     required super.createdAt,
     required super.updatedAt,
   });
@@ -32,6 +33,9 @@ class ProjectModel extends Project {
       members: membersList,
       iconIndex: (json['iconIndex'] as num?)?.toInt() ?? 0,
       colorIndex: (json['colorIndex'] as num?)?.toInt() ?? 0,
+      currency: (json['currency'] as String?)?.isNotEmpty == true
+          ? (json['currency'] as String)
+          : 'VND',
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -45,6 +49,7 @@ class ProjectModel extends Project {
       'members': members,
       'iconIndex': iconIndex,
       'colorIndex': colorIndex,
+      'currency': currency,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -58,6 +63,7 @@ class ProjectModel extends Project {
       'members': jsonEncode(members),
       'iconIndex': iconIndex,
       'colorIndex': colorIndex,
+      'currency': currency,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -71,6 +77,7 @@ class ProjectModel extends Project {
       members: project.members,
       iconIndex: project.iconIndex,
       colorIndex: project.colorIndex,
+      currency: project.currency,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
     );

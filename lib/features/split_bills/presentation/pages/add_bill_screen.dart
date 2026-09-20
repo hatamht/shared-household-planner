@@ -64,6 +64,7 @@ class AddBillScreen extends StatefulWidget {
   final BillTemplate? template;
   final String? projectId;
   final String? projectName;
+  final String? initialCurrency;
   final bool requireProject;
   final bool? initialCompactMode;
 
@@ -78,6 +79,7 @@ class AddBillScreen extends StatefulWidget {
     this.template,
     this.projectId,
     this.projectName,
+    this.initialCurrency,
     this.requireProject = false,
     this.initialCompactMode,
   }) : super(key: key);
@@ -135,6 +137,7 @@ class AddBillScreenState extends State<AddBillScreen>
 
   // Currency
   late String selectedCurrency;
+  bool _hasUserManuallySelectedCurrency = false;
 
   // Transaction type tab
   int selectedTransactionType = 0; // 0: Expense, 1: Income, 2: Transfer
@@ -207,7 +210,9 @@ class AddBillScreenState extends State<AddBillScreen>
 
     categoriesList = List.from(defaultCategoryIcons);
     selectedCategoryItem = categoriesList.first;
-    selectedCurrency = widget.projectSettings.defaultCurrency;
+    selectedCurrency = widget.initialCurrency ??
+        widget.billToEdit?.currency ??
+        widget.projectSettings.defaultCurrency;
 
     if (widget.initialImagePaths != null && widget.initialImagePaths!.isNotEmpty) {
       imagePaths = List.from(widget.initialImagePaths!);
@@ -302,6 +307,9 @@ class AddBillScreenState extends State<AddBillScreen>
           if (found.isNotEmpty) {
             selectedProject = found.first;
             projectMembers = List.from(selectedProject!.members);
+            if (widget.billToEdit == null && widget.initialCurrency == null) {
+              selectedCurrency = selectedProject!.currency;
+            }
             if (widget.billToEdit == null && selectedParticipants.isEmpty) {
               selectedParticipants = Set.from(selectedProject!.members);
               if (selectedProject!.members.isNotEmpty && paidByController.text.isEmpty) {
@@ -321,9 +329,13 @@ class AddBillScreenState extends State<AddBillScreen>
           id: widget.projectId!,
           name: widget.projectName!,
           members: widget.projectSettings.members,
+          currency: widget.initialCurrency ?? widget.projectSettings.defaultCurrency,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
+        if (widget.billToEdit == null && widget.initialCurrency == null) {
+          selectedCurrency = selectedProject!.currency;
+        }
       }
       if (projectMembers.isEmpty && widget.projectSettings.members.isNotEmpty) {
         projectMembers = List.from(widget.projectSettings.members);
@@ -1496,6 +1508,9 @@ class AddBillScreenState extends State<AddBillScreen>
     }
     setState(() {
       selectedProject = project;
+      if (project != null && widget.billToEdit == null && !_hasUserManuallySelectedCurrency) {
+        selectedCurrency = project.currency;
+      }
       if (project == null) {
         if (manualParticipants.isEmpty && selectedParticipants.isNotEmpty) {
           manualParticipants.addAll(selectedParticipants);
@@ -2374,7 +2389,10 @@ class AddBillScreenState extends State<AddBillScreen>
                             .toList(),
                         onChanged: (val) {
                           if (val != null) {
-                            setState(() => selectedCurrency = val);
+                            setState(() {
+                              selectedCurrency = val;
+                              _hasUserManuallySelectedCurrency = true;
+                            });
                           }
                         },
                       ),
@@ -2983,6 +3001,9 @@ class AddBillScreenState extends State<AddBillScreen>
               setState(() {
                 selectedProject = matching;
                 projectMembers = List.from(matching.members);
+                if (widget.billToEdit == null && widget.initialCurrency == null && !_hasUserManuallySelectedCurrency) {
+                  selectedCurrency = matching.currency;
+                }
                 if (widget.billToEdit == null && selectedParticipants.isEmpty) {
                   selectedParticipants = Set.from(matching.members);
                   if (matching.members.isNotEmpty && paidByController.text.isEmpty) {

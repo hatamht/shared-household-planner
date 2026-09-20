@@ -5,6 +5,7 @@ import '../../domain/entities/project.dart';
 import '../bloc/project_bloc.dart';
 
 import '../../domain/entities/project_palette.dart';
+import '../../../split_bills/domain/entities/category_icon.dart';
 
 class CreateProjectScreen extends StatefulWidget {
   final Project? project;
@@ -27,9 +28,11 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
   // Icon & Color palette options
   static const List<IconData> projectIcons = ProjectPalette.icons;
   static const List<Color> projectColors = ProjectPalette.colors;
+  static const List<String> supportedCurrencies = ['VND', 'USD', 'EUR', 'JPY', 'GBP'];
 
   int _selectedIconIndex = 0;
   int _selectedColorIndex = 0;
+  String _selectedCurrency = 'VND';
 
   Color get _activeColor => projectColors[_selectedColorIndex];
   IconData get _activeIcon => projectIcons[_selectedIconIndex];
@@ -43,6 +46,9 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       _members.addAll(widget.project!.members);
       _selectedIconIndex = widget.project!.iconIndex.clamp(0, projectIcons.length - 1);
       _selectedColorIndex = widget.project!.colorIndex.clamp(0, projectColors.length - 1);
+      if (widget.project!.currency.isNotEmpty) {
+        _selectedCurrency = widget.project!.currency;
+      }
     }
   }
 
@@ -111,6 +117,7 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
       members: List.unmodifiable(_members),
       iconIndex: _selectedIconIndex,
       colorIndex: _selectedColorIndex,
+      currency: _selectedCurrency,
       createdAt: isEditing ? widget.project!.createdAt : now,
       updatedAt: now,
     );
@@ -406,6 +413,69 @@ class _CreateProjectScreenState extends State<CreateProjectScreen> {
                           ),
                         );
                       }),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // ── 5.1 Currency Picker ─────────────────────────────
+                  Text(
+                    loc.translate('project_currency'),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : Colors.grey.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    key: const Key('projectCurrencyPicker'),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: cardBorder),
+                    ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: supportedCurrencies.map((curr) {
+                        final isSelected = _selectedCurrency == curr;
+                        final symbol = currencySymbols[curr] ?? curr;
+                        return ChoiceChip(
+                          key: Key('currencyOption_$curr'),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setState(() {
+                                _selectedCurrency = curr;
+                              });
+                            }
+                          },
+                          avatar: Text(
+                            symbol,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: isSelected
+                                  ? _activeColor
+                                  : (isDark ? Colors.white70 : Colors.black87),
+                            ),
+                          ),
+                          label: Text(curr),
+                          selectedColor: _activeColor.withOpacity(0.18),
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? _activeColor
+                                : (isDark ? Colors.white70 : Colors.black87),
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          side: BorderSide(
+                            color: isSelected ? _activeColor : cardBorder,
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                          backgroundColor: isDark ? Colors.white10 : Colors.grey.shade50,
+                        );
+                      }).toList(),
                     ),
                   ),
                   const SizedBox(height: 20),

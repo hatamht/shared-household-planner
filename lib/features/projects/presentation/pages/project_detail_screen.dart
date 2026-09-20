@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../features/split_bills/domain/entities/bill.dart';
 import '../../../../features/split_bills/domain/repositories/bill_repository.dart';
@@ -52,7 +53,9 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
           projectName: widget.project.name,
           projectSettings: ProjectSettings(
             members: widget.project.members,
+            defaultCurrency: widget.project.currency,
           ),
+          initialCurrency: widget.project.currency,
         ),
       ),
     );
@@ -262,7 +265,7 @@ class _BillsTab extends StatelessWidget {
             subtitle: Text(
                 '${loc.translate('paid_by_label')}: ${bill.paidBy}\n$participantNames'),
             trailing: Text(
-              '${_formatAmount(bill.amount)}đ',
+              '${_formatAmount(bill.amount)}${project.currencySymbol}',
               style: const TextStyle(
                   fontWeight: FontWeight.bold, fontSize: 16),
             ),
@@ -393,7 +396,7 @@ class _SettlementTab extends StatelessWidget {
               ),
               title: Text(e.key),
               trailing: Text(
-                '${isPositive ? '+' : ''}${_formatAmount(e.value)}đ',
+                '${isPositive ? '+' : ''}${_formatAmount(e.value)}${project.currencySymbol}',
                 style: TextStyle(
                   color: isPositive ? Colors.green : Colors.red,
                   fontWeight: FontWeight.bold,
@@ -448,7 +451,7 @@ class _SettlementCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${_formatAmount(item.amount)}đ',
+                  '${_formatAmount(item.amount)}${project.currencySymbol}',
                   style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -539,7 +542,8 @@ class _StatisticsTab extends StatelessWidget {
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 4),
                 Text(
-                  '${_formatAmount(stats!.totalExpense)}đ',
+                  '${_formatAmount(stats!.totalExpense)}${project.currencySymbol}',
+                  key: const Key('summaryTotalExpenseText'),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
@@ -548,7 +552,7 @@ class _StatisticsTab extends StatelessWidget {
                 if (numMembers > 0) ...[
                   const SizedBox(height: 4),
                   Text(
-                    '≈ ${_formatAmount(perPerson)}đ ${loc.translate('per_person')}',
+                    '≈ ${_formatAmount(perPerson)}${project.currencySymbol} ${loc.translate('per_person')}',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -567,6 +571,7 @@ class _StatisticsTab extends StatelessWidget {
             label: loc.translate('top_payer'),
             value: stats!.topPayer!,
             amount: stats!.totalPaidPerPerson[stats!.topPayer] ?? 0,
+            currencySymbol: project.currencySymbol,
           ),
         if (stats!.topDebtor != null)
           _StatRow(
@@ -576,6 +581,7 @@ class _StatisticsTab extends StatelessWidget {
             label: loc.translate('top_debtor'),
             value: stats!.topDebtor!,
             amount: (stats!.netBalancePerPerson[stats!.topDebtor] ?? 0).abs(),
+            currencySymbol: project.currencySymbol,
           ),
         const SizedBox(height: 16),
 
@@ -596,7 +602,7 @@ class _StatisticsTab extends StatelessWidget {
               ),
               title: Text(e.key),
               trailing: Text(
-                '${_formatAmount(e.value)}đ',
+                '${_formatAmount(e.value)}${project.currencySymbol}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -613,6 +619,7 @@ class _StatRow extends StatelessWidget {
   final String label;
   final String value;
   final double amount;
+  final String currencySymbol;
 
   const _StatRow({
     super.key,
@@ -621,6 +628,7 @@ class _StatRow extends StatelessWidget {
     required this.label,
     required this.value,
     required this.amount,
+    required this.currencySymbol,
   });
 
   @override
@@ -633,7 +641,7 @@ class _StatRow extends StatelessWidget {
         subtitle: Text(value,
             style: const TextStyle(fontWeight: FontWeight.bold)),
         trailing: Text(
-          '${_formatAmount(amount)}đ',
+          '${_formatAmount(amount)}$currencySymbol',
           style: TextStyle(fontWeight: FontWeight.bold, color: color),
         ),
       ),
@@ -645,12 +653,9 @@ class _StatRow extends StatelessWidget {
 // Helper
 // ─────────────────────────────────────────────────────
 String _formatAmount(double amount) {
-  // Format without decimals for VND display
   final abs = amount.abs();
-  if (abs >= 1000000) {
-    return '${(abs / 1000000).toStringAsFixed(1)}M';
-  } else if (abs >= 1000) {
-    return '${(abs / 1000).toStringAsFixed(0)}k';
+  if (abs % 1 != 0) {
+    return NumberFormat('#,##0.##', 'en_US').format(abs);
   }
-  return abs.toStringAsFixed(0);
+  return NumberFormat('#,##0', 'en_US').format(abs);
 }
