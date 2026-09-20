@@ -262,6 +262,24 @@ Widget buildTestApp({
     getSuggestedTemplatesUseCase: GetSuggestedTemplatesUseCase(fakeTemplateRepo),
   );
 
+  Widget effectiveChild = child;
+  if (child is AddBillScreen && child.initialCompactMode == null) {
+    effectiveChild = AddBillScreen(
+      key: child.key,
+      billToEdit: child.billToEdit,
+      projectId: child.projectId,
+      requireProject: child.requireProject,
+      projectSettings: child.projectSettings,
+      template: child.template,
+      initialImagePath: child.initialImagePath,
+      initialImagePaths: child.initialImagePaths,
+      onPickImage: child.onPickImage,
+      onPickMultipleImages: child.onPickMultipleImages,
+      projectName: child.projectName,
+      initialCompactMode: false,
+    );
+  }
+
   return MultiRepositoryProvider(
     providers: [
       RepositoryProvider<BillRepository>.value(value: fakeBillRepo),
@@ -286,7 +304,7 @@ Widget buildTestApp({
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en'), Locale('vi')],
-        home: child,
+        home: effectiveChild,
       ),
     ),
   );

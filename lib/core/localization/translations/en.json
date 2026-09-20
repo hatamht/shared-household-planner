@@ -343,6 +343,12 @@
   "project_required": "Please select a project",
   "select_project_modal_title": "Select Project",
   "no_project_selected": "No Project Selected",
-  "choose_project": "Choose Project"
+  "choose_project": "Choose Project",
+  "expand": "Expand",
+  "collapse": "Collapse",
+  "compact_mode": "Compact Mode",
+  "full_mode": "Full Mode",
+  "select_project_first": "Select project first",
+  "more": "More"
 }
 

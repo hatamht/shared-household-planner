@@ -238,6 +238,24 @@ Widget createTestWidget(
         deleteProjectUseCase: DeleteProjectUseCase(fakeProjectRepo),
       );
 
+  Widget effectiveChild = child;
+  if (child is AddBillScreen && child.initialCompactMode == null) {
+    effectiveChild = AddBillScreen(
+      key: child.key,
+      billToEdit: child.billToEdit,
+      projectId: child.projectId,
+      requireProject: child.requireProject,
+      projectSettings: child.projectSettings,
+      template: child.template,
+      initialImagePath: child.initialImagePath,
+      initialImagePaths: child.initialImagePaths,
+      onPickImage: child.onPickImage,
+      onPickMultipleImages: child.onPickMultipleImages,
+      projectName: child.projectName,
+      initialCompactMode: false,
+    );
+  }
+
   return MultiRepositoryProvider(
     providers: [
       RepositoryProvider<BillRepository>.value(value: effectiveBillRepo),
@@ -259,7 +277,7 @@ Widget createTestWidget(
         theme: ThemeData.light(),
         darkTheme: ThemeData.dark(),
         themeMode: themeMode,
-        home: Material(child: child),
+        home: Material(child: effectiveChild),
       ),
     ),
   );
@@ -1125,6 +1143,7 @@ void main() {
       expect(find.byKey(const Key('imagePreview')), findsOneWidget);
       expect(find.byKey(const Key('removeImageButton')), findsOneWidget);
 
+      await tester.ensureVisible(find.byKey(const Key('removeImageButton')));
       await tester.tap(find.byKey(const Key('removeImageButton')));
       await tester.pumpAndSettle();
 
@@ -1478,6 +1497,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Receipts (3)'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('removeImageButton_1')));
       await tester.tap(find.byKey(const Key('removeImageButton_1')));
       await tester.pumpAndSettle();
 

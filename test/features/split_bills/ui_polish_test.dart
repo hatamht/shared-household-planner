@@ -206,6 +206,7 @@ Widget buildTestUIPolishApp({
           projectSettings: projectSettings ?? const ProjectSettings(),
           initialImagePath: initialImagePath,
           onPickImage: onPickImage,
+          initialCompactMode: false,
         ),
       ),
     ),
@@ -538,6 +539,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('removeImageButton')), findsOneWidget);
+      await tester.ensureVisible(find.byKey(const Key('removeImageButton')));
       await tester.tap(find.byKey(const Key('removeImageButton')));
       await tester.pumpAndSettle();
 

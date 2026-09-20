@@ -343,5 +343,11 @@
   "project_required": "Vui lòng chọn dự án",
   "select_project_modal_title": "Chọn dự án",
   "no_project_selected": "Chưa chọn dự án",
-  "choose_project": "Chọn dự án"
+  "choose_project": "Chọn dự án",
+  "expand": "Mở rộng",
+  "collapse": "Thu gọn",
+  "compact_mode": "Chế độ thu gọn",
+  "full_mode": "Chế độ đầy đủ",
+  "select_project_first": "Chọn dự án trước",
+  "more": "Thêm"
 }

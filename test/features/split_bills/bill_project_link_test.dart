@@ -367,7 +367,25 @@ Widget buildTestApp({
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: const [Locale('en')],
-        home: child,
+        home: () {
+          if (child is AddBillScreen && child.initialCompactMode == null) {
+            return AddBillScreen(
+              key: child.key,
+              billToEdit: child.billToEdit,
+              projectId: child.projectId,
+              requireProject: child.requireProject,
+              projectSettings: child.projectSettings,
+              template: child.template,
+              initialImagePath: child.initialImagePath,
+              initialImagePaths: child.initialImagePaths,
+              onPickImage: child.onPickImage,
+              onPickMultipleImages: child.onPickMultipleImages,
+              projectName: child.projectName,
+              initialCompactMode: false,
+            );
+          }
+          return child;
+        }(),
       ),
     ),
   );

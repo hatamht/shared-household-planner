@@ -410,6 +410,24 @@ Widget buildTestWidget({
     deleteProjectUseCase: DeleteProjectUseCase(fakeProjectRepo),
   );
 
+  Widget effectiveChild = child;
+  if (child is AddBillScreen && child.initialCompactMode == null) {
+    effectiveChild = AddBillScreen(
+      key: child.key,
+      billToEdit: child.billToEdit,
+      projectId: child.projectId,
+      requireProject: child.requireProject,
+      projectSettings: child.projectSettings,
+      template: child.template,
+      initialImagePath: child.initialImagePath,
+      initialImagePaths: child.initialImagePaths,
+      onPickImage: child.onPickImage,
+      onPickMultipleImages: child.onPickMultipleImages,
+      projectName: child.projectName,
+      initialCompactMode: false,
+    );
+  }
+
   return MultiRepositoryProvider(
     providers: [
       RepositoryProvider<BillTemplateRepository>.value(value: fakeTemplateRepo),
@@ -433,7 +451,7 @@ Widget buildTestWidget({
         themeMode: themeMode,
         theme: ThemeData.light(),
         darkTheme: ThemeData.dark(),
-        home: child,
+        home: effectiveChild,
       ),
     ),
   );

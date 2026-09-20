@@ -242,7 +242,26 @@ Widget buildTestApp({
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: [locale],
-        home: child ?? const AddBillScreen(),
+        home: () {
+          final effective = child ?? const AddBillScreen(initialCompactMode: false);
+          if (effective is AddBillScreen && effective.initialCompactMode == null) {
+            return AddBillScreen(
+              key: effective.key,
+              billToEdit: effective.billToEdit,
+              projectId: effective.projectId,
+              requireProject: effective.requireProject,
+              projectSettings: effective.projectSettings,
+              template: effective.template,
+              initialImagePath: effective.initialImagePath,
+              initialImagePaths: effective.initialImagePaths,
+              onPickImage: effective.onPickImage,
+              onPickMultipleImages: effective.onPickMultipleImages,
+              projectName: effective.projectName,
+              initialCompactMode: false,
+            );
+          }
+          return effective;
+        }(),
       ),
     ),
   );

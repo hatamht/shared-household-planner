@@ -175,7 +175,7 @@ Widget buildTestAddBillApp({
         ],
         supportedLocales: const [Locale('en'), Locale('vi')],
         locale: locale,
-        home: const AddBillScreen(),
+        home: const AddBillScreen(initialCompactMode: false),
       ),
     ),
   );

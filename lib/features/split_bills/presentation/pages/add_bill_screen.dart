@@ -26,6 +26,32 @@ import '../../domain/entities/split_mode.dart';
 import '../../domain/services/smart_split_calculator.dart';
 import '../../domain/services/default_split_mode_service.dart';
 
+// ─── Category keyword maps for silent auto-detection ───
+const Map<String, List<String>> autoCategoryKeywords = {
+  'restaurant': ['food', 'lunch', 'dinner', 'breakfast', 'meal', 'eat', 'restaurant',
+      'ăn trưa', 'ăn tối', 'ăn sáng', 'cơm', 'phở', 'bún', 'trưa', 'tối', 'sáng', 'quán', 'cafe', 'coffee', 'cà phê'],
+  'transport': ['taxi', 'uber', 'grab', 'bus', 'car', 'gas', 'fuel', 'parking',
+      'xe máy', 'xe ôm', 'xe bus', 'xe buýt', 'gửi xe', 'xăng', 'đổ xăng', 'đậu xe', 'đi lại'],
+  'shopping': ['shop', 'buy', 'store', 'market', 'mall', 'grocery', 'mua', 'siêu thị', 'chợ'],
+  'entertainment': ['movie', 'film', 'game', 'netflix', 'concert', 'show', 'phim', 'trò chơi'],
+  'health': ['doctor', 'medicine', 'pharmacy', 'hospital', 'thuốc', 'bệnh viện', 'khám'],
+  'travel': ['hotel', 'flight', 'trip', 'travel', 'vacation', 'tour', 'khách sạn', 'vé máy bay', 'du lịch'],
+  'utilities': ['electric', 'water', 'internet', 'rent', 'điện', 'nước', 'thuê nhà', 'wifi'],
+  'party': ['party', 'birthday', 'event', 'tiệc', 'sinh nhật'],
+  'sport': ['gym', 'sport', 'fitness', 'swimming', 'thể thao', 'bơi', 'gym'],
+};
+
+String detectCategoryFromText(String text) {
+  if (text.trim().isEmpty) return 'restaurant';
+  final lower = text.toLowerCase();
+  for (final entry in autoCategoryKeywords.entries) {
+    for (final keyword in entry.value) {
+      if (lower.contains(keyword)) return entry.key;
+    }
+  }
+  return 'restaurant';
+}
+
 class AddBillScreen extends StatefulWidget {
   final ProjectSettings projectSettings;
   final Future<String?> Function(ImageSource source)? onPickImage;
@@ -35,7 +61,9 @@ class AddBillScreen extends StatefulWidget {
   final Bill? billToEdit;
   final BillTemplate? template;
   final String? projectId;
+  final String? projectName;
   final bool requireProject;
+  final bool? initialCompactMode;
 
   const AddBillScreen({
     Key? key,
@@ -47,7 +75,9 @@ class AddBillScreen extends StatefulWidget {
     this.billToEdit,
     this.template,
     this.projectId,
+    this.projectName,
     this.requireProject = false,
+    this.initialCompactMode,
   }) : super(key: key);
 
   @override
@@ -55,6 +85,10 @@ class AddBillScreen extends StatefulWidget {
 }
 
 class AddBillScreenState extends State<AddBillScreen> {
+  late bool _isCompactMode;
+  bool get isCompactMode => _isCompactMode;
+  FocusNode get descriptionFocusNode => titleFocusNode;
+
   late TextEditingController titleController;
   late TextEditingController amountController;
   late TextEditingController paidByController;
@@ -207,6 +241,16 @@ class AddBillScreenState extends State<AddBillScreen> {
       _checkDefaultSplitMode();
     }
 
+    _isCompactMode = widget.initialCompactMode ?? (widget.billToEdit == null && widget.template == null);
+
+    if (_isCompactMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          titleFocusNode.requestFocus();
+        }
+      });
+    }
+
     titleController.addListener(() {
       setState(() {});
     });
@@ -338,6 +382,704 @@ class AddBillScreenState extends State<AddBillScreen> {
       c.dispose();
     }
     super.dispose();
+  }
+
+  // ────────────────────────────────────────
+  // Two-Mode Layout Helpers (Compact Mode)
+  // ────────────────────────────────────────
+  bool get _canSave {
+    final hasProject = _hasUserExplicitlySelectedProject
+        ? selectedProject != null
+        : (selectedProject != null ||
+            (widget.projectId != null && widget.projectId!.isNotEmpty));
+    final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
+    return hasProject && amount > 0;
+  }
+
+  bool get _isToday {
+    final now = DateTime.now();
+    return selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
+  }
+
+  String _formatCompactDate(AppLocalizations loc) {
+    if (_isToday) return loc.translate('today');
+    return DateFormat('MMM d').format(selectedDate);
+  }
+
+  String _compactMembersLabel(AppLocalizations loc) {
+    if (selectedProject == null) {
+      return loc.translate('members');
+    }
+    final members = selectedProject!.members;
+    final validParticipants =
+        selectedParticipants.where((m) => members.contains(m)).toList();
+    if (validParticipants.isEmpty) {
+      return '${members.length} ${loc.translate('members')}';
+    } else if (validParticipants.length == 1) {
+      return validParticipants.first;
+    } else {
+      return '${validParticipants.length} ${loc.translate('members')}';
+    }
+  }
+
+  void _onCompactDescriptionChanged(String text) {
+    if (text.trim().isEmpty) {
+      isTitleManuallyEdited = false;
+    } else {
+      isTitleManuallyEdited = true;
+      final detected = detectCategoryFromText(text);
+      final match = categoriesList.where((c) => c.id == detected);
+      if (match.isNotEmpty && match.first.id != selectedCategoryItem.id) {
+        setState(() {
+          selectedCategoryItem = match.first;
+        });
+      }
+    }
+  }
+
+  void _openCompactMembersSheet() {
+    FocusScope.of(context).unfocus();
+    final loc = AppLocalizations.of(context);
+    if (selectedProject == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          key: const Key('selectProjectFirstSnackBar'),
+          content: Text(loc.translate('select_project_first')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final members = selectedProject!.members;
+    final tempSelected = Set<String>.from(
+      selectedParticipants.where((m) => members.contains(m)),
+    );
+    if (tempSelected.isEmpty) {
+      tempSelected.addAll(members);
+    }
+    String tempPayer = paidByController.text.trim().isNotEmpty &&
+            members.contains(paidByController.text.trim())
+        ? paidByController.text.trim()
+        : (members.isNotEmpty ? members.first : '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          loc.translate('members'),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        TextButton(
+                          key: const Key('compactMembersSelectAllButton'),
+                          onPressed: () {
+                            setModalState(() {
+                              if (tempSelected.length == members.length) {
+                                tempSelected.clear();
+                              } else {
+                                tempSelected.addAll(members);
+                              }
+                            });
+                          },
+                          child: Text(
+                            tempSelected.length == members.length
+                                ? loc.translate('deselect_all')
+                                : loc.translate('select_all'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Flexible(
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: members.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (ctx, i) {
+                          final m = members[i];
+                          final isChecked = tempSelected.contains(m);
+                          final isPayer = (tempPayer == m);
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: CircleAvatar(
+                              backgroundColor: Color(int.parse(
+                                selectedCategoryItem.colorHex.replaceFirst('#', '0xFF'),
+                              )).withOpacity(0.15),
+                              child: Text(
+                                m.isNotEmpty ? m[0].toUpperCase() : '?',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(int.parse(
+                                    selectedCategoryItem.colorHex.replaceFirst('#', '0xFF'),
+                                  )),
+                                ),
+                              ),
+                            ),
+                            title: Row(
+                              children: [
+                                Text(m, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                if (isPayer) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      loc.translate('paid_by'),
+                                      style: const TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  key: Key('compact_set_payer_$m'),
+                                  icon: Icon(
+                                    isPayer ? Icons.star : Icons.star_border,
+                                    color: isPayer ? Colors.amber : Colors.grey,
+                                    size: 20,
+                                  ),
+                                  tooltip: loc.translate('paid_by'),
+                                  onPressed: () {
+                                    setModalState(() {
+                                      tempPayer = m;
+                                      tempSelected.add(m);
+                                    });
+                                  },
+                                ),
+                                Checkbox(
+                                  key: Key('compact_member_checkbox_$m'),
+                                  value: isChecked,
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      if (val == true) {
+                                        tempSelected.add(m);
+                                      } else {
+                                        tempSelected.remove(m);
+                                      }
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            onTap: () {
+                              setModalState(() {
+                                if (isChecked) {
+                                  tempSelected.remove(m);
+                                } else {
+                                  tempSelected.add(m);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        key: const Key('compactMembersDoneButton'),
+                        onPressed: () {
+                          setState(() {
+                            selectedParticipants = Set.from(tempSelected);
+                            if (tempPayer.isNotEmpty) {
+                              paidByController.text = tempPayer;
+                            }
+                            _syncParticipantControllers();
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(int.parse(
+                            selectedCategoryItem.colorHex.replaceFirst('#', '0xFF'),
+                          )),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(loc.translate('done'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openCompactSplitSheet() {
+    FocusScope.of(context).unfocus();
+    final loc = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final members = selectedProject?.members ??
+        (selectedParticipants.isNotEmpty ? selectedParticipants.toList() : ['You']);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        String currentMode = _splitMode;
+        String currentPayer = paidByController.text.trim().isNotEmpty
+            ? paidByController.text.trim()
+            : (members.isNotEmpty ? members.first : 'You');
+
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      loc.translate('split_bills'),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      loc.translate('paid_by'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: members.map((m) {
+                        final isSelected = currentPayer == m;
+                        return ChoiceChip(
+                          key: Key('compact_payer_chip_$m'),
+                          label: Text(m),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            if (selected) {
+                              setModalState(() => currentPayer = m);
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      loc.translate('split_mode'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildCompactSplitModeItem('equal', loc.translate('split_mode_equal'), currentMode, (m) {
+                      setModalState(() => currentMode = m);
+                    }),
+                    _buildCompactSplitModeItem('percentage', loc.translate('split_mode_percentage'), currentMode, (m) {
+                      setModalState(() => currentMode = m);
+                    }),
+                    _buildCompactSplitModeItem('shares', loc.translate('split_mode_shares'), currentMode, (m) {
+                      setModalState(() => currentMode = m);
+                    }),
+                    _buildCompactSplitModeItem('custom', loc.translate('split_mode_custom'), currentMode, (m) {
+                      setModalState(() => currentMode = m);
+                    }),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        key: const Key('compactSplitDoneButton'),
+                        onPressed: () {
+                          setState(() {
+                            _splitMode = currentMode;
+                            paidByController.text = currentPayer;
+                            _syncParticipantControllers();
+                          });
+                          Navigator.pop(ctx);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(int.parse(
+                            selectedCategoryItem.colorHex.replaceFirst('#', '0xFF'),
+                          )),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(loc.translate('done'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCompactSplitModeItem(
+    String mode,
+    String label,
+    String selectedMode,
+    ValueChanged<String> onSelected,
+  ) {
+    final isSelected = selectedMode == mode;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: InkWell(
+        key: Key('compact_split_mode_$mode'),
+        borderRadius: BorderRadius.circular(10),
+        onTap: () => onSelected(mode),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Color(int.parse(selectedCategoryItem.colorHex.replaceFirst('#', '0xFF'))).withOpacity(0.12)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isSelected
+                  ? Color(int.parse(selectedCategoryItem.colorHex.replaceFirst('#', '0xFF')))
+                  : Colors.grey.shade300,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                size: 20,
+                color: isSelected
+                    ? Color(int.parse(selectedCategoryItem.colorHex.replaceFirst('#', '0xFF')))
+                    : Colors.grey,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _splitChipLabel(AppLocalizations loc) {
+    final payer = paidByController.text.trim().isNotEmpty
+        ? paidByController.text.trim()
+        : (selectedProject?.members.isNotEmpty == true
+            ? selectedProject!.members.first
+            : loc.translate('you'));
+    switch (_splitMode) {
+      case 'equal':
+        return '${loc.translate('paid_by')} $payer · ${loc.translate('split_mode_equal')}';
+      case 'percentage':
+        return '${loc.translate('paid_by')} $payer · ${loc.translate('split_mode_percentage')}';
+      case 'shares':
+        return '${loc.translate('paid_by')} $payer · ${loc.translate('split_mode_shares')}';
+      case 'custom':
+        return '${loc.translate('paid_by')} $payer · ${loc.translate('split_mode_custom')}';
+      default:
+        return '${loc.translate('paid_by')} $payer · ${loc.translate('split_mode_equal')}';
+    }
+  }
+
+  Widget _buildCompactChip({
+    required Widget icon,
+    required String label,
+    required VoidCallback onTap,
+    Key? key,
+    bool isActive = false,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      key: key,
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive
+              ? Color(int.parse(selectedCategoryItem.colorHex.replaceFirst('#', '0xFF'))).withOpacity(0.15)
+              : (isDark ? const Color(0xFF262626) : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive
+                ? Color(int.parse(selectedCategoryItem.colorHex.replaceFirst('#', '0xFF')))
+                : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            icon,
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.grey.shade200 : Colors.grey.shade800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactDescriptionField(AppLocalizations loc, Color categoryColor, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: categoryColor.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              selectedCategoryItem.icon,
+              style: const TextStyle(fontSize: 20),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              key: const Key('compactDescriptionField'),
+              focusNode: titleFocusNode,
+              controller: titleController,
+              onChanged: _onCompactDescriptionChanged,
+              decoration: InputDecoration(
+                hintText: loc.translate('bill_name_hint'),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              textInputAction: TextInputAction.next,
+            ),
+          ),
+          if (titleController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.clear, size: 18),
+              splashRadius: 18,
+              onPressed: () {
+                setState(() {
+                  titleController.clear();
+                  isTitleManuallyEdited = false;
+                });
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactAmountField(AppLocalizations loc, Color categoryColor, bool isDark) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Text(
+            selectedCurrency,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: categoryColor,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              key: const Key('compactAmountField'),
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                hintText: '0',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactSecondaryBar(AppLocalizations loc, Color categoryColor, bool isDark) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          // Date Chip
+          _buildCompactChip(
+            key: const Key('compactDateChip'),
+            icon: Icon(Icons.calendar_today, size: 16, color: categoryColor),
+            label: _formatCompactDate(loc),
+            onTap: _selectDate,
+          ),
+          const SizedBox(width: 8),
+          // Members Chip
+          _buildCompactChip(
+            key: const Key('compactMembersChip'),
+            icon: Icon(Icons.group, size: 16, color: categoryColor),
+            label: _compactMembersLabel(loc),
+            onTap: _openCompactMembersSheet,
+          ),
+          const SizedBox(width: 8),
+          // Camera Chip
+          _buildCompactChip(
+            key: const Key('compactCameraChip'),
+            icon: Icon(
+              imagePaths.isNotEmpty ? Icons.check_circle : Icons.camera_alt,
+              size: 16,
+              color: imagePaths.isNotEmpty ? Colors.green : categoryColor,
+            ),
+            label: imagePaths.isNotEmpty ? '${imagePaths.length} ảnh' : loc.translate('receipt'),
+            isActive: imagePaths.isNotEmpty,
+            onTap: () => _pickImage(ImageSource.camera),
+          ),
+          const SizedBox(width: 8),
+          // Expand Button
+          _buildCompactChip(
+            key: const Key('expandToFullModeButton'),
+            icon: Icon(Icons.tune, size: 16, color: categoryColor),
+            label: loc.translate('expand'),
+            onTap: () {
+              setState(() {
+                _isCompactMode = false;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactSplitChip(AppLocalizations loc, Color categoryColor, bool isDark) {
+    return InkWell(
+      key: const Key('compactSplitChip'),
+      onTap: _openCompactSplitSheet,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.call_split, size: 18, color: categoryColor),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _splitChipLabel(loc),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: isDark ? Colors.grey.shade500 : Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollapseBar(AppLocalizations loc, Color categoryColor, bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          TextButton.icon(
+            key: const Key('collapseToCompactModeButton'),
+            icon: const Icon(Icons.unfold_less, size: 18),
+            label: Text(loc.translate('collapse')),
+            style: TextButton.styleFrom(
+              foregroundColor: categoryColor,
+              visualDensity: VisualDensity.compact,
+            ),
+            onPressed: () {
+              setState(() {
+                _isCompactMode = true;
+              });
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   String _getCategoryDisplayName(CategoryIconItem cat, AppLocalizations loc) {
@@ -720,6 +1462,21 @@ class AddBillScreenState extends State<AddBillScreen> {
       }
     }
 
+    if (_isCompactMode) {
+      if (titleController.text.trim().isEmpty) {
+        titleController.text = _getCategoryDisplayName(selectedCategoryItem, loc);
+      }
+      if (paidByController.text.trim().isEmpty) {
+        paidByController.text = (selectedProject?.members.isNotEmpty == true)
+            ? selectedProject!.members.first
+            : 'You';
+      }
+      if (selectedParticipants.length < 2 && selectedProject != null && selectedProject!.members.length >= 2) {
+        selectedParticipants = Set.from(selectedProject!.members);
+        _syncParticipantControllers();
+      }
+    }
+
     if (titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('bill_name_required'))),
@@ -934,6 +1691,20 @@ class AddBillScreenState extends State<AddBillScreen> {
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         actions: [
+          TextButton(
+            key: const Key('saveBillButton'),
+            onPressed: _canSave ? _submitForm : null,
+            child: Text(
+              loc.translate('save'),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: _canSave
+                    ? categoryColor
+                    : (isDark ? Colors.white38 : Colors.black26),
+              ),
+            ),
+          ),
           IconButton(
             key: const Key('saveAsTemplateAppBarButton'),
             icon: const Icon(Icons.bookmark_add_outlined),
@@ -955,9 +1726,42 @@ class AddBillScreenState extends State<AddBillScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildQuickTemplatesSection(loc, isDark),
             _buildTopProjectSelector(context, loc, isDark),
-            const SizedBox(height: 6),
+            if (_isCompactMode) ...[
+              const SizedBox(height: 12),
+              _buildCompactDescriptionField(loc, categoryColor, isDark),
+              const SizedBox(height: 12),
+              _buildCompactAmountField(loc, categoryColor, isDark),
+              const SizedBox(height: 12),
+              _buildCompactSecondaryBar(loc, categoryColor, isDark),
+              const SizedBox(height: 12),
+              _buildCompactSplitChip(loc, categoryColor, isDark),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  key: const Key('saveProjectButton'),
+                  onPressed: _canSave ? _submitForm : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: categoryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Text(
+                    loc.translate('save_bill'),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 6),
+              _buildCollapseBar(loc, categoryColor, isDark),
+              _buildQuickTemplatesSection(loc, isDark),
+              const SizedBox(height: 6),
             // ── 0. Tab Selector Refinement ───────────────────────
             Container(
               key: const Key('transactionTypeTabs'),
@@ -1638,10 +2442,11 @@ class AddBillScreenState extends State<AddBillScreen> {
               ),
             ),
           ],
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildQuickTemplatesSection(AppLocalizations loc, bool isDark) {
     try {
@@ -2024,7 +2829,9 @@ class AddBillScreenState extends State<AddBillScreen> {
                         ),
                         const SizedBox(height: 1),
                         Text(
-                          selectedProject?.name ?? loc.translate('no_project_selected'),
+                          selectedProject?.name ??
+                              widget.projectName ??
+                              loc.translate('no_project_selected'),
                           key: const Key('selectedProjectName'),
                           style: const TextStyle(
                             fontSize: 14,

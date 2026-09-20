@@ -262,6 +262,24 @@ Widget buildTestApp({
     bBloc.emit(const BillsLoaded(bills: []));
   }
 
+  Widget effectiveChild = child ?? const HomeScreen();
+  if (effectiveChild is AddBillScreen && effectiveChild.initialCompactMode == null) {
+    effectiveChild = AddBillScreen(
+      key: effectiveChild.key,
+      billToEdit: effectiveChild.billToEdit,
+      projectId: effectiveChild.projectId,
+      requireProject: effectiveChild.requireProject,
+      projectSettings: effectiveChild.projectSettings,
+      template: effectiveChild.template,
+      initialImagePath: effectiveChild.initialImagePath,
+      initialImagePaths: effectiveChild.initialImagePaths,
+      onPickImage: effectiveChild.onPickImage,
+      onPickMultipleImages: effectiveChild.onPickMultipleImages,
+      projectName: effectiveChild.projectName,
+      initialCompactMode: false,
+    );
+  }
+
   return MultiRepositoryProvider(
     providers: [
       RepositoryProvider<ProjectRepository>.value(value: pRepo),
@@ -290,7 +308,7 @@ Widget buildTestApp({
             '/bills': (_) => const Scaffold(body: BillsListScreen()),
             '/projects': (_) => const HomeScreen(),
           },
-          home: child ?? const HomeScreen(),
+          home: effectiveChild,
         ),
       ),
     ),

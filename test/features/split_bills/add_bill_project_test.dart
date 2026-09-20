@@ -177,6 +177,24 @@ Widget buildTestApp({
   required BillsBloc billsBloc,
   required ProjectBloc projectBloc,
 }) {
+  Widget effectiveChild = child;
+  if (child is AddBillScreen && child.initialCompactMode == null) {
+    effectiveChild = AddBillScreen(
+      key: child.key,
+      billToEdit: child.billToEdit,
+      projectId: child.projectId,
+      requireProject: child.requireProject,
+      projectSettings: child.projectSettings,
+      template: child.template,
+      initialImagePath: child.initialImagePath,
+      initialImagePaths: child.initialImagePaths,
+      onPickImage: child.onPickImage,
+      onPickMultipleImages: child.onPickMultipleImages,
+      projectName: child.projectName,
+      initialCompactMode: false,
+    );
+  }
+
   return MultiProvider(
     providers: [
       ChangeNotifierProvider<LanguageProvider>(
@@ -193,7 +211,7 @@ Widget buildTestApp({
           TestAppLocalizationsDelegate(),
         ],
         supportedLocales: const [Locale('en')],
-        home: child,
+        home: effectiveChild,
       ),
     ),
   );
