@@ -418,5 +418,9 @@
   "project_expense_total": "Tổng cộng",
   "no_bills_in_project": "Chưa có chi tiêu trong dự án này",
   "bill_count_singular": "1 hóa đơn",
-  "bill_count_plural": "hóa đơn"
+  "bill_count_plural": "hóa đơn",
+  "expand_all": "Mở rộng tất cả",
+  "collapse_all": "Thu gọn tất cả",
+  "tap_to_expand": "Chạm để mở rộng",
+  "tap_to_collapse": "Chạm để thu gọn"
 }

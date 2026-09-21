@@ -422,7 +422,7 @@ void main() {
       // Proj 1 has 2 bills: 150 + 350 = 500
       expect(find.text('2 bills'), findsOneWidget);
       expect(find.text('Total'), findsWidgets);
-      expect(find.text('500đ'), findsWidgets);
+      expect(find.text('500 đ'), findsWidgets);
 
       // Proj 2 has 1 bill: 500
       expect(find.text('1 bill'), findsWidgets);
@@ -677,7 +677,7 @@ void main() {
       expect(find.text('Nhóm theo Dự án'), findsOneWidget);
       expect(find.text('Nhóm theo Ngày'), findsOneWidget);
       expect(find.text('Tổng'), findsWidgets);
-      expect(find.text('500đ'), findsWidgets);
+      expect(find.text('500 đ'), findsWidgets);
     });
 
     testWidgets('24. Dark theme renders correctly without overflow', (tester) async {

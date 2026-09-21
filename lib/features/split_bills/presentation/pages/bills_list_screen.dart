@@ -38,6 +38,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
   late BillFilter _filter;
   late final BillFilterPersistenceService _persistenceService;
   late BillGroupingMode _groupingMode;
+  final Set<String> _collapsedProjectIds = <String>{};
 
   @override
   void initState() {
@@ -72,6 +73,28 @@ class _BillsListScreenState extends State<BillsListScreen> {
       _filter = const BillFilter.initial();
     });
     _persistenceService.clearFilter();
+  }
+
+  bool _isProjectExpanded(String id) => !_collapsedProjectIds.contains(id);
+
+  void _toggleProjectExpand(String id) {
+    setState(() {
+      if (_collapsedProjectIds.contains(id)) {
+        _collapsedProjectIds.remove(id);
+      } else {
+        _collapsedProjectIds.add(id);
+      }
+    });
+  }
+
+  void _toggleExpandCollapseAll(List<_ProjectSectionData> sections) {
+    setState(() {
+      if (_collapsedProjectIds.isEmpty) {
+        _collapsedProjectIds.addAll(sections.map((s) => s.id));
+      } else {
+        _collapsedProjectIds.clear();
+      }
+    });
   }
 
   @override
@@ -120,6 +143,54 @@ class _BillsListScreenState extends State<BillsListScreen> {
     }
 
     return _buildBillsContent(context, allBills, const <Project>[]);
+  }
+
+  List<_ProjectSectionData> _buildSections(
+    List<Bill> filteredBills,
+    List<Project> displayProjects,
+    AppLocalizations loc,
+  ) {
+    final List<_ProjectSectionData> sections = [];
+
+    for (final project in displayProjects) {
+      final pBills = filteredBills.where((b) => b.projectId == project.id).toList();
+      if (pBills.isNotEmpty) {
+        final total = pBills.fold<double>(0.0, (sum, b) => sum + b.amount);
+        sections.add(_ProjectSectionData(
+          id: project.id,
+          title: project.name,
+          icon: project.iconData,
+          color: project.color,
+          currencySymbol: project.currencySymbol,
+          bills: pBills,
+          totalAmount: total,
+          isGeneral: false,
+        ));
+      }
+    }
+
+    final generalBills = filteredBills
+        .where((b) =>
+            b.projectId == null ||
+            b.projectId!.isEmpty ||
+            b.projectId == 'none' ||
+            b.projectId == 'general')
+        .toList();
+    if (generalBills.isNotEmpty) {
+      final total = generalBills.fold<double>(0.0, (sum, b) => sum + b.amount);
+      sections.add(_ProjectSectionData(
+        id: 'general',
+        title: loc.translate('general_expenses'),
+        icon: Icons.receipt_long_outlined,
+        color: Colors.blueGrey,
+        currencySymbol: '₫',
+        bills: generalBills,
+        totalAmount: total,
+        isGeneral: true,
+      ));
+    }
+
+    return sections;
   }
 
   Widget _buildBillsContent(BuildContext context, List<Bill> allBills, List<Project> projects) {
@@ -177,6 +248,8 @@ class _BillsListScreenState extends State<BillsListScreen> {
           b.projectId == 'general',
     );
 
+    final sections = _buildSections(filteredBills, displayProjects, loc);
+
     return Column(
       children: [
         BillSearchFilterBar(
@@ -189,12 +262,12 @@ class _BillsListScreenState extends State<BillsListScreen> {
           onClearAllFilters: _onClearAllFilters,
         ),
         _buildProjectFilterChips(context, displayProjects, hasUnassignedBills),
-        _buildGroupingToggleBar(context),
+        _buildGroupingToggleBar(context, sections),
         Expanded(
           child: filteredBills.isEmpty
               ? _buildEmptyState(context, loc)
               : _groupingMode == BillGroupingMode.project
-                  ? _buildProjectGroupedList(context, filteredBills, displayProjects, loc)
+                  ? _buildProjectGroupedList(context, sections, loc)
                   : _buildDateGroupedList(context, filteredBills),
         ),
       ],
@@ -328,98 +401,154 @@ class _BillsListScreenState extends State<BillsListScreen> {
     );
   }
 
-  Widget _buildGroupingToggleBar(BuildContext context) {
+  Widget _buildGroupingToggleBar(BuildContext context, List<_ProjectSectionData> sections) {
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isProject = _groupingMode == BillGroupingMode.project;
+    final allExpanded = _collapsedProjectIds.isEmpty;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        padding: const EdgeInsets.all(3),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                key: const Key('groupByProjectToggle'),
-                onTap: () {
-                  if (!isProject) {
-                    setState(() => _groupingMode = BillGroupingMode.project);
-                  }
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isProject ? theme.colorScheme.primary : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.folder_outlined,
-                        size: 16,
-                        color: isProject
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        loc.translate('group_by_project'),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isProject
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurfaceVariant,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: const EdgeInsets.all(3),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      key: const Key('groupByProjectToggle'),
+                      onTap: () {
+                        if (!isProject) {
+                          setState(() => _groupingMode = BillGroupingMode.project);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isProject ? theme.colorScheme.primary : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.folder_outlined,
+                              size: 14,
+                              color: isProject
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                loc.translate('group_by_project'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isProject
+                                      ? theme.colorScheme.onPrimary
+                                      : theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  Expanded(
+                    child: InkWell(
+                      key: const Key('groupByDateToggle'),
+                      onTap: () {
+                        if (isProject) {
+                          setState(() => _groupingMode = BillGroupingMode.date);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          color: !isProject ? theme.colorScheme.primary : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.calendar_month_outlined,
+                              size: 14,
+                              color: !isProject
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                loc.translate('group_by_date'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: !isProject
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Expanded(
+          ),
+          if (isProject && sections.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Material(
+              color: Colors.transparent,
               child: InkWell(
-                key: const Key('groupByDateToggle'),
-                onTap: () {
-                  if (isProject) {
-                    setState(() => _groupingMode = BillGroupingMode.date);
-                  }
-                },
+                key: const Key('expandCollapseAllButton'),
+                onTap: () => _toggleExpandCollapseAll(sections),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  key: Key(allExpanded ? 'collapseAllButton' : 'expandAllButton'),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                   decoration: BoxDecoration(
-                    color: !isProject ? theme.colorScheme.primary : Colors.transparent,
+                    color: theme.colorScheme.surfaceVariant.withOpacity(0.35),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: theme.dividerColor.withOpacity(0.2),
+                    ),
                   ),
-                  alignment: Alignment.center,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.calendar_month_outlined,
+                        allExpanded ? Icons.unfold_less : Icons.unfold_more,
                         size: 16,
-                        color: !isProject
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.onSurfaceVariant,
+                        color: theme.colorScheme.primary,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                       Text(
-                        loc.translate('group_by_date'),
+                        allExpanded ? loc.translate('collapse_all') : loc.translate('expand_all'),
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: !isProject
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurfaceVariant,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                     ],
@@ -428,57 +557,16 @@ class _BillsListScreenState extends State<BillsListScreen> {
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildProjectGroupedList(
     BuildContext context,
-    List<Bill> filteredBills,
-    List<Project> displayProjects,
+    List<_ProjectSectionData> sections,
     AppLocalizations loc,
   ) {
-    final List<_ProjectSectionData> sections = [];
-
-    for (final project in displayProjects) {
-      final pBills = filteredBills.where((b) => b.projectId == project.id).toList();
-      if (pBills.isNotEmpty) {
-        final total = pBills.fold<double>(0.0, (sum, b) => sum + b.amount);
-        sections.add(_ProjectSectionData(
-          id: project.id,
-          title: project.name,
-          icon: project.iconData,
-          color: project.color,
-          currencySymbol: project.currencySymbol,
-          bills: pBills,
-          totalAmount: total,
-          isGeneral: false,
-        ));
-      }
-    }
-
-    final generalBills = filteredBills
-        .where((b) =>
-            b.projectId == null ||
-            b.projectId!.isEmpty ||
-            b.projectId == 'none' ||
-            b.projectId == 'general')
-        .toList();
-    if (generalBills.isNotEmpty) {
-      final total = generalBills.fold<double>(0.0, (sum, b) => sum + b.amount);
-      sections.add(_ProjectSectionData(
-        id: 'general',
-        title: loc.translate('general_expenses'),
-        icon: Icons.receipt_long_outlined,
-        color: Colors.blueGrey,
-        currencySymbol: '₫',
-        bills: generalBills,
-        totalAmount: total,
-        isGeneral: true,
-      ));
-    }
-
     if (sections.isEmpty) {
       return _buildEmptyState(context, loc);
     }
@@ -487,6 +575,8 @@ class _BillsListScreenState extends State<BillsListScreen> {
       itemCount: sections.length,
       itemBuilder: (context, index) {
         final section = sections[index];
+        final isExpanded = _isProjectExpanded(section.id);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -500,14 +590,24 @@ class _BillsListScreenState extends State<BillsListScreen> {
               totalAmount: section.totalAmount,
               billCount: section.bills.length,
               isGeneral: section.isGeneral,
+              isExpanded: isExpanded,
+              onTap: () => _toggleProjectExpand(section.id),
             ),
-            ...section.bills.map(
-              (bill) => BillCard(
-                bill: bill,
-                projectName: section.title,
-                projectColor: section.color,
-                projectIcon: section.icon,
-              ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: isExpanded
+                  ? Column(
+                      children: section.bills.map(
+                        (bill) => BillCard(
+                          bill: bill,
+                          projectName: section.title,
+                          projectColor: section.color,
+                          projectIcon: section.icon,
+                        ),
+                      ).toList(),
+                    )
+                  : const SizedBox.shrink(),
             ),
           ],
         );
@@ -591,11 +691,13 @@ class _BillsListScreenState extends State<BillsListScreen> {
     required double totalAmount,
     required int billCount,
     required bool isGeneral,
+    required bool isExpanded,
+    required VoidCallback onTap,
   }) {
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final currencyDisplay = currencySymbol == 'VND' ? 'đ' : ' $currencySymbol';
+    final currencyDisplay = currencySymbol == 'VND' ? ' đ' : ' $currencySymbol';
     final formattedTotal = '${NumberFormat('#,##0.##').format(totalAmount)}$currencyDisplay';
     final billCountText = billCount == 1
         ? loc.translate('bill_count_singular')
@@ -605,8 +707,7 @@ class _BillsListScreenState extends State<BillsListScreen> {
       key: Key('projectSectionHeader_$projectId'),
       child: Container(
         key: isGeneral ? const Key('projectSectionHeader_none') : null,
-        margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        margin: const EdgeInsets.fromLTRB(16, 12, 16, 6),
         decoration: BoxDecoration(
           color: isDark
               ? theme.colorScheme.surface
@@ -624,64 +725,88 @@ class _BillsListScreenState extends State<BillsListScreen> {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            key: Key('projectSectionHeaderInk_$projectId'),
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
                 children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    child: Icon(icon, color: color, size: 20),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    billCountText,
-                    style: theme.textTheme.bodySmall?.copyWith(
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          billCountText,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        loc.translate('project_expense_total'),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        formattedTotal,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.0 : -0.25,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      key: Key('projectChevron_$projectId'),
                       color: theme.colorScheme.onSurfaceVariant,
+                      size: 22,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  loc.translate('project_expense_total'),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  formattedTotal,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );

@@ -418,6 +418,10 @@
   "project_expense_total": "Total",
   "no_bills_in_project": "No expenses in this project",
   "bill_count_singular": "1 bill",
-  "bill_count_plural": "bills"
+  "bill_count_plural": "bills",
+  "expand_all": "Expand All",
+  "collapse_all": "Collapse All",
+  "tap_to_expand": "Tap to expand",
+  "tap_to_collapse": "Tap to collapse"
 }
 

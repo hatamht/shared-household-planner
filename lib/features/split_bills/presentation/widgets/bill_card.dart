@@ -102,8 +102,9 @@ class BillCard extends StatelessWidget {
           }
         },
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Category emoji
               Text(
@@ -123,13 +124,16 @@ class BillCard extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                           ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       '${dateFormat.format(bill.date)} • ${loc.translate('category_${bill.category}')}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           '${bill.participants.length} ${loc.translate('participants')}',
@@ -138,7 +142,6 @@ class BillCard extends StatelessWidget {
                               ),
                         ),
                         if (bill.splitMode != 'equal') ...[
-                          const SizedBox(width: 6),
                           Container(
                             key: Key('splitModeChip_${bill.id}'),
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -157,23 +160,26 @@ class BillCard extends StatelessWidget {
                           ),
                         ],
                         if (hasReceipt) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.attach_file,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          Text(
-                            '${bill.effectiveImagePaths.length}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 11,
-                                ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.attach_file,
+                                size: 14,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              Text(
+                                '${bill.effectiveImagePaths.length}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11,
+                                    ),
+                              ),
+                            ],
                           ),
                         ],
                         if (displayProjectName != null && displayProjectName.isNotEmpty) ...[
-                          const SizedBox(width: 6),
                           Container(
                             key: Key('projectBadge_${bill.id}'),
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -195,6 +201,7 @@ class BillCard extends StatelessWidget {
                                   child: Text(
                                     displayProjectName,
                                     overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -209,7 +216,6 @@ class BillCard extends StatelessWidget {
                       ],
                     ),
                   ],
-
                 ),
               ),
 
@@ -282,14 +288,15 @@ class BillCard extends StatelessWidget {
               // Amount
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${bill.amount.toStringAsFixed(0)}${currency == 'VND' ? 'đ' : ' $currency'}',
+                    '${NumberFormat('#,##0.##').format(bill.amount)}${currency == 'VND' ? ' đ' : ' $currency'}',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
