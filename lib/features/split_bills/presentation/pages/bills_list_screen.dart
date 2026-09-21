@@ -570,6 +570,8 @@ class _BillsListScreenState extends State<BillsListScreen> {
     if (sections.isEmpty) {
       return _buildEmptyState(context, loc);
     }
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return ListView.builder(
       itemCount: sections.length,
@@ -577,39 +579,70 @@ class _BillsListScreenState extends State<BillsListScreen> {
         final section = sections[index];
         final isExpanded = _isProjectExpanded(section.id);
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildProjectSectionHeader(
-              context,
-              projectId: section.id,
-              title: section.title,
-              icon: section.icon,
-              color: section.color,
-              currencySymbol: section.currencySymbol,
-              totalAmount: section.totalAmount,
-              billCount: section.bills.length,
-              isGeneral: section.isGeneral,
-              isExpanded: isExpanded,
-              onTap: () => _toggleProjectExpand(section.id),
+        return Container(
+          key: Key('projectGroupCard_${section.id}'),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDark ? theme.colorScheme.surface : theme.cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: section.color.withOpacity(isDark ? 0.35 : 0.22),
+              width: 1.2,
             ),
-            AnimatedSize(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              child: isExpanded
-                  ? Column(
-                      children: section.bills.map(
-                        (bill) => BillCard(
-                          bill: bill,
-                          projectName: section.title,
-                          projectColor: section.color,
-                          projectIcon: section.icon,
-                        ),
-                      ).toList(),
-                    )
-                  : const SizedBox.shrink(),
-            ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildProjectSectionHeader(
+                context,
+                projectId: section.id,
+                title: section.title,
+                icon: section.icon,
+                color: section.color,
+                currencySymbol: section.currencySymbol,
+                totalAmount: section.totalAmount,
+                billCount: section.bills.length,
+                isGeneral: section.isGeneral,
+                isExpanded: isExpanded,
+                onTap: () => _toggleProjectExpand(section.id),
+              ),
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: isExpanded
+                    ? Column(
+                        children: [
+                          for (int i = 0; i < section.bills.length; i++) ...[
+                            Divider(
+                              height: 1,
+                              thickness: 0.8,
+                              indent: 14,
+                              endIndent: 14,
+                              color: theme.dividerColor.withOpacity(isDark ? 0.25 : 0.15),
+                            ),
+                            BillCard(
+                              bill: section.bills[i],
+                              projectName: section.title,
+                              projectColor: section.color,
+                              projectIcon: section.icon,
+                              isEmbedded: true,
+                            ),
+                          ],
+                          const SizedBox(height: 4),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -707,31 +740,16 @@ class _BillsListScreenState extends State<BillsListScreen> {
       key: Key('projectSectionHeader_$projectId'),
       child: Container(
         key: isGeneral ? const Key('projectSectionHeader_none') : null,
-        margin: const EdgeInsets.fromLTRB(16, 12, 16, 6),
         decoration: BoxDecoration(
-          color: isDark
-              ? theme.colorScheme.surface
-              : theme.cardColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(isDark ? 0.4 : 0.25),
-            width: 1.2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: isExpanded
+              ? color.withOpacity(isDark ? 0.12 : 0.05)
+              : Colors.transparent,
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
           child: InkWell(
             key: Key('projectSectionHeaderInk_$projectId'),
             onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(

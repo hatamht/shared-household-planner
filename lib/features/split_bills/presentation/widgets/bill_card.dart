@@ -18,6 +18,7 @@ class BillCard extends StatelessWidget {
   final String? projectName;
   final Color? projectColor;
   final IconData? projectIcon;
+  final bool isEmbedded;
 
   const BillCard({
     Key? key,
@@ -27,6 +28,7 @@ class BillCard extends StatelessWidget {
     this.projectName,
     this.projectColor,
     this.projectIcon,
+    this.isEmbedded = false,
   }) : super(key: key);
 
 
@@ -81,13 +83,17 @@ class BillCard extends StatelessWidget {
     }
 
     return Card(
-
       key: Key('billCard_${bill.id}'),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: isEmbedded
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      elevation: isEmbedded ? 0 : 1,
+      color: isEmbedded ? Colors.transparent : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: isEmbedded ? BorderRadius.zero : BorderRadius.circular(12),
+      ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: isEmbedded ? BorderRadius.zero : BorderRadius.circular(12),
         onTap: () {
           if (onTap != null) {
             onTap!();
@@ -102,7 +108,10 @@ class BillCard extends StatelessWidget {
           }
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: isEmbedded ? 14 : 12,
+            vertical: isEmbedded ? 10 : 8,
+          ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -196,16 +205,18 @@ class BillCard extends StatelessWidget {
                                   color: displayProjectColor ?? Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 2),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 80),
-                                  child: Text(
-                                    displayProjectName,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: displayProjectColor ?? Theme.of(context).colorScheme.primary,
+                                Flexible(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 80),
+                                    child: Text(
+                                      displayProjectName,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: displayProjectColor ?? Theme.of(context).colorScheme.primary,
+                                      ),
                                     ),
                                   ),
                                 ),
