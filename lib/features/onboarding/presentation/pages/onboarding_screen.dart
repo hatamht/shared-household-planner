@@ -6,50 +6,62 @@ import '../../domain/services/onboarding_service.dart';
 import '../../../home/presentation/pages/home_screen.dart';
 
 /// Data model for a single onboarding slide.
-class _OnboardingSlide {
+class OnboardingSlide {
   final IconData icon;
   final Color iconColor;
   final String titleKey;
   final String descKey;
+  final String imageAsset;
 
-  const _OnboardingSlide({
+  const OnboardingSlide({
     required this.icon,
     required this.iconColor,
     required this.titleKey,
     required this.descKey,
+    required this.imageAsset,
   });
 }
 
-const _slides = [
-  _OnboardingSlide(
-    icon: Icons.receipt_long_rounded,
-    iconColor: Color(0xFF3F51B5),
-    titleKey: 'onboarding_slide1_title',
-    descKey: 'onboarding_slide1_desc',
-  ),
-  _OnboardingSlide(
-    icon: Icons.folder_special_rounded,
-    iconColor: Color(0xFF009688),
-    titleKey: 'onboarding_slide2_title',
-    descKey: 'onboarding_slide2_desc',
-  ),
-  _OnboardingSlide(
-    icon: Icons.account_balance_wallet_rounded,
-    iconColor: Color(0xFF9C27B0),
-    titleKey: 'onboarding_slide3_title',
-    descKey: 'onboarding_slide3_desc',
-  ),
-  _OnboardingSlide(
-    icon: Icons.lock_rounded,
-    iconColor: Color(0xFF2196F3),
-    titleKey: 'onboarding_slide4_title',
-    descKey: 'onboarding_slide4_desc',
-  ),
-];
-
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback? onFinish;
-  const OnboardingScreen({super.key, this.onFinish});
+  final bool showFallbackIcon;
+  const OnboardingScreen({
+    super.key,
+    this.onFinish,
+    this.showFallbackIcon = false,
+  });
+
+
+  static const List<OnboardingSlide> slides = [
+    OnboardingSlide(
+      icon: Icons.receipt_long_rounded,
+      iconColor: Color(0xFF3F51B5),
+      titleKey: 'onboarding_slide1_title',
+      descKey: 'onboarding_slide1_desc',
+      imageAsset: 'assets/images/onboarding/slide1_split_bills.jpg',
+    ),
+    OnboardingSlide(
+      icon: Icons.folder_special_rounded,
+      iconColor: Color(0xFF009688),
+      titleKey: 'onboarding_slide2_title',
+      descKey: 'onboarding_slide2_desc',
+      imageAsset: 'assets/images/onboarding/slide2_project_budget.jpg',
+    ),
+    OnboardingSlide(
+      icon: Icons.account_balance_wallet_rounded,
+      iconColor: Color(0xFF9C27B0),
+      titleKey: 'onboarding_slide3_title',
+      descKey: 'onboarding_slide3_desc',
+      imageAsset: 'assets/images/onboarding/slide3_smart_debt.jpg',
+    ),
+    OnboardingSlide(
+      icon: Icons.lock_rounded,
+      iconColor: Color(0xFF2196F3),
+      titleKey: 'onboarding_slide4_title',
+      descKey: 'onboarding_slide4_desc',
+      imageAsset: 'assets/images/onboarding/slide4_offline_private.jpg',
+    ),
+  ];
 
   @override
   State<OnboardingScreen> createState() => OnboardingScreenState();
@@ -71,7 +83,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  bool get _isLastPage => _currentPage == _slides.length - 1;
+  bool get _isLastPage => _currentPage == OnboardingScreen.slides.length - 1;
 
   Future<void> _finishOnboarding() async {
     await OnboardingService.instance.markOnboardingSeen();
@@ -85,7 +97,6 @@ class OnboardingScreenState extends State<OnboardingScreen> {
       (_) => false,
     );
   }
-
 
   void _goNext() {
     if (_isLastPage) {
@@ -113,7 +124,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
     final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
-    final subtitleColor = isDark ? Colors.white60 : Colors.black54;
+    final subtitleColor = isDark ? Colors.white70 : Colors.black54;
     final dotInactiveColor = isDark ? Colors.white24 : Colors.grey.shade300;
 
     return Scaffold(
@@ -173,17 +184,19 @@ class OnboardingScreenState extends State<OnboardingScreen> {
               child: PageView.builder(
                 key: const Key('onboardingPageView'),
                 controller: _pageController,
-                itemCount: _slides.length,
+                itemCount: OnboardingScreen.slides.length,
                 onPageChanged: (index) {
                   setState(() => _currentPage = index);
                 },
                 itemBuilder: (context, index) {
                   return _buildSlide(
                     context,
-                    _slides[index],
+                    OnboardingScreen.slides[index],
+                    index,
                     loc,
                     textColor,
                     subtitleColor,
+                    isDark,
                   );
                 },
               ),
@@ -194,7 +207,7 @@ class OnboardingScreenState extends State<OnboardingScreen> {
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(_slides.length, (i) {
+                children: List.generate(OnboardingScreen.slides.length, (i) {
                   final isActive = _currentPage == i;
                   return AnimatedContainer(
                     key: Key('onboardingDot_$i'),
@@ -265,57 +278,111 @@ class OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _buildSlide(
     BuildContext context,
-    _OnboardingSlide slide,
+    OnboardingSlide slide,
+    int index,
     AppLocalizations loc,
     Color textColor,
     Color subtitleColor,
+    bool isDark,
   ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Illustration
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              color: slide.iconColor.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              slide.icon,
-              size: 80,
-              color: slide.iconColor,
-            ),
-          ),
-          const SizedBox(height: 40),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableHeight = constraints.maxHeight;
+        final imageHeight = (availableHeight * 0.52).clamp(180.0, 360.0);
 
-          // Title
-          Text(
-            loc.translate(slide.titleKey),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              height: 1.3,
-            ),
-          ),
-          const SizedBox(height: 16),
+        return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Prominent Graphic Illustration Container
+                  Container(
+                    height: imageHeight,
+                    width: double.infinity,
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                      border: Border.all(
+                        color: isDark ? Colors.white10 : Colors.black.withOpacity(0.06),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: widget.showFallbackIcon
+                        ? Container(
+                            key: Key('onboardingFallbackIcon_$index'),
+                            color: slide.iconColor.withOpacity(0.12),
+                            child: Center(
+                              child: Icon(
+                                slide.icon,
+                                size: 80,
+                                color: slide.iconColor,
+                              ),
+                            ),
+                          )
+                        : Image.asset(
+                            slide.imageAsset,
+                            key: Key('onboardingImage_$index'),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                key: Key('onboardingFallbackIcon_$index'),
+                                color: slide.iconColor.withOpacity(0.12),
+                                child: Center(
+                                  child: Icon(
+                                    slide.icon,
+                                    size: 80,
+                                    color: slide.iconColor,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
 
-          // Description
-          Text(
-            loc.translate(slide.descKey),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              color: subtitleColor,
-              height: 1.6,
+                  const SizedBox(height: 28),
+
+                  // Title
+                  Text(
+                    loc.translate(slide.titleKey),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Description
+                  Text(
+                    loc.translate(slide.descKey),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: subtitleColor,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

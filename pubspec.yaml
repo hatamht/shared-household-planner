@@ -55,6 +55,8 @@ flutter:
   assets:
     - lib/core/localization/translations/en.json
     - lib/core/localization/translations/vi.json
+    - assets/images/onboarding/
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

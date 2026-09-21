@@ -160,6 +160,7 @@ Widget _buildOnboardingApp({
   bool darkMode = false,
   String initialLang = 'en',
   VoidCallback? onFinish,
+  bool showFallbackIcon = false,
 }) {
   final langProvider = LanguageProvider();
 
@@ -178,11 +179,15 @@ Widget _buildOnboardingApp({
         ],
         supportedLocales: const [Locale('en'), Locale('vi')],
         locale: lp.currentLocale,
-        home: OnboardingScreen(onFinish: onFinish),
+        home: OnboardingScreen(
+          onFinish: onFinish,
+          showFallbackIcon: showFallbackIcon,
+        ),
       ),
     ),
   );
 }
+
 
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -547,7 +552,7 @@ void main() {
       expect(find.text('Instantly see who owes whom.'), findsOneWidget);
     });
 
-    testWidgets('8.3 Slide icons are rendered (receipt icon for slide 1)', (tester) async {
+    testWidgets('8.3 Slide image is rendered (for slide 1)', (tester) async {
       tester.view.physicalSize = const Size(800, 1200);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -555,9 +560,22 @@ void main() {
       await tester.pumpWidget(_buildOnboardingApp());
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('onboardingImage_0')), findsOneWidget);
+    });
+
+    testWidgets('8.4 Fallback icon is rendered when showFallbackIcon is true', (tester) async {
+      tester.view.physicalSize = const Size(800, 1200);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(_buildOnboardingApp(showFallbackIcon: true));
+      await tester.pumpAndSettle();
+
       expect(find.byIcon(Icons.receipt_long_rounded), findsOneWidget);
+      expect(find.byKey(const Key('onboardingFallbackIcon_0')), findsOneWidget);
     });
   });
+
 
   group('AC 9: Completion and Persistence', () {
     testWidgets('9.1 Tapping Skip calls onFinish and persists hasSeenOnboarding', (tester) async {
