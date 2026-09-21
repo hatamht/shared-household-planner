@@ -31,7 +31,6 @@ class OnboardingScreen extends StatefulWidget {
     this.showFallbackIcon = false,
   });
 
-
   static const List<OnboardingSlide> slides = [
     OnboardingSlide(
       icon: Icons.receipt_long_rounded,
@@ -118,271 +117,318 @@ class OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     final langCode = context.watch<LanguageProvider>().currentLocale.languageCode;
 
-    final bgColor = isDark ? const Color(0xFF121212) : Colors.white;
-    final textColor = isDark ? Colors.white : Colors.black87;
-    final subtitleColor = isDark ? Colors.white70 : Colors.black54;
-    final dotInactiveColor = isDark ? Colors.white24 : Colors.grey.shade300;
-
     return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top bar: Skip + Language switcher ──────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Skip button
-                  TextButton(
-                    key: const Key('onboardingSkipButton'),
-                    onPressed: _finishOnboarding,
-                    child: Text(
-                      loc.translate('onboarding_skip'),
-                      style: TextStyle(
-                        color: subtitleColor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-
-                  // Language toggle
-                  OutlinedButton(
-                    key: const Key('onboardingLanguageToggle'),
-                    onPressed: _toggleLanguage,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      side: BorderSide(
-                        color: colorScheme.primary.withOpacity(0.6),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                    child: Text(
-                      langCode == 'en' ? 'EN | VI' : 'VI | EN',
-                      style: TextStyle(
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // ── Full-screen PageView with edge-to-edge images ────────────
+          Positioned.fill(
+            child: PageView.builder(
+              key: const Key('onboardingPageView'),
+              controller: _pageController,
+              itemCount: OnboardingScreen.slides.length,
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+              },
+              itemBuilder: (context, index) {
+                return _buildFullScreenSlide(
+                  context,
+                  OnboardingScreen.slides[index],
+                  index,
+                  loc,
+                );
+              },
             ),
+          ),
 
-            // ── Page View (slides) ──────────────────────────────────────────
-            Expanded(
-              child: PageView.builder(
-                key: const Key('onboardingPageView'),
-                controller: _pageController,
-                itemCount: OnboardingScreen.slides.length,
-                onPageChanged: (index) {
-                  setState(() => _currentPage = index);
-                },
-                itemBuilder: (context, index) {
-                  return _buildSlide(
-                    context,
-                    OnboardingScreen.slides[index],
-                    index,
-                    loc,
-                    textColor,
-                    subtitleColor,
-                    isDark,
-                  );
-                },
-              ),
-            ),
-
-            // ── Dot indicator ───────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(OnboardingScreen.slides.length, (i) {
-                  final isActive = _currentPage == i;
-                  return AnimatedContainer(
-                    key: Key('onboardingDot_$i'),
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: isActive ? 22 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: isActive ? colorScheme.primary : dotInactiveColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  );
-                }),
-              ),
-            ),
-
-            // ── Bottom buttons ──────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: _isLastPage
-                    ? ElevatedButton(
-                        key: const Key('onboardingGetStartedButton'),
-                        onPressed: _finishOnboarding,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 3,
-                        ),
-                        child: Text(
-                          loc.translate('onboarding_get_started'),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : ElevatedButton(
-                        key: const Key('onboardingNextButton'),
-                        onPressed: _goNext,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colorScheme.primary,
-                          foregroundColor: colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          loc.translate('onboarding_next'),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+          // ── Top Bar: Skip + Language Switcher with frosted pill style ──
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Skip button
+                    TextButton(
+                      key: const Key('onboardingSkipButton'),
+                      onPressed: _finishOnboarding,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        backgroundColor: Colors.black.withOpacity(0.35),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: Colors.white.withOpacity(0.25),
                           ),
                         ),
                       ),
+                      child: Text(
+                        loc.translate('onboarding_skip'),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+
+                    // Quick language toggle
+                    OutlinedButton(
+                      key: const Key('onboardingLanguageToggle'),
+                      onPressed: _toggleLanguage,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor: Colors.black.withOpacity(0.35),
+                        side: BorderSide(
+                          color: Colors.white.withOpacity(0.35),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: Text(
+                        langCode == 'en' ? 'EN | VI' : 'VI | EN',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // ── Bottom Controls: Dots Indicator + Action Button ──────────
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Dots indicator
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(OnboardingScreen.slides.length, (i) {
+                        final isActive = _currentPage == i;
+                        return AnimatedContainer(
+                          key: Key('onboardingDot_$i'),
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: isActive ? 24 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? colorScheme.primary
+                                : Colors.white.withOpacity(0.35),
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: isActive
+                                ? [
+                                    BoxShadow(
+                                      color: colorScheme.primary.withOpacity(0.6),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Next / Get Started button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: _isLastPage
+                          ? ElevatedButton(
+                              key: const Key('onboardingGetStartedButton'),
+                              onPressed: _finishOnboarding,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 4,
+                              ),
+                              child: Text(
+                                loc.translate('onboarding_get_started'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          : ElevatedButton(
+                              key: const Key('onboardingNextButton'),
+                              onPressed: _goNext,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 2,
+                              ),
+                              child: Text(
+                                loc.translate('onboarding_next'),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSlide(
+  Widget _buildFullScreenSlide(
     BuildContext context,
     OnboardingSlide slide,
     int index,
     AppLocalizations loc,
-    Color textColor,
-    Color subtitleColor,
-    bool isDark,
   ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final availableHeight = constraints.maxHeight;
-        final imageHeight = (availableHeight * 0.52).clamp(180.0, 360.0);
-
-        return SingleChildScrollView(
-          physics: const ClampingScrollPhysics(),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Prominent Graphic Illustration Container
-                  Container(
-                    height: imageHeight,
-                    width: double.infinity,
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
-                      border: Border.all(
-                        color: isDark ? Colors.white10 : Colors.black.withOpacity(0.06),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(isDark ? 0.35 : 0.08),
-                          blurRadius: 18,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // 1. Full-screen Graphic Image Asset (with fallback)
+        Positioned.fill(
+          child: widget.showFallbackIcon
+              ? Container(
+                  key: Key('onboardingFallbackIcon_$index'),
+                  color: slide.iconColor.withOpacity(0.25),
+                  child: Center(
+                    child: Icon(
+                      slide.icon,
+                      size: 96,
+                      color: slide.iconColor,
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: widget.showFallbackIcon
-                        ? Container(
-                            key: Key('onboardingFallbackIcon_$index'),
-                            color: slide.iconColor.withOpacity(0.12),
-                            child: Center(
-                              child: Icon(
-                                slide.icon,
-                                size: 80,
-                                color: slide.iconColor,
-                              ),
-                            ),
-                          )
-                        : Image.asset(
-                            slide.imageAsset,
-                            key: Key('onboardingImage_$index'),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                key: Key('onboardingFallbackIcon_$index'),
-                                color: slide.iconColor.withOpacity(0.12),
-                                child: Center(
-                                  child: Icon(
-                                    slide.icon,
-                                    size: 80,
-                                    color: slide.iconColor,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
                   ),
+                )
+              : Image.asset(
+                  slide.imageAsset,
+                  key: Key('onboardingImage_$index'),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      key: Key('onboardingFallbackIcon_$index'),
+                      color: slide.iconColor.withOpacity(0.25),
+                      child: Center(
+                        child: Icon(
+                          slide.icon,
+                          size: 96,
+                          color: slide.iconColor,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
 
-                  const SizedBox(height: 28),
+        // 2. High-contrast Scrim Gradient Overlay for 100% text readability
+        Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.20, 0.40, 0.62, 0.85, 1.0],
+                colors: [
+                  Colors.black.withOpacity(0.55), // Top scrim for top bar readability
+                  Colors.black.withOpacity(0.15),
+                  Colors.transparent,             // Clear mid area to view the graphic illustration
+                  Colors.black.withOpacity(0.40), // Transition into text backdrop
+                  Colors.black.withOpacity(0.85), // Solid dark backdrop for title/desc
+                  Colors.black.withOpacity(0.95), // Deep dark for bottom controls
+                ],
+              ),
+            ),
+          ),
+        ),
 
-                  // Title
+        // 3. Clear, High-Contrast Typography
+        Positioned.fill(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 26),
+              child: Column(
+                children: [
+                  const Spacer(flex: 5),
+
+                  // Slide Title
                   Text(
                     loc.translate(slide.titleKey),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 23,
+                    style: const TextStyle(
+                      fontSize: 25,
                       fontWeight: FontWeight.bold,
-                      color: textColor,
-                      height: 1.3,
+                      color: Colors.white,
+                      letterSpacing: -0.2,
+                      height: 1.25,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black,
+                          blurRadius: 12,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
 
-                  // Description
+                  // Slide Description
                   Text(
                     loc.translate(slide.descKey),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 15,
-                      color: subtitleColor,
+                      color: Colors.white.withOpacity(0.90),
                       height: 1.5,
+                      shadows: const [
+                        Shadow(
+                          color: Colors.black87,
+                          blurRadius: 8,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 110), // Room for dots + action button
                 ],
               ),
             ),
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 }
