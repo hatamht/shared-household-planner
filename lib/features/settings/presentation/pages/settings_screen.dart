@@ -10,6 +10,8 @@ import '../../../export/presentation/pages/export_data_screen.dart';
 import '../../../../core/services/receipt_image_service.dart';
 import '../../../templates/presentation/pages/bill_templates_screen.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
+import '../../../onboarding/domain/services/onboarding_service.dart';
+import '../../../onboarding/presentation/pages/onboarding_screen.dart';
 
 
 /// Comprehensive Settings Screen consolidating Profile, Theme, Language,
@@ -207,11 +209,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _buildDataManagementCard(context, loc, isDark),
         const SizedBox(height: 20),
 
-        // ── SECTION 6: About App ─────────────────────────────────────────
+        // ── SECTION 6: User Guide ────────────────────────────────────────
+        _buildSectionHeader(context, loc.translate('user_guide')),
+        const SizedBox(height: 8),
+        _buildUserGuideCard(context, loc, isDark),
+        const SizedBox(height: 20),
+
+        // ── SECTION 7: About App ─────────────────────────────────────────
         _buildSectionHeader(context, loc.translate('about_app')),
         const SizedBox(height: 8),
         _buildAboutCard(context, loc, isDark),
         const SizedBox(height: 24),
+
       ],
     );
 
@@ -532,7 +541,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildUserGuideCard(BuildContext context, AppLocalizations loc, bool isDark) {
+    return Card(
+      key: const Key('userGuideCard'),
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      child: ListTile(
+        key: const Key('replayOnboardingTile'),
+        leading: const CircleAvatar(
+          backgroundColor: Color(0xFFE0F2FE),
+          child: Icon(Icons.auto_stories_rounded, color: Color(0xFF0284C7)),
+        ),
+        title: Text(
+          loc.translate('replay_onboarding'),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          loc.translate('replay_onboarding_desc'),
+          style: const TextStyle(fontSize: 12),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () async {
+          await OnboardingService.instance.resetOnboarding();
+          if (!mounted) return;
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildAboutCard(BuildContext context, AppLocalizations loc, bool isDark) {
+
     return Card(
       key: const Key('aboutAppCard'),
       elevation: 1,

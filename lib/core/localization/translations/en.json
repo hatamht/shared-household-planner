@@ -394,6 +394,21 @@
   "clear_filters": "Clear filters",
   "no_matching_projects": "No matching projects found",
   "no_matching_projects_hint": "Try adjusting your search or filters",
-  "reset_filters": "Reset filters"
+  "reset_filters": "Reset filters",
+  "onboarding_slide1_title": "Split Bills Effortlessly",
+  "onboarding_slide1_desc": "Track shared expenses, split costs fairly among housemates, and never argue about money again.",
+  "onboarding_slide2_title": "Project-based Budgeting",
+  "onboarding_slide2_desc": "Organize expenses by projects — trips, households, events. Keep every budget neat and separated.",
+  "onboarding_slide3_title": "Smart Debt Settlement",
+  "onboarding_slide3_desc": "Instantly see who owes whom and how much. One-tap settlement tracking for stress-free paybacks.",
+  "onboarding_slide4_title": "100% Offline & Private",
+  "onboarding_slide4_desc": "Your data stays on your device. No cloud, no subscriptions — just privacy and full control.",
+  "onboarding_skip": "Skip",
+  "onboarding_next": "Next",
+  "onboarding_get_started": "Get Started",
+  "onboarding_language_switch": "EN | VI",
+  "replay_onboarding": "User Guide",
+  "replay_onboarding_desc": "View the introductory tour again",
+  "user_guide": "User Guide"
 }
 

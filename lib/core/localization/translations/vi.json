@@ -394,5 +394,20 @@
   "clear_filters": "Xóa bộ lọc",
   "no_matching_projects": "Không tìm thấy dự án phù hợp",
   "no_matching_projects_hint": "Thử điều chỉnh tìm kiếm hoặc bộ lọc",
-  "reset_filters": "Đặt lại bộ lọc"
+  "reset_filters": "Đặt lại bộ lọc",
+  "onboarding_slide1_title": "Chia tiền dễ dàng",
+  "onboarding_slide1_desc": "Theo dõi chi phí chung, chia tiền công bằng giữa mọi người — không còn tranh cãi về tiền bạc.",
+  "onboarding_slide2_title": "Ngân sách theo dự án",
+  "onboarding_slide2_desc": "Phân chia chi tiêu theo dự án — chuyến đi, hộ gia đình, sự kiện. Mọi khoản chi rõ ràng, minh bạch.",
+  "onboarding_slide3_title": "Quyết toán thông minh",
+  "onboarding_slide3_desc": "Biết ngay ai nợ ai bao nhiêu. Ghi nhận thanh toán chỉ với một chạm — hết lo nợ nần.",
+  "onboarding_slide4_title": "100% Ngoại tuyến & Riêng tư",
+  "onboarding_slide4_desc": "Dữ liệu ở lại trên thiết bị của bạn. Không cloud, không đăng ký — hoàn toàn bảo mật và kiểm soát.",
+  "onboarding_skip": "Bỏ qua",
+  "onboarding_next": "Tiếp theo",
+  "onboarding_get_started": "Bắt đầu",
+  "onboarding_language_switch": "EN | VI",
+  "replay_onboarding": "Hướng dẫn sử dụng",
+  "replay_onboarding_desc": "Xem lại hướng dẫn giới thiệu ứng dụng",
+  "user_guide": "Hướng dẫn sử dụng"
 }

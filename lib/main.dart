@@ -20,33 +20,46 @@ import 'features/templates/presentation/bloc/bill_templates_bloc.dart';
 import 'features/settlement/domain/repositories/settlement_repository.dart';
 import 'features/settlement/presentation/bloc/settlement_bloc.dart';
 import 'features/settlement/presentation/pages/payment_history_screen.dart';
+import 'features/onboarding/domain/services/onboarding_service.dart';
+import 'features/onboarding/presentation/pages/onboarding_screen.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Check first launch — before loading saved language, so we can default to EN
+  final hasSeenOnboarding = await OnboardingService.instance.hasSeenOnboarding();
+
   await themeProvider.loadTheme();
-  await languageProvider.loadLanguage();
+
+  // Default to English on very first launch (no saved language)
+  if (hasSeenOnboarding) {
+    await languageProvider.loadLanguage();
+  }
+  // On first launch: languageProvider already defaults to 'en' in constructor
+
   await setupServiceLocator();
   getIt<ProjectBloc>().add(const GetAllProjects());
   getIt<BillsBloc>().add(const GetBillsEvent());
   getIt<BillTemplatesBloc>().add(const LoadTemplatesEvent());
   getIt<SettlementBloc>().add(const LoadSettlementsEvent());
-  
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider<ThemeProvider>(create: (_) => themeProvider),
         ChangeNotifierProvider<LanguageProvider>(create: (_) => languageProvider),
       ],
-      child: const MyApp(),
+      child: MyApp(showOnboarding: !hasSeenOnboarding),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool showOnboarding;
+  const MyApp({super.key, this.showOnboarding = false});
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +109,7 @@ class MyApp extends StatelessWidget {
                 Locale('vi'),
               ],
               theme: themeProvider.currentTheme,
-              home: const HomeScreen(),
+              home: showOnboarding ? const OnboardingScreen() : const HomeScreen(),
               routes: {
                 '/bills': (context) => const BillsListScreen(),
                 '/add-bill': (context) => const AddBillScreen(),
