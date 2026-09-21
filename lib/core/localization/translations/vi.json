@@ -409,5 +409,14 @@
   "onboarding_language_switch": "EN | VI",
   "replay_onboarding": "Hướng dẫn sử dụng",
   "replay_onboarding_desc": "Xem lại hướng dẫn giới thiệu ứng dụng",
-  "user_guide": "Hướng dẫn sử dụng"
+  "user_guide": "Hướng dẫn sử dụng",
+  "group_by_project": "Nhóm theo Dự án",
+  "group_by_date": "Nhóm theo Ngày",
+  "all_projects": "Tất cả Dự án",
+  "general_expenses": "Chi tiêu chung",
+  "filter_by_project": "Lọc theo dự án",
+  "project_expense_total": "Tổng cộng",
+  "no_bills_in_project": "Chưa có chi tiêu trong dự án này",
+  "bill_count_singular": "1 hóa đơn",
+  "bill_count_plural": "hóa đơn"
 }

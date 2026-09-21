@@ -409,6 +409,15 @@
   "onboarding_language_switch": "EN | VI",
   "replay_onboarding": "User Guide",
   "replay_onboarding_desc": "View the introductory tour again",
-  "user_guide": "User Guide"
+  "user_guide": "User Guide",
+  "group_by_project": "Group by Project",
+  "group_by_date": "Group by Date",
+  "all_projects": "All Projects",
+  "general_expenses": "General Expenses",
+  "filter_by_project": "Filter by Project",
+  "project_expense_total": "Total",
+  "no_bills_in_project": "No expenses in this project",
+  "bill_count_singular": "1 bill",
+  "bill_count_plural": "bills"
 }
 

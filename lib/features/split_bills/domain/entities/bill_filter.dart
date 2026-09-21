@@ -10,6 +10,7 @@ class BillFilter extends Equatable {
   final DateTime? toDate;
   final double? minAmount;
   final double? maxAmount;
+  final String? selectedProjectId;
 
   const BillFilter({
     this.searchQuery = '',
@@ -19,6 +20,7 @@ class BillFilter extends Equatable {
     this.toDate,
     this.minAmount,
     this.maxAmount,
+    this.selectedProjectId,
   });
 
   const BillFilter.initial()
@@ -28,7 +30,8 @@ class BillFilter extends Equatable {
         fromDate = null,
         toDate = null,
         minAmount = null,
-        maxAmount = null;
+        maxAmount = null,
+        selectedProjectId = null;
 
   /// Whether any search query or filter condition is active.
   bool get isActive {
@@ -38,7 +41,10 @@ class BillFilter extends Equatable {
         fromDate != null ||
         toDate != null ||
         minAmount != null ||
-        maxAmount != null;
+        maxAmount != null ||
+        (selectedProjectId != null &&
+            selectedProjectId!.isNotEmpty &&
+            selectedProjectId != 'all');
   }
 
   /// Total number of active filter categories (including search if non-empty).
@@ -49,16 +55,26 @@ class BillFilter extends Equatable {
     if (selectedCategories.isNotEmpty) count++;
     if (fromDate != null || toDate != null) count++;
     if (minAmount != null || maxAmount != null) count++;
+    if (selectedProjectId != null &&
+        selectedProjectId!.isNotEmpty &&
+        selectedProjectId != 'all') {
+      count++;
+    }
     return count;
   }
 
-  /// Number of non-text filters active (persons, categories, date, amount).
+  /// Number of non-text filters active (persons, categories, date, amount, project).
   int get nonTextFilterCount {
     int count = 0;
     if (selectedPersons.isNotEmpty) count++;
     if (selectedCategories.isNotEmpty) count++;
     if (fromDate != null || toDate != null) count++;
     if (minAmount != null || maxAmount != null) count++;
+    if (selectedProjectId != null &&
+        selectedProjectId!.isNotEmpty &&
+        selectedProjectId != 'all') {
+      count++;
+    }
     return count;
   }
 
@@ -120,6 +136,21 @@ class BillFilter extends Equatable {
       return false;
     }
 
+    // 6. Project filter (matches bill.projectId or unassigned bills)
+    if (selectedProjectId != null &&
+        selectedProjectId!.isNotEmpty &&
+        selectedProjectId != 'all') {
+      if (selectedProjectId == 'none' || selectedProjectId == 'general') {
+        if (bill.projectId != null && bill.projectId!.isNotEmpty) {
+          return false;
+        }
+      } else {
+        if (bill.projectId != selectedProjectId) {
+          return false;
+        }
+      }
+    }
+
     // All active criteria matched (AND logic)
     return true;
   }
@@ -138,8 +169,10 @@ class BillFilter extends Equatable {
     DateTime? toDate,
     double? minAmount,
     double? maxAmount,
+    String? selectedProjectId,
     bool clearDates = false,
     bool clearAmounts = false,
+    bool clearProject = false,
   }) {
     return BillFilter(
       searchQuery: searchQuery ?? this.searchQuery,
@@ -149,6 +182,8 @@ class BillFilter extends Equatable {
       toDate: clearDates ? null : (toDate ?? this.toDate),
       minAmount: clearAmounts ? null : (minAmount ?? this.minAmount),
       maxAmount: clearAmounts ? null : (maxAmount ?? this.maxAmount),
+      selectedProjectId:
+          clearProject ? null : (selectedProjectId ?? this.selectedProjectId),
     );
   }
 
@@ -161,6 +196,7 @@ class BillFilter extends Equatable {
       'toDate': toDate?.toIso8601String(),
       'minAmount': minAmount,
       'maxAmount': maxAmount,
+      'selectedProjectId': selectedProjectId,
     };
   }
 
@@ -183,6 +219,7 @@ class BillFilter extends Equatable {
           : null,
       minAmount: (json['minAmount'] as num?)?.toDouble(),
       maxAmount: (json['maxAmount'] as num?)?.toDouble(),
+      selectedProjectId: json['selectedProjectId'] as String?,
     );
   }
 
@@ -195,5 +232,6 @@ class BillFilter extends Equatable {
         toDate,
         minAmount,
         maxAmount,
+        selectedProjectId,
       ];
 }

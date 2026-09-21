@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../domain/entities/bill.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../projects/presentation/bloc/project_bloc.dart';
 import '../../../templates/domain/entities/bill_template.dart';
 import '../../../templates/presentation/bloc/bill_templates_bloc.dart';
 import 'receipt_viewer_modal.dart';
@@ -14,13 +15,20 @@ class BillCard extends StatelessWidget {
   final Bill bill;
   final VoidCallback? onTap;
   final VoidCallback? onSaveAsTemplate;
+  final String? projectName;
+  final Color? projectColor;
+  final IconData? projectIcon;
 
   const BillCard({
     Key? key,
     required this.bill,
     this.onTap,
     this.onSaveAsTemplate,
+    this.projectName,
+    this.projectColor,
+    this.projectIcon,
   }) : super(key: key);
+
 
   String _getCategoryEmoji(String? category) {
     final categoryMap = {
@@ -54,7 +62,26 @@ class BillCard extends StatelessWidget {
     final currency = bill.currency ?? 'VND';
     final hasReceipt = bill.hasReceipt;
 
+    String? displayProjectName = projectName;
+    Color? displayProjectColor = projectColor;
+    IconData? displayProjectIcon = projectIcon;
+
+    if (displayProjectName == null && bill.projectId != null && bill.projectId!.isNotEmpty) {
+      try {
+        final projectState = context.read<ProjectBloc>().state;
+        if (projectState is ProjectLoaded) {
+          final matched = projectState.projects.where((p) => p.id == bill.projectId);
+          if (matched.isNotEmpty) {
+            displayProjectName = matched.first.name;
+            displayProjectColor = matched.first.color;
+            displayProjectIcon = matched.first.iconData;
+          }
+        }
+      } catch (_) {}
+    }
+
     return Card(
+
       key: Key('billCard_${bill.id}'),
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 1,
@@ -145,9 +172,44 @@ class BillCard extends StatelessWidget {
                                 ),
                           ),
                         ],
+                        if (displayProjectName != null && displayProjectName.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            key: Key('projectBadge_${bill.id}'),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: (displayProjectColor ?? Theme.of(context).colorScheme.primary).withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  displayProjectIcon ?? Icons.folder_outlined,
+                                  size: 10,
+                                  color: displayProjectColor ?? Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 2),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 80),
+                                  child: Text(
+                                    displayProjectName,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: displayProjectColor ?? Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ],
+
                 ),
               ),
 
