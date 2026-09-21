@@ -579,20 +579,26 @@ class _BillsListScreenState extends State<BillsListScreen> {
         final section = sections[index];
         final isExpanded = _isProjectExpanded(section.id);
 
-        return Container(
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutCubic,
           key: Key('projectGroupCard_${section.id}'),
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
             color: isDark ? theme.colorScheme.surface : theme.cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: section.color.withOpacity(isDark ? 0.35 : 0.22),
+              color: section.color.withOpacity(
+                isExpanded ? (isDark ? 0.45 : 0.3) : (isDark ? 0.3 : 0.18),
+              ),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
-                blurRadius: 6,
+                color: Colors.black.withOpacity(
+                  isExpanded ? (isDark ? 0.25 : 0.06) : (isDark ? 0.15 : 0.03),
+                ),
+                blurRadius: isExpanded ? 8 : 4,
                 offset: const Offset(0, 2),
               ),
             ],
@@ -616,7 +622,9 @@ class _BillsListScreenState extends State<BillsListScreen> {
               ),
               AnimatedSize(
                 duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+                curve: Curves.easeInOutCubic,
+                alignment: Alignment.topCenter,
+                clipBehavior: Clip.hardEdge,
                 child: isExpanded
                     ? Column(
                         children: [
@@ -738,7 +746,9 @@ class _BillsListScreenState extends State<BillsListScreen> {
 
     return KeyedSubtree(
       key: Key('projectSectionHeader_$projectId'),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeInOutCubic,
         key: isGeneral ? const Key('projectSectionHeader_none') : null,
         decoration: BoxDecoration(
           color: isExpanded
@@ -812,8 +822,8 @@ class _BillsListScreenState extends State<BillsListScreen> {
                   const SizedBox(width: 8),
                   AnimatedRotation(
                     turns: isExpanded ? 0.0 : -0.25,
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
+                    duration: const Duration(milliseconds: 280),
+                    curve: Curves.easeInOutCubic,
                     child: Icon(
                       Icons.keyboard_arrow_down,
                       key: Key('projectChevron_$projectId'),
