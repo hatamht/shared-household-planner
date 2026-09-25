@@ -1354,4 +1354,178 @@ void main() {
       expect(find.text('Xuất file'), findsOneWidget);
     });
   });
+
+  // ── GROUP 11: PDF Currency Symbol & Font Glyph Safety (Shared-60) ──────────
+  group('11. PDF Currency Symbol, Font Glyph Safety & Project Currency Binding (Shared-60)', () {
+    test('107. formatCurrencyAmount formats VND without decimals and with VND suffix', () {
+      expect(PdfGenerator.formatCurrencyAmount(150000, 'VND'), '150,000 VND');
+      expect(PdfGenerator.formatCurrencyAmount(0, 'VND'), '0 VND');
+    });
+
+    test('108. formatCurrencyAmount maps ₫ and đ to VND to avoid broken glyphs', () {
+      expect(PdfGenerator.formatCurrencyAmount(250000, '₫'), '250,000 VND');
+      expect(PdfGenerator.formatCurrencyAmount(50000, 'đ'), '50,000 VND');
+    });
+
+    test('109. formatCurrencyAmount formats USD with \$ prefix and 2 decimals', () {
+      expect(PdfGenerator.formatCurrencyAmount(123.45, 'USD'), '\$123.45');
+      expect(PdfGenerator.formatCurrencyAmount(100, '\$'), '\$100.00');
+    });
+
+    test('110. formatCurrencyAmount formats EUR with 2 decimals', () {
+      expect(PdfGenerator.formatCurrencyAmount(45.5, 'EUR'), '45.50 EUR');
+      expect(PdfGenerator.formatCurrencyAmount(99, '€'), '€99.00');
+    });
+
+    test('111. formatCurrencyAmount formats JPY with ¥ prefix and 0 decimals', () {
+      expect(PdfGenerator.formatCurrencyAmount(1200, 'JPY'), '¥1,200');
+      expect(PdfGenerator.formatCurrencyAmount(500, '¥'), '¥500');
+    });
+
+    test('112. formatCurrencyAmount formats GBP with £ prefix and 2 decimals', () {
+      expect(PdfGenerator.formatCurrencyAmount(75.2, 'GBP'), '£75.20');
+      expect(PdfGenerator.formatCurrencyAmount(10, '£'), '£10.00');
+    });
+
+    test('113. PdfGenerator generates valid PDF bytes with VND currency', () async {
+      final generator = const PdfGenerator();
+      final bill = createSampleBill(
+        id: 'b1',
+        title: 'Dinner',
+        amount: 250000,
+        paidBy: 'u1',
+        projectId: 'p1',
+      );
+
+      final pdfBytes = await generator.generate(
+        bills: [bill],
+        projectName: 'Household VND',
+        currencySymbol: 'VND',
+      );
+
+      expect(pdfBytes, isNotEmpty);
+      expect(pdfBytes.sublist(0, 4), equals([0x25, 0x50, 0x44, 0x46])); // %PDF
+    });
+
+    test('114. PdfGenerator generates valid PDF bytes with ₫ currency safely mapped', () async {
+      final generator = const PdfGenerator();
+      final bill = createSampleBill(
+        id: 'b2',
+        title: 'Coffee',
+        amount: 50000,
+        paidBy: 'u1',
+        projectId: 'p1',
+      );
+
+      final pdfBytes = await generator.generate(
+        bills: [bill],
+        projectName: 'Household Dong',
+        currencySymbol: '₫',
+      );
+
+      expect(pdfBytes, isNotEmpty);
+      expect(pdfBytes.sublist(0, 4), equals([0x25, 0x50, 0x44, 0x46])); // %PDF
+    });
+
+    test('115. ExportService defaults currencySymbol to VND when exporting PDF', () async {
+      final tempDir = Directory.systemTemp.createTempSync('export_vnd_test_');
+      addTearDown(() => tempDir.deleteSync(recursive: true));
+
+      final exportService = ExportService(
+        getOutputDirectory: () async => tempDir,
+      );
+
+      final bill = createSampleBill(
+        id: 'b3',
+        title: 'Groceries',
+        amount: 300000,
+        paidBy: 'u1',
+      );
+
+      final filter = const ExportFilter(
+        format: ExportFormat.pdf,
+        dateRange: ExportDateRange.allTime,
+      );
+
+      final result = await exportService.exportToFile(
+        bills: [bill],
+        filter: filter,
+      );
+
+      expect(result.success, isTrue);
+      final file = File(result.filePath!);
+      expect(await file.exists(), isTrue);
+    });
+
+    testWidgets('116. ExportDataScreen resolves currency from selected project and exports', (tester) async {
+      final tempDir = Directory.systemTemp.createTempSync('export_screen_curr_');
+      addTearDown(() => tempDir.deleteSync(recursive: true));
+
+      String? capturedCurrency;
+      final mockPdf = _CapturePdfGenerator(onGenerate: (curr) => capturedCurrency = curr);
+
+      final exportService = ExportService(
+        pdfGenerator: mockPdf,
+        getOutputDirectory: () async => tempDir,
+      );
+
+      final p = Project(
+        id: 'proj_usd',
+        name: 'US Trip',
+        members: const ['Alice'],
+        currency: 'USD',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final bill = createSampleBill(
+        id: 'b_usd',
+        title: 'Taxi',
+        amount: 45.0,
+        paidBy: 'Alice',
+        projectId: 'proj_usd',
+      );
+
+      await pumpTestScreen(
+        tester,
+        buildExportTestApp(
+          projects: [p],
+          bills: [bill],
+          child: ExportDataScreen(
+            exportService: exportService,
+            initialProjectId: 'proj_usd',
+            initialFormat: ExportFormat.pdf,
+          ),
+        ),
+      );
+
+      await tester.runAsync(() async {
+        await tester.tap(find.byKey(const Key('exportFileButton')));
+        await Future.delayed(const Duration(milliseconds: 50));
+      });
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(capturedCurrency, equals('USD'));
+    });
+  });
 }
+
+class _CapturePdfGenerator extends PdfGenerator {
+  final void Function(String currency) onGenerate;
+  const _CapturePdfGenerator({required this.onGenerate});
+
+  @override
+  Future<Uint8List> generate({
+    required List<Bill> bills,
+    String? projectName,
+    String? dateRangeLabel,
+    String currencySymbol = 'VND',
+    bool includeSettlement = true,
+    dynamic settlementLogs,
+  }) async {
+    onGenerate(currencySymbol);
+    return Uint8List.fromList([0x25, 0x50, 0x44, 0x46]);
+  }
+}
+
