@@ -46,7 +46,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedCurrency = 'EUR';
   bool _cacheCleared = false;
-  bool _dataReset = false;
   String? _actualCacheSize;
 
   final List<String> _supportedCurrencies = const ['EUR', 'USD', 'VND', 'GBP', 'JPY'];
@@ -107,41 +106,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: Text(loc.translate('cache_cleared')),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  void _handleResetData(BuildContext context, AppLocalizations loc) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(loc.translate('reset_demo_data')),
-        content: Text(loc.translate('reset_demo_data_desc')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(loc.translate('cancel')),
-          ),
-          ElevatedButton(
-            key: const Key('confirmResetDataButton'),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              setState(() {
-                _dataReset = true;
-              });
-              widget.onResetData?.call();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(loc.translate('data_reset_success')),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            child: Text(loc.translate('confirm_delete')),
-          ),
-        ],
       ),
     );
   }
@@ -566,20 +530,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ? const Icon(Icons.check_circle, color: Colors.green)
                 : const Icon(Icons.delete_sweep_outlined),
             onTap: () => _handleClearCache(context, loc),
-          ),
-          const Divider(height: 1),
-          ListTile(
-            key: const Key('resetDataButton'),
-            leading: const CircleAvatar(
-              backgroundColor: Color(0xFFFEE2E2),
-              child: Icon(Icons.restore, color: Color(0xFFDC2626)),
-            ),
-            title: Text(loc.translate('reset_demo_data'), style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(loc.translate('reset_demo_data_desc'), style: const TextStyle(fontSize: 12)),
-            trailing: _dataReset
-                ? const Icon(Icons.check_circle, color: Colors.green)
-                : const Icon(Icons.refresh),
-            onTap: () => _handleResetData(context, loc),
           ),
         ],
       ),

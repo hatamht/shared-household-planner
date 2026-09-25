@@ -666,57 +666,35 @@ void main() {
       expect(find.text('Cache cleared successfully'), findsWidgets);
     });
 
-    testWidgets('54. Reset Demo Data button exists', (tester) async {
+    testWidgets('54. Reset Demo Data button is removed from Data Management', (tester) async {
       await pumpTestScreen(tester, buildSettingsTestApp());
-      expect(find.byKey(const Key('resetDataButton')), findsOneWidget);
-      expect(find.text('Reset Demo Data'), findsOneWidget);
+      expect(find.byKey(const Key('resetDataButton')), findsNothing);
+      expect(find.text('Reset Demo Data'), findsNothing);
     });
 
-    testWidgets('55. Tapping Reset Demo Data opens confirmation dialog', (tester) async {
+    testWidgets('55. Confirm reset data button key is not found', (tester) async {
       await pumpTestScreen(tester, buildSettingsTestApp());
-      await tester.tap(find.byKey(const Key('resetDataButton')));
-      await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Reset Demo Data'), findsWidgets);
-      expect(find.descendant(of: find.byType(AlertDialog), matching: find.text('Restore initial sample projects and expenses')), findsOneWidget);
+      expect(find.byKey(const Key('confirmResetDataButton')), findsNothing);
     });
 
-    testWidgets('56. Cancelling reset dialog dismisses without invoking callback', (tester) async {
-      bool called = false;
+    testWidgets('56. SettingsScreen accepts onResetData callback for backward compatibility', (tester) async {
       await pumpTestScreen(
         tester,
         buildSettingsTestApp(
           child: SettingsScreen(
             showAppBar: true,
-            onResetData: () => called = true,
+            onResetData: () {},
           ),
         ),
       );
-      await tester.tap(find.byKey(const Key('resetDataButton')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(called, false);
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(SettingsScreen), findsOneWidget);
     });
 
-    testWidgets('57. Confirming reset dialog invokes onResetData and shows SnackBar', (tester) async {
-      bool called = false;
-      await pumpTestScreen(
-        tester,
-        buildSettingsTestApp(
-          child: SettingsScreen(
-            showAppBar: true,
-            onResetData: () => called = true,
-          ),
-        ),
-      );
-      await tester.tap(find.byKey(const Key('resetDataButton')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('confirmResetDataButton')));
-      await tester.pump();
-      expect(called, true);
-      expect(find.text('Sample data reset successfully'), findsOneWidget);
+    testWidgets('57. Data Management only contains billTemplatesTile and clearCacheButton', (tester) async {
+      await pumpTestScreen(tester, buildSettingsTestApp());
+      expect(find.byKey(const Key('billTemplatesTile')), findsOneWidget);
+      expect(find.byKey(const Key('clearCacheButton')), findsOneWidget);
+      expect(find.byKey(const Key('resetDataButton')), findsNothing);
     });
   });
 
