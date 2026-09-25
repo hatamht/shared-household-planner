@@ -1,0 +1,6 @@
+# Example release signing configuration
+# Copy this file to key.properties and replace with your actual keystore credentials.
+storePassword=YOUR_STORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=homesplit
+storeFile=release-key.jks
