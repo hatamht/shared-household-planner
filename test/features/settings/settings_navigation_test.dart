@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -875,6 +876,24 @@ void main() {
       );
       expect(find.byType(SettingsScreen), findsOneWidget);
       expect(find.text('Account Info'), findsOneWidget);
+    });
+
+    testWidgets('76. About App card displays app_icon image asset', (tester) async {
+      await pumpTestScreen(tester, buildSettingsTestApp());
+      expect(find.byKey(const Key('aboutAppCard')), findsOneWidget);
+      final imageFinder = find.descendant(
+        of: find.byKey(const Key('aboutAppCard')),
+        matching: find.byType(Image),
+      );
+      expect(imageFinder, findsOneWidget);
+      final image = tester.widget<Image>(imageFinder);
+      expect(image.image, isA<AssetImage>());
+      expect((image.image as AssetImage).assetName, 'assets/images/app_icon.png');
+    });
+
+    test('77. app_icon and app_avatar image assets exist on disk', () {
+      expect(File('assets/images/app_icon.png').existsSync(), isTrue);
+      expect(File('assets/images/app_avatar.png').existsSync(), isTrue);
     });
   });
 }
