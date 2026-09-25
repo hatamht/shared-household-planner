@@ -188,6 +188,8 @@
   "clear_cache": "Clear Cache",
   "cache_cleared": "Cache cleared successfully",
   "cache_size": "Cache size: 1.2 MB",
+  "cache_size_label": "Cache size",
+  "cache_safe_note": "Safe: Does not affect your expense data",
   "reset_demo_data": "Reset Demo Data",
   "reset_demo_data_desc": "Restore initial sample projects and expenses",
   "data_reset_success": "Sample data reset successfully",

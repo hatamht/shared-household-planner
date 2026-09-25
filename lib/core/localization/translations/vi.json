@@ -188,6 +188,8 @@
   "clear_cache": "Xóa bộ nhớ đệm",
   "cache_cleared": "Đã xóa bộ nhớ đệm thành công",
   "cache_size": "Dung lượng bộ nhớ đệm: 1.2 MB",
+  "cache_size_label": "Dung lượng bộ nhớ đệm",
+  "cache_safe_note": "An toàn: Không ảnh hưởng đến dữ liệu chi tiêu",
   "reset_demo_data": "Đặt lại dữ liệu mẫu",
   "reset_demo_data_desc": "Khôi phục các dự án và chi tiêu mẫu ban đầu",
   "data_reset_success": "Đã đặt lại dữ liệu mẫu thành công",

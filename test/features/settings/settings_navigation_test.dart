@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dartz/dartz.dart';
+import 'package:shared_household_planner/core/services/cache_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -894,6 +895,35 @@ void main() {
     test('77. app_icon and app_avatar image assets exist on disk', () {
       expect(File('assets/images/app_icon.png').existsSync(), isTrue);
       expect(File('assets/images/app_avatar.png').existsSync(), isTrue);
+    });
+
+    testWidgets('78. Displays safety note in clear cache tile', (tester) async {
+      await pumpTestScreen(tester, buildSettingsTestApp());
+      expect(find.byIcon(Icons.shield_outlined), findsOneWidget);
+    });
+
+    test('79. CacheService formatBytes formats sizes correctly', () {
+      expect(CacheService.formatBytes(0), '0 KB');
+      expect(CacheService.formatBytes(500), '500 B');
+      expect(CacheService.formatBytes(1024 * 150), '150.0 KB');
+      expect(CacheService.formatBytes(1024 * 1024 * 2), '2.0 MB');
+    });
+
+    test('80. CacheService clears files in directory', () async {
+      final tempDir = Directory.systemTemp.createTempSync('cache_test_');
+      addTearDown(() => tempDir.deleteSync(recursive: true));
+
+      final testFile = File('${tempDir.path}/test_cache.txt');
+      await testFile.writeAsString('hello world');
+      expect(await testFile.exists(), isTrue);
+
+      final service = CacheService(getTempDir: () async => tempDir);
+      final size = await service.getCacheSizeBytes();
+      expect(size, greaterThan(0));
+
+      await service.clearCache();
+      expect(await testFile.exists(), isFalse);
+      expect(await service.getCacheSizeBytes(), equals(0));
     });
   });
 }

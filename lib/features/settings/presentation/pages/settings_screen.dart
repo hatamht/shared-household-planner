@@ -12,6 +12,7 @@ import '../../../templates/presentation/pages/bill_templates_screen.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../onboarding/domain/services/onboarding_service.dart';
 import '../../../onboarding/presentation/pages/onboarding_screen.dart';
+import '../../../../core/services/cache_service.dart';
 
 
 /// Comprehensive Settings Screen consolidating Profile, Theme, Language,
@@ -24,6 +25,7 @@ class SettingsScreen extends StatefulWidget {
   final void Function()? onResetData;
   final void Function()? onExportCsv;
   final void Function()? onExportPdf;
+  final CacheService cacheService;
 
   const SettingsScreen({
     super.key,
@@ -34,6 +36,7 @@ class SettingsScreen extends StatefulWidget {
     this.onResetData,
     this.onExportCsv,
     this.onExportPdf,
+    this.cacheService = const CacheService(),
   });
 
   @override
@@ -44,6 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedCurrency = 'EUR';
   bool _cacheCleared = false;
   bool _dataReset = false;
+  String? _actualCacheSize;
 
   final List<String> _supportedCurrencies = const ['EUR', 'USD', 'VND', 'GBP', 'JPY'];
 
@@ -55,6 +59,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } else {
       _loadCurrency();
     }
+    _loadCacheSize();
+  }
+
+  Future<void> _loadCacheSize() async {
+    try {
+      final bytes = await widget.cacheService.getCacheSizeBytes();
+      if (!mounted) return;
+      setState(() {
+        _actualCacheSize = CacheService.formatBytes(bytes);
+      });
+    } catch (_) {}
   }
 
   Future<void> _loadCurrency() async {
@@ -83,11 +98,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _handleClearCache(BuildContext context, AppLocalizations loc) {
     setState(() {
       _cacheCleared = true;
+      _actualCacheSize = '0 KB';
     });
-    try {
-      ReceiptImageService.clearAllReceipts();
-    } catch (_) {}
     widget.onClearCache?.call();
+    widget.cacheService.clearCache();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(loc.translate('cache_cleared')),
@@ -512,10 +526,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Icon(Icons.cleaning_services, color: Color(0xFFD97706)),
             ),
             title: Text(loc.translate('clear_cache'), style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(
-              _cacheCleared ? loc.translate('cache_cleared') : loc.translate('cache_size'),
-              key: const Key('cacheSizeText'),
-              style: const TextStyle(fontSize: 12),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 2),
+                Text(
+                  _cacheCleared
+                      ? loc.translate('cache_cleared')
+                      : (_actualCacheSize != null
+                          ? '${loc.translate("cache_size_label")}: $_actualCacheSize'
+                          : loc.translate('cache_size')),
+                  key: const Key('cacheSizeText'),
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 13,
+                      color: isDark ? Colors.teal.shade300 : Colors.teal.shade700,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        loc.translate('cache_safe_note'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.teal.shade300 : Colors.teal.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
             trailing: _cacheCleared
                 ? const Icon(Icons.check_circle, color: Colors.green)
