@@ -257,9 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             )
           : null,
-      body: widget.showAppBar
-          ? _buildCurrentTab(context, loc, isDark)
-          : SafeArea(child: _buildCurrentTab(context, loc, isDark)),
+      body: _buildCurrentTab(context, loc, isDark),
       bottomNavigationBar: _buildBottomNavigationBar(context, loc, isDark),
       floatingActionButton: _currentTabIndex == 0
           ? FloatingActionButton(
@@ -281,15 +279,21 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCurrentTab(BuildContext context, AppLocalizations loc, bool isDark) {
     switch (_currentTabIndex) {
       case 0:
-        return _buildProjectsTab(context, loc, isDark);
+        return widget.showAppBar
+            ? _buildProjectsTab(context, loc, isDark)
+            : SafeArea(bottom: false, child: _buildProjectsTab(context, loc, isDark));
       case 1:
         return _buildBillsTab(context, loc);
       case 2:
         return const StatisticsScreen();
       case 3:
-        return const SettingsScreen();
+        return widget.showAppBar
+            ? const SettingsScreen()
+            : const SafeArea(bottom: false, child: SettingsScreen());
       default:
-        return _buildProjectsTab(context, loc, isDark);
+        return widget.showAppBar
+            ? _buildProjectsTab(context, loc, isDark)
+            : SafeArea(bottom: false, child: _buildProjectsTab(context, loc, isDark));
     }
   }
 
