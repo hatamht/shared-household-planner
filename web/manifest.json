@@ -1,11 +1,11 @@
 {
-    "name": "shared_household_planner",
-    "short_name": "shared_household_planner",
+    "name": "HomeSplit",
+    "short_name": "HomeSplit",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "HomeSplit - Shared Expenses & Bill Split",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
