@@ -117,8 +117,77 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.translate('statistics_charts')),
         elevation: 0.5,
+        centerTitle: false,
+        titleSpacing: 16,
+        foregroundColor: Colors.white,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1F1F1F), const Color(0xFF141414)]
+                  : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.insights_rounded,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                loc.translate('statistics_charts'),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (filteredBills.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(right: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.receipt_outlined, size: 15, color: Colors.white),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${filteredBills.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

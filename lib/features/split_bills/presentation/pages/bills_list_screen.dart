@@ -100,10 +100,72 @@ class _BillsListScreenState extends State<BillsListScreen> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.translate('bills')),
         elevation: 0,
+        centerTitle: false,
+        titleSpacing: 16,
+        foregroundColor: Colors.white,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF1F1F1F), const Color(0xFF141414)]
+                  : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                loc.translate('bills'),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.2,
+                  color: Colors.white,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            key: const Key('addBillAppBarButton'),
+            icon: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.18),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.add, size: 20, color: Colors.white),
+            ),
+            tooltip: loc.translate('add_bill'),
+            onPressed: () => _showAddBillDialog(context),
+          ),
+          const SizedBox(width: 4),
+        ],
       ),
       body: BlocBuilder<BillsBloc, BillsState>(
         builder: (context, state) {
