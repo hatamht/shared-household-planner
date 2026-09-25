@@ -22,6 +22,7 @@ import 'features/settlement/presentation/bloc/settlement_bloc.dart';
 import 'features/settlement/presentation/pages/payment_history_screen.dart';
 import 'features/onboarding/domain/services/onboarding_service.dart';
 import 'features/onboarding/presentation/pages/onboarding_screen.dart';
+import 'core/widgets/global_keyboard_dismiss.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -109,6 +110,7 @@ class MyApp extends StatelessWidget {
                 Locale('vi'),
               ],
               theme: themeProvider.currentTheme,
+              builder: (context, child) => GlobalKeyboardDismiss(child: child),
               home: showOnboarding ? const OnboardingScreen() : const HomeScreen(),
               routes: {
                 '/bills': (context) => const BillsListScreen(),
