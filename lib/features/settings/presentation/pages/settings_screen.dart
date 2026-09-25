@@ -586,10 +586,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  child: Icon(Icons.home_work, color: Theme.of(context).colorScheme.primary),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      child: Icon(Icons.home_work, color: Theme.of(context).colorScheme.primary),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Column(

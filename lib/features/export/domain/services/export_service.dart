@@ -59,7 +59,7 @@ class ExportService {
   Future<ExportResult> exportToFile({
     required List<Bill> bills,
     required ExportFilter filter,
-    String currencySymbol = '€',
+    String currencySymbol = 'VND',
     dynamic settlementLogs,
   }) async {
     try {
@@ -115,7 +115,7 @@ class ExportService {
   Future<ExportResult> exportAndShare({
     required List<Bill> bills,
     required ExportFilter filter,
-    String currencySymbol = '€',
+    String currencySymbol = 'VND',
     dynamic settlementLogs,
   }) async {
     final exportRes = await exportToFile(

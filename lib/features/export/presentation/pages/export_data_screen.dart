@@ -55,6 +55,20 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
     return match.isNotEmpty ? match.first.name : 'Project';
   }
 
+  String _resolveCurrency(List<Project> projects) {
+    if (_selectedProjectId != null && _selectedProjectId!.isNotEmpty) {
+      final match = projects.where((p) => p.id == _selectedProjectId).toList();
+      if (match.isNotEmpty && match.first.currency.isNotEmpty) {
+        return match.first.currency;
+      }
+    }
+    final withCurrency = projects.where((p) => p.currency.isNotEmpty).toList();
+    if (withCurrency.isNotEmpty) {
+      return withCurrency.first.currency;
+    }
+    return 'VND';
+  }
+
   ExportFilter _buildCurrentFilter(List<Project> projects) {
     return ExportFilter(
       format: _selectedFormat,
@@ -114,10 +128,19 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         : <Project>[];
 
     final filter = _buildCurrentFilter(projects);
+    final resolvedCurrency = _resolveCurrency(projects);
 
     final res = andShare
-        ? await widget.exportService.exportAndShare(bills: bills, filter: filter)
-        : await widget.exportService.exportToFile(bills: bills, filter: filter);
+        ? await widget.exportService.exportAndShare(
+            bills: bills,
+            filter: filter,
+            currencySymbol: resolvedCurrency,
+          )
+        : await widget.exportService.exportToFile(
+            bills: bills,
+            filter: filter,
+            currencySymbol: resolvedCurrency,
+          );
 
     if (!mounted) return;
 

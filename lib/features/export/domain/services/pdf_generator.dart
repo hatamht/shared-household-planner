@@ -9,12 +9,61 @@ import 'export_settlement_helper.dart';
 class PdfGenerator {
   const PdfGenerator();
 
+  /// Formats an amount with its currency symbol/code safely for PDF standard font rendering.
+  /// Prevents corrupted font glyphs (such as ¤ for Vietnamese Dong ₫/đ) and removes redundant .00 decimals for VND.
+  static String formatCurrencyAmount(double amount, String currency) {
+    final clean = currency.trim();
+    final upper = clean.toUpperCase();
+
+    // Check if currency is VND or represents Vietnamese Dong (₫, đ, VND)
+    if (upper == 'VND' || clean == '₫' || clean == 'đ') {
+      final formatted = NumberFormat('#,##0').format(amount);
+      return '$formatted VND';
+    }
+
+    // Check JPY (zero-decimal currency)
+    if (upper == 'JPY' || clean == '¥') {
+      final formatted = NumberFormat('#,##0').format(amount);
+      return '¥$formatted';
+    }
+
+    // Check USD / $
+    if (upper == 'USD' || clean == '\$') {
+      final formatted = NumberFormat('#,##0.00').format(amount);
+      return '\$$formatted';
+    }
+
+    // Check EUR / €
+    if (upper == 'EUR') {
+      final formatted = NumberFormat('#,##0.00').format(amount);
+      return '$formatted EUR';
+    }
+    if (clean == '€') {
+      final formatted = NumberFormat('#,##0.00').format(amount);
+      return '€$formatted';
+    }
+
+    // Check GBP / £
+    if (upper == 'GBP' || clean == '£') {
+      final formatted = NumberFormat('#,##0.00').format(amount);
+      return '£$formatted';
+    }
+
+    // Fallback for other currencies
+    final formatted = NumberFormat('#,##0.00').format(amount);
+    if (clean.length == 1) {
+      return '$clean$formatted';
+    } else {
+      return '$formatted $clean';
+    }
+  }
+
   /// Generates a complete PDF document as binary bytes ([Uint8List]).
   Future<Uint8List> generate({
     required List<Bill> bills,
     String? projectName,
     String? dateRangeLabel,
-    String currencySymbol = '€',
+    String currencySymbol = 'VND',
     bool includeSettlement = true,
     dynamic settlementLogs,
   }) async {
@@ -24,7 +73,6 @@ class PdfGenerator {
     );
 
     final dateFormat = DateFormat('yyyy-MM-dd');
-    final numberFormat = NumberFormat('#,##0.00');
     final generatedDate = dateFormat.format(DateTime.now());
 
     final totalExpense = bills.fold<double>(0.0, (sum, b) => sum + b.amount);
@@ -95,7 +143,7 @@ class PdfGenerator {
               children: [
                 _buildMetricCard(
                   'Total Spending',
-                  '$currencySymbol${numberFormat.format(totalExpense)}',
+                  formatCurrencyAmount(totalExpense, currencySymbol),
                   PdfColors.teal700,
                 ),
                 pw.SizedBox(width: 12),
@@ -167,7 +215,7 @@ class PdfGenerator {
                     b.paidBy,
                     b.category,
                     b.title,
-                    '$currencySymbol${numberFormat.format(b.amount)}',
+                    formatCurrencyAmount(b.amount, currencySymbol),
                   ];
                 }).toList(),
                 cellAlignments: {
@@ -233,7 +281,7 @@ class PdfGenerator {
                     return [
                       item.from,
                       item.to,
-                      '$currencySymbol${numberFormat.format(item.amount)}',
+                      formatCurrencyAmount(item.amount, currencySymbol),
                     ];
                   }).toList(),
                   cellAlignments: {
@@ -274,7 +322,10 @@ class PdfGenerator {
                       dateFormat.format(log.date as DateTime),
                       log.payer.toString(),
                       log.payee.toString(),
-                      '$currencySymbol${numberFormat.format(log.amount)}',
+                      formatCurrencyAmount(
+                        log.amount is num ? (log.amount as num).toDouble() : 0.0,
+                        currencySymbol,
+                      ),
                       log.status.toString().split('.').last.toUpperCase(),
                       (log.note as String?) ?? '',
                     ];
