@@ -23,6 +23,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
 import '../../../auth/presentation/widgets/share_project_modal.dart';
+import '../widgets/project_members_modal.dart';
 import 'dart:async';
 import '../../../sync/presentation/widgets/manual_sync_button.dart';
 import '../../../sync/presentation/widgets/sync_status_badge.dart';
@@ -140,7 +141,37 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
       projectId: widget.project.id,
       projectName: widget.project.name,
       userId: currentUser.uid,
-      cloudSyncRepository: cloudSyncRepo ?? FirestoreCloudSyncRepository(),
+      cloudSyncRepository: cloudSyncRepo,
+    );
+  }
+
+  Future<void> _handleShowMembers(BuildContext context) async {
+    AuthUser? currentUser;
+    try {
+      final authBloc = context.read<AuthBloc>();
+      if (authBloc.state is Authenticated) {
+        currentUser = (authBloc.state as Authenticated).user;
+      }
+    } catch (_) {}
+
+    CloudSyncRepository? cloudSyncRepo;
+    try {
+      cloudSyncRepo = context.read<CloudSyncRepository>();
+    } catch (_) {
+      try {
+        cloudSyncRepo = getIt<CloudSyncRepository>();
+      } catch (_) {
+        cloudSyncRepo = FirestoreCloudSyncRepository();
+      }
+    }
+
+    await ProjectMembersModal.show(
+      context,
+      project: widget.project,
+      currentUserId: currentUser?.uid,
+      currentUserName: currentUser?.displayName,
+      cloudSyncRepository: cloudSyncRepo,
+      onMembersChanged: refreshData,
     );
   }
 
@@ -218,6 +249,12 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
         backgroundColor: project.color,
         actions: [
           ManualSyncButton(projectId: project.id),
+          IconButton(
+            key: const Key('projectMembersButton'),
+            icon: Icon(Icons.people_outline, color: onProjectColor),
+            tooltip: loc.translate('project_members_title'),
+            onPressed: () => _handleShowMembers(context),
+          ),
           IconButton(
             key: const Key('shareProjectButton'),
             icon: Icon(Icons.share_outlined, color: onProjectColor),

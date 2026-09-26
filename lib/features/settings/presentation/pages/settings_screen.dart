@@ -7,7 +7,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../split_bills/domain/entities/category_icon.dart';
 import '../../../export/domain/entities/export_options.dart';
 import '../../../export/presentation/pages/export_data_screen.dart';
-import '../../../../core/services/receipt_image_service.dart';
 import '../../../templates/presentation/pages/bill_templates_screen.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../onboarding/domain/services/onboarding_service.dart';
@@ -232,11 +231,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildAccountCard(BuildContext context, AppLocalizations loc, bool isDark) {
     AuthUser? currentUser;
-    bool hasAuthBloc = false;
     bool isUnauthenticated = false;
     try {
       final authBloc = context.watch<AuthBloc>();
-      hasAuthBloc = true;
       if (authBloc.state is Authenticated) {
         currentUser = (authBloc.state as Authenticated).user;
       } else if (authBloc.state is Unauthenticated) {

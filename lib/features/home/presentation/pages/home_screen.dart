@@ -16,7 +16,13 @@ import 'package:shared_household_planner/features/split_bills/domain/entities/bi
 import 'package:shared_household_planner/features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
 import 'package:shared_household_planner/features/sync/presentation/widgets/manual_sync_button.dart';
-import 'package:shared_household_planner/features/sync/presentation/widgets/sync_status_badge.dart';
+import 'package:shared_household_planner/core/injection_container.dart';
+import 'package:shared_household_planner/features/auth/domain/entities/auth_user.dart';
+import 'package:shared_household_planner/features/auth/domain/repositories/cloud_sync_repository.dart';
+import 'package:shared_household_planner/features/auth/data/repositories/firestore_cloud_sync_repository.dart';
+import 'package:shared_household_planner/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:shared_household_planner/features/auth/presentation/bloc/auth_state.dart';
+import 'package:shared_household_planner/features/projects/presentation/widgets/join_project_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool showAppBar;
@@ -103,6 +109,48 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _handlePullToRefresh() async {
     _refreshData();
     await Future.delayed(const Duration(milliseconds: 300));
+  }
+
+  Future<void> _handleJoinProjectFromHome(BuildContext context) async {
+    AuthUser? currentUser;
+    try {
+      final authBloc = context.read<AuthBloc>();
+      if (authBloc.state is Authenticated) {
+        currentUser = (authBloc.state as Authenticated).user;
+      }
+    } catch (_) {}
+
+    CloudSyncRepository? cloudSyncRepo;
+    try {
+      cloudSyncRepo = context.read<CloudSyncRepository>();
+    } catch (_) {
+      try {
+        cloudSyncRepo = getIt<CloudSyncRepository>();
+      } catch (_) {
+        cloudSyncRepo = FirestoreCloudSyncRepository();
+      }
+    }
+
+    ProjectRepository? projectRepo;
+    try {
+      projectRepo = context.read<ProjectRepository>();
+    } catch (_) {
+      try {
+        projectRepo = getIt<ProjectRepository>();
+      } catch (_) {}
+    }
+
+    final joined = await JoinProjectDialog.show(
+      context,
+      userId: currentUser?.uid ?? 'guest_user',
+      userName: currentUser?.displayName ?? 'Khách',
+      cloudSyncRepository: cloudSyncRepo,
+      projectRepository: projectRepo,
+    );
+
+    if (joined != null && mounted) {
+      _refreshData();
+    }
   }
 
   void _confirmDeleteProject(BuildContext context, Project project) {
@@ -228,6 +276,12 @@ class _HomeScreenState extends State<HomeScreen> {
               elevation: 0.5,
               actions: [
                 const ManualSyncButton(),
+                IconButton(
+                  key: const Key('homeJoinProjectButton'),
+                  icon: const Icon(Icons.group_add_outlined),
+                  tooltip: loc.translate('join_project_button'),
+                  onPressed: () => _handleJoinProjectFromHome(context),
+                ),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.language),
                   tooltip: loc.translate('language'),

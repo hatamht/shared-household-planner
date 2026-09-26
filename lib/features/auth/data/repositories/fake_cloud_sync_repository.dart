@@ -201,6 +201,63 @@ class FakeCloudSyncRepository implements CloudSyncRepository {
     }
   }
 
+  @override
+  Future<CloudProject> removeMemberFromProject({
+    required String projectId,
+    required String memberId,
+    required String memberName,
+  }) async {
+    _checkFailure();
+    final project = projects[projectId];
+    if (project == null) {
+      throw Exception('Dự án không tồn tại');
+    }
+    if (project.ownerId == memberId) {
+      throw Exception('Không thể xóa chủ dự án');
+    }
+    final updatedMemberIds = List<String>.from(project.memberIds)..remove(memberId);
+    final updatedMemberNames = List<String>.from(project.memberNames)..remove(memberName);
+
+    final updated = CloudProject(
+      id: project.id,
+      name: project.name,
+      currency: project.currency,
+      category: project.category,
+      color: project.color,
+      iconIndex: project.iconIndex,
+      ownerId: project.ownerId,
+      memberIds: updatedMemberIds,
+      memberNames: updatedMemberNames,
+      inviteCode: project.inviteCode,
+      createdAt: project.createdAt,
+      updatedAt: DateTime.now(),
+    );
+    projects[projectId] = updated;
+    _projectStreamControllers[projectId]?.add(updated);
+    return updated;
+  }
+
+  @override
+  Future<void> leaveProject({
+    required String projectId,
+    required String userId,
+    required String userName,
+  }) async {
+    _checkFailure();
+    final project = projects[projectId];
+    if (project == null) {
+      throw Exception('Dự án không tồn tại');
+    }
+    if (project.ownerId == userId) {
+      throw Exception('Chủ dự án không thể rời dự án');
+    }
+    await removeMemberFromProject(
+      projectId: projectId,
+      memberId: userId,
+      memberName: userName,
+    );
+  }
+
   /// Simulation helper: push an arbitrary list of bills for a project
   void emitProjectBills(String projectId, List<CloudBill> newBills) {
     bills[projectId] = List.from(newBills);

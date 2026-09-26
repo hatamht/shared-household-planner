@@ -487,6 +487,25 @@
   "remote_bill_updated": "{user} updated an expense: {amount} [{description}]",
   "remote_bill_deleted": "{user} deleted expense [{description}]",
   "remote_sync_active": "Live sync active",
-  "remote_member_activity": "Member Activity"
+  "remote_member_activity": "Member Activity",
+  "join_project_instruction": "Enter the 6-character invite code to join a shared trip or group project.",
+  "join_code_hint": "e.g. DL-8899",
+  "check_code_button": "Check Code",
+  "copy_link_button": "Copy Link",
+  "share_link_copied": "Share link copied to clipboard!",
+  "project_members_title": "Project Members",
+  "owner_role": "Owner",
+  "member_role": "Member",
+  "remove_member_title": "Remove Member",
+  "remove_member_confirm": "Are you sure you want to remove {name} from this project?",
+  "remove_member_tooltip": "Remove member",
+  "remove_button": "Remove",
+  "leave_project_title": "Leave Project",
+  "leave_project_confirm": "Are you sure you want to leave this project?",
+  "leave_button": "Leave",
+  "you_label": "You",
+  "permission_denied_edit_bill": "Only the creator or project owner can edit this expense.",
+  "permission_denied_delete_bill": "Only the creator or project owner can delete this expense.",
+  "scan_qr_to_join": "Scan QR to join"
 }
 

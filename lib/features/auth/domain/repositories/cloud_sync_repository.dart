@@ -45,4 +45,18 @@ abstract class CloudSyncRepository {
 
   /// Delete a bill from Firestore
   Future<void> deleteBill(String projectId, String billId);
+
+  /// Remove a member from project (Owner only)
+  Future<CloudProject> removeMemberFromProject({
+    required String projectId,
+    required String memberId,
+    required String memberName,
+  });
+
+  /// Leave a project (Member only)
+  Future<void> leaveProject({
+    required String projectId,
+    required String userId,
+    required String userName,
+  });
 }

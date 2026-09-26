@@ -225,4 +225,41 @@ class FirestoreCloudSyncRepository implements CloudSyncRepository {
     }
     await _fallback.deleteBill(projectId, billId);
   }
+
+  @override
+  Future<CloudProject> removeMemberFromProject({
+    required String projectId,
+    required String memberId,
+    required String memberName,
+  }) async {
+    final db = _db;
+    if (db != null) {
+      final projectRef = db.collection(CloudCollections.projects).doc(projectId);
+      await projectRef.update({
+        'memberIds': FieldValue.arrayRemove([memberId]),
+        'memberNames': FieldValue.arrayRemove([memberName]),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
+      final updatedDoc = await projectRef.get();
+      return CloudProject.fromMap(updatedDoc.data()!, projectId);
+    }
+    return _fallback.removeMemberFromProject(
+      projectId: projectId,
+      memberId: memberId,
+      memberName: memberName,
+    );
+  }
+
+  @override
+  Future<void> leaveProject({
+    required String projectId,
+    required String userId,
+    required String userName,
+  }) async {
+    await removeMemberFromProject(
+      projectId: projectId,
+      memberId: userId,
+      memberName: userName,
+    );
+  }
 }
