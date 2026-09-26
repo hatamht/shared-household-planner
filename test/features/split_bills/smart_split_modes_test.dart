@@ -1305,7 +1305,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
       await tester.tap(find.byKey(const Key('addParticipantButton')));
       await tester.pumpAndSettle();
@@ -1356,7 +1356,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
       await tester.tap(find.byKey(const Key('addParticipantButton')));
       await tester.pumpAndSettle();
@@ -1443,7 +1443,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('amountField')), '120000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '120000';
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
       await tester.tap(find.byKey(const Key('addParticipantButton')));
       await tester.pumpAndSettle();
@@ -1501,7 +1501,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
       await tester.tap(find.byKey(const Key('addParticipantButton')));
       await tester.pumpAndSettle();
@@ -1534,7 +1534,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner');
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
 
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
@@ -1571,7 +1571,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner');
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
 
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
@@ -1609,7 +1609,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Group Dinner');
-      await tester.enterText(find.byKey(const Key('amountField')), '200000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '200000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
 
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
@@ -1650,7 +1650,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Family Meal');
-      await tester.enterText(find.byKey(const Key('amountField')), '150000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '150000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
 
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');
@@ -1717,7 +1717,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Groceries');
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
 
       await tester.enterText(find.byKey(const Key('participantNameField')), 'Alice');

@@ -544,7 +544,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       await tester.pumpWidget(buildApp(child: const AddBillScreen(initialCompactMode: true)));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '150000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '150000';
       await tester.pump();
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
       await tester.pumpAndSettle();
@@ -981,7 +981,7 @@ void main() {
       await tester.pumpWidget(buildApp(child: const AddBillScreen(initialCompactMode: true)));
       await tester.pumpAndSettle();
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Supermarket groceries');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '320000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '320000';
       await tester.pump();
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
       await tester.pumpAndSettle();

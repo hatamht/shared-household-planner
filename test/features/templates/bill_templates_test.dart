@@ -1542,7 +1542,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'New Custom Template');
-      await tester.enterText(find.byKey(const Key('amountField')), '120000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '120000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alex');
       await tester.pumpAndSettle();
 

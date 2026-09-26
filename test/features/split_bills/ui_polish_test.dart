@@ -645,7 +645,7 @@ void main() {
       await tester.pumpWidget(buildTestUIPolishApp());
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '250000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '250000';
       await tester.pumpAndSettle();
 
       expect(find.text('250000'), findsOneWidget);
@@ -840,7 +840,7 @@ void main() {
       await tester.tap(find.text('Apartment').last);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '100000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('realtimeSplitText')), findsOneWidget);
@@ -1245,7 +1245,7 @@ void main() {
       await tester.enterText(find.byKey(const Key('titleField')), 'Grocery shopping');
 
       // Enter amount
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '150000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '150000';
 
       // Enter payer
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');

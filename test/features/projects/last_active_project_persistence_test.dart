@@ -313,7 +313,7 @@ void main() {
 
       // Enter title and amount, then save
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner');
-      await tester.enterText(find.byKey(const Key('amountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));

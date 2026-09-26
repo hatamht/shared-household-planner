@@ -637,7 +637,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 3. Amount
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '1200000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '1200000';
 
       // 4. Select Project
       await tester.tap(find.byKey(const Key('projectDropdown')));

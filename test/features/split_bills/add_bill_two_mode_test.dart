@@ -426,7 +426,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '50000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '50000';
       await tester.pumpAndSettle();
 
       final saveBillBtn = tester.widget<TextButton>(find.byKey(const Key('saveBillButton')));
@@ -443,7 +443,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(projectId: 'p1'), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '50000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '50000';
       await tester.pumpAndSettle();
 
       final saveBillBtn = tester.widget<TextButton>(find.byKey(const Key('saveBillButton')));
@@ -467,7 +467,7 @@ void main() {
       await tester.tap(find.byKey(const Key('projectPickerItem_none')));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '120000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '120000';
       await tester.pumpAndSettle();
 
       expect(tester.widget<TextButton>(find.byKey(const Key('saveBillButton'))).onPressed, isNull);
@@ -489,7 +489,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(projectId: 'p1'), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       expect(tester.widget<TextButton>(find.byKey(const Key('saveBillButton'))).onPressed, isNotNull);
@@ -510,11 +510,11 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(projectId: 'p1'), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '50000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '50000';
       await tester.pumpAndSettle();
       expect(tester.widget<TextButton>(find.byKey(const Key('saveBillButton'))).onPressed, isNotNull);
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '';
       await tester.pumpAndSettle();
       expect(tester.widget<TextButton>(find.byKey(const Key('saveBillButton'))).onPressed, isNull);
       pb.close();
@@ -527,11 +527,11 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(projectId: 'p1'), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '0');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '0';
       await tester.pumpAndSettle();
       expect(tester.widget<TextButton>(find.byKey(const Key('saveBillButton'))).onPressed, isNull);
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '-50');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '-50';
       await tester.pumpAndSettle();
       expect(tester.widget<TextButton>(find.byKey(const Key('saveBillButton'))).onPressed, isNull);
       pb.close();
@@ -812,7 +812,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(projectId: 'p1'), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
@@ -907,7 +907,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '250000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '250000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
@@ -924,7 +924,7 @@ void main() {
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('amountField')), '450000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '450000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('collapseToCompactModeButton')));
@@ -1236,7 +1236,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Lunch');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '80000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '80000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1263,7 +1263,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Dinner Buffet');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '200000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '200000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1288,7 +1288,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '150000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '150000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1313,7 +1313,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1338,7 +1338,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1363,7 +1363,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1389,7 +1389,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       // Change payer to Bob
@@ -1423,7 +1423,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Coffee');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '45000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '45000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1482,7 +1482,7 @@ void main() {
 
       expect(find.byKey(const Key('compactAmountField')), findsOneWidget);
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '99000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '99000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveBillButton')));
@@ -1508,7 +1508,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '100000');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       // Open split sheet and choose percentage

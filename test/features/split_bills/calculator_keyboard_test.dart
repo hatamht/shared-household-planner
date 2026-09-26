@@ -474,7 +474,7 @@ void main() {
       ));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '25*30');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '25*30';
       await tester.pump();
 
       expect(find.byKey(const Key('compactAmountCalcPreview')), findsOneWidget);
@@ -494,7 +494,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Dinner party');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '25*30');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '25*30';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -517,7 +517,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Coffee & snacks');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '25 + 30 * 2');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '25 + 30 * 2';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -540,7 +540,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('compactDescriptionField')), 'Fuel bill');
-      await tester.enterText(find.byKey(const Key('compactAmountField')), '25.5 * 30');
+      tester.widget<TextField>(find.byKey(const Key('compactAmountField'))).controller!.text = '25.5 * 30';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));

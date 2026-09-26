@@ -799,7 +799,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Beach Tickets');
-      await tester.enterText(find.byKey(const Key('amountField')), '120000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '120000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -833,7 +833,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Steak');
-      await tester.enterText(find.byKey(const Key('amountField')), '500000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '500000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -857,7 +857,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Coffee');
-      await tester.enterText(find.byKey(const Key('amountField')), '50000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '50000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Me');
 
       // Add manual participants
@@ -1011,7 +1011,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Rent Oct');
-      await tester.enterText(find.byKey(const Key('amountField')), '5000000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '5000000';
       await tester.pumpAndSettle();
 
       // Tap save as template
@@ -1095,7 +1095,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Lunch');
-      await tester.enterText(find.byKey(const Key('amountField')), '200000');
+      tester.widget<TextField>(find.byKey(const Key('amountField'))).controller!.text = '200000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));

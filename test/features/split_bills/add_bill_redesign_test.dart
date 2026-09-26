@@ -903,7 +903,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Enter amount 200000
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '200000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '200000';
       await tester.pumpAndSettle();
 
       // 200000 / 2 members = 100000 each
@@ -911,7 +911,7 @@ void main() {
       expect(find.textContaining('100000'), findsWidgets);
 
       // Change amount to 600000
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '600000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '600000';
       await tester.pumpAndSettle();
 
       // 600000 / 2 = 300000 each
@@ -953,7 +953,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Amount: 300000 (with 3 members: An, Binh, Chi -> 100000 each)
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '300000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '300000';
       await tester.pumpAndSettle();
       expect(find.textContaining('100000'), findsWidgets);
 
@@ -1007,7 +1007,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 4. Enter amount
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '500000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '500000';
 
       // 5. Select Currency USD
       await tester.tap(find.byKey(const Key('currencyDropdown')));
@@ -1102,7 +1102,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.widgetWithText(TextField, 'Bill Name'), 'Lunch');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '0');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '0';
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
       await tester.pumpAndSettle();

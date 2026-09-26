@@ -1295,7 +1295,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 3. Fill remaining bill fields
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '45000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '45000';
       await tester.enterText(find.widgetWithText(TextField, 'Payer'), 'Huy');
       await tester.enterText(find.widgetWithText(TextField, 'Participant Name'), 'Huy');
       await tester.tap(find.byKey(const Key('addParticipantButton')));
@@ -1337,7 +1337,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 3. Fill and save bill with at least 2 participants
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '30000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '30000';
       await tester.enterText(find.widgetWithText(TextField, 'Payer'), 'Lan');
       await tester.enterText(find.widgetWithText(TextField, 'Participant Name'), 'Lan');
       await tester.tap(find.byKey(const Key('addParticipantButton')));

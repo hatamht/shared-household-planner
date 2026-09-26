@@ -108,6 +108,7 @@ class AddBillScreenState extends State<AddBillScreen>
 
   bool _showCalculator = false;
   void _toggleCalculator() {
+    FocusScope.of(context).unfocus();
     setState(() {
       _showCalculator = !_showCalculator;
     });
@@ -119,6 +120,7 @@ class AddBillScreenState extends State<AddBillScreen>
 
   // Title FocusNode & Auto-fill control
   late FocusNode titleFocusNode;
+  late FocusNode payerFocusNode;
   bool isTitleManuallyEdited = false;
 
   // Image paths
@@ -205,6 +207,21 @@ class AddBillScreenState extends State<AddBillScreen>
     super.initState();
     titleController = TextEditingController();
     titleFocusNode = FocusNode();
+    titleFocusNode.addListener(() {
+      if (titleFocusNode.hasFocus && _showCalculator) {
+        setState(() {
+          _showCalculator = false;
+        });
+      }
+    });
+    payerFocusNode = FocusNode();
+    payerFocusNode.addListener(() {
+      if (payerFocusNode.hasFocus && _showCalculator) {
+        setState(() {
+          _showCalculator = false;
+        });
+      }
+    });
     amountController = TextEditingController();
     paidByController = TextEditingController();
     participantController = TextEditingController();
@@ -435,6 +452,7 @@ class AddBillScreenState extends State<AddBillScreen>
   void dispose() {
     titleController.dispose();
     titleFocusNode.dispose();
+    payerFocusNode.dispose();
     amountController.dispose();
     paidByController.dispose();
     participantController.dispose();
@@ -989,6 +1007,11 @@ class AddBillScreenState extends State<AddBillScreen>
               key: const Key('compactDescriptionField'),
               focusNode: titleFocusNode,
               controller: titleController,
+              onTap: () {
+                if (_showCalculator) {
+                  setState(() => _showCalculator = false);
+                }
+              },
               onChanged: _onCompactDescriptionChanged,
               decoration: InputDecoration(
                 hintText: loc.translate('bill_name_hint'),
@@ -1026,86 +1049,104 @@ class AddBillScreenState extends State<AddBillScreen>
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: hasError
-                  ? Colors.redAccent
-                  : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+        InkWell(
+          key: const Key('compactAmountContainer'),
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            if (!_showCalculator) {
+              setState(() => _showCalculator = true);
+            }
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: hasError
+                    ? Colors.redAccent
+                    : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+              ),
             ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Text(
-                selectedCurrency,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: categoryColor,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  selectedCurrency,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: categoryColor,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      key: const Key('compactAmountField'),
-                      controller: amountController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                      decoration: InputDecoration(
-                        hintText: '0',
-                        hintStyle: TextStyle(
-                          color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        key: const Key('compactAmountField'),
+                        controller: amountController,
+                        readOnly: true,
+                        showCursor: true,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                        decoration: InputDecoration(
+                          hintText: '0',
+                          hintStyle: TextStyle(
+                            color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
                         ),
-                        border: InputBorder.none,
-                        isDense: true,
+                        onTap: () {
+                          FocusScope.of(context).unfocus();
+                          if (!_showCalculator) {
+                            setState(() => _showCalculator = true);
+                          }
+                        },
+                        onSubmitted: (val) {
+                          final evaluated = CalculatorEvaluator.evaluate(val);
+                          if (evaluated != null) {
+                            amountController.text = CalculatorEvaluator.formatResult(evaluated);
+                          }
+                        },
                       ),
-                      onSubmitted: (val) {
-                        final evaluated = CalculatorEvaluator.evaluate(val);
-                        if (evaluated != null) {
-                          amountController.text = CalculatorEvaluator.formatResult(evaluated);
-                        }
-                      },
-                    ),
-                    if (hasOp && canEval)
-                      Text(
-                        '= ${CalculatorEvaluator.formatResult(evalResult)}',
-                        key: const Key('compactAmountCalcPreview'),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: categoryColor,
+                      if (hasOp && canEval)
+                        Text(
+                          '= ${CalculatorEvaluator.formatResult(evalResult)}',
+                          key: const Key('compactAmountCalcPreview'),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: categoryColor,
+                          ),
+                        )
+                      else if (hasError)
+                        Text(
+                          loc.translate('invalid_expression'),
+                          key: const Key('compactAmountCalcError'),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.redAccent,
+                          ),
                         ),
-                      )
-                    else if (hasError)
-                      Text(
-                        loc.translate('invalid_expression'),
-                        key: const Key('compactAmountCalcError'),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.redAccent,
-                        ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                key: const Key('toggleCalculatorButton'),
-                icon: Icon(
-                  _showCalculator ? Icons.keyboard_hide : Icons.calculate_outlined,
-                  color: categoryColor,
+                IconButton(
+                  key: const Key('toggleCalculatorButton'),
+                  icon: Icon(
+                    _showCalculator ? Icons.keyboard_hide : Icons.calculate_outlined,
+                    color: categoryColor,
+                  ),
+                  tooltip: loc.translate('calculator'),
+                  onPressed: _toggleCalculator,
                 ),
-                tooltip: loc.translate('calculator'),
-                onPressed: _toggleCalculator,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         if (_showCalculator) ...[
@@ -2006,6 +2047,11 @@ class AddBillScreenState extends State<AddBillScreen>
                       key: const Key('titleField'),
                       controller: titleController,
                       focusNode: titleFocusNode,
+                      onTap: () {
+                        if (_showCalculator) {
+                          setState(() => _showCalculator = false);
+                        }
+                      },
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -2348,96 +2394,116 @@ class AddBillScreenState extends State<AddBillScreen>
             const SizedBox(height: 6),
 
             // ── 4. Amount + Currency Section ─────────────────────
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: cardBorder),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(isDark ? 0.15 : 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Currency pill dropdown
-                  Container(
-                    key: const Key('currencyPillContainer'),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: cardBorder),
+            InkWell(
+              key: const Key('fullAmountContainer'),
+              borderRadius: BorderRadius.circular(16),
+              onTap: () {
+                FocusScope.of(context).unfocus();
+                if (!_showCalculator) {
+                  setState(() => _showCalculator = true);
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: cardBorder),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isDark ? 0.15 : 0.03),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        key: const Key('currencyDropdown'),
-                        value: selectedCurrency,
-                        isDense: true,
-                        borderRadius: BorderRadius.circular(12),
-                        items: widget.projectSettings.availableCurrencies
-                            .map((c) => DropdownMenuItem(
-                                  value: c,
-                                  child: Text(
-                                    '$c (${currencySymbols[c] ?? c})',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              selectedCurrency = val;
-                              _hasUserManuallySelectedCurrency = true;
-                            });
-                          }
-                        },
+                  ],
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Currency pill dropdown
+                    Container(
+                      key: const Key('currencyPillContainer'),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF2C2C2C) : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: cardBorder),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Amount input right-aligned
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextField(
-                          key: const Key('amountField'),
-                          controller: amountController,
-                          textAlign: TextAlign.right,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: loc.translate('amount'),
-                            hintText: '100,000',
-                            border: InputBorder.none,
-                            suffixText: currencySymbol,
-                            suffixStyle: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                          onSubmitted: (val) {
-                            final evaluated = CalculatorEvaluator.evaluate(val);
-                            if (evaluated != null) {
-                              amountController.text = CalculatorEvaluator.formatResult(evaluated);
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          key: const Key('currencyDropdown'),
+                          value: selectedCurrency,
+                          isDense: true,
+                          borderRadius: BorderRadius.circular(12),
+                          items: widget.projectSettings.availableCurrencies
+                              .map((c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(
+                                      '$c (${currencySymbols[c] ?? c})',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                selectedCurrency = val;
+                                _hasUserManuallySelectedCurrency = true;
+                              });
                             }
                           },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Amount input right-aligned
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          KeyedSubtree(
+                            key: const Key('fullAmountField'),
+                            child: TextField(
+                              key: const Key('amountField'),
+                              controller: amountController,
+                              readOnly: true,
+                              showCursor: true,
+                              textAlign: TextAlign.right,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: loc.translate('amount'),
+                                hintText: '100,000',
+                                border: InputBorder.none,
+                                suffixText: currencySymbol,
+                                suffixStyle: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              onTap: () {
+                                FocusScope.of(context).unfocus();
+                                if (!_showCalculator) {
+                                setState(() => _showCalculator = true);
+                              }
+                            },
+                            onSubmitted: (val) {
+                              final evaluated = CalculatorEvaluator.evaluate(val);
+                              if (evaluated != null) {
+                                amountController.text = CalculatorEvaluator.formatResult(evaluated);
+                              }
+                            },
+                          ),
                         ),
                         if (CalculatorEvaluator.hasOperator(amountController.text.trim()) &&
                             CalculatorEvaluator.canEvaluate(amountController.text.trim()))
@@ -2477,6 +2543,7 @@ class AddBillScreenState extends State<AddBillScreen>
                 ],
               ),
             ),
+          ),
             if (_showCalculator) ...[
               const SizedBox(height: 8),
               CalculatorKeyboard(
@@ -2501,6 +2568,12 @@ class AddBillScreenState extends State<AddBillScreen>
                     child: TextField(
                       key: const Key('payerField'),
                       controller: paidByController,
+                      focusNode: payerFocusNode,
+                      onTap: () {
+                        if (_showCalculator) {
+                          setState(() => _showCalculator = false);
+                        }
+                      },
                       decoration: InputDecoration(
                         labelText: loc.translate('payer'),
                         hintText: loc.translate('payer_hint'),
@@ -3387,6 +3460,11 @@ class AddBillScreenState extends State<AddBillScreen>
               child: TextField(
                 key: const Key('participantNameField'),
                 controller: participantController,
+                onTap: () {
+                  if (_showCalculator) {
+                    setState(() => _showCalculator = false);
+                  }
+                },
                 decoration: InputDecoration(
                   labelText: loc.translate('participant_name'),
                   hintText: loc.translate('enter_name'),

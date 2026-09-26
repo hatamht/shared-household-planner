@@ -1029,7 +1029,7 @@ void main() {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen(), projectBloc: pb));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '100000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       expect(find.textContaining('50000'), findsWidgets);
@@ -1434,7 +1434,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '100000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
       await tester.pumpAndSettle();
 
@@ -1466,7 +1466,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '100000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '100000';
       await tester.enterText(find.byKey(const Key('payerField')), 'Alice');
       await tester.pumpAndSettle();
 
@@ -1573,7 +1573,7 @@ void main() {
 
       // Enter valid fields
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '100000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1647,7 +1647,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Team Lunch');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '300000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '300000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1684,7 +1684,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Switch Test');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '120000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '120000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1717,7 +1717,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Two Members');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '80000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '80000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1750,7 +1750,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Explicit Project');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '50000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '50000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1863,7 +1863,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Dinner Bill');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '250000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '250000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
@@ -1894,7 +1894,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byKey(const Key('titleField')), 'Bill');
-      await tester.enterText(find.widgetWithText(TextField, 'Amount'), '100000');
+      tester.widget<TextField>(find.widgetWithText(TextField, 'Amount')).controller!.text = '100000';
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('saveProjectButton')));
