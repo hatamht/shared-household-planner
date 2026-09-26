@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "288243894517",
+    "project_id": "shared-household-planner",
+    "storage_bucket": "shared-household-planner.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288243894517:android:7e6f22a9279b491b805dbc",
+        "android_client_info": {
+          "package_name": "com.hatam.homesplit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAe0wSdj03ECA8rtgXAuqnEXU3s2pnkKUk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
