@@ -188,12 +188,12 @@ class CalculatorKeyboard extends StatelessWidget {
                     primary,
                     Colors.white,
                     flex: 1,
-                    onTap: onSubmitted ??
-                        () {
-                          if (canEval) {
-                            controller.text = CalculatorEvaluator.formatResult(evalResult);
-                          }
-                        },
+                    onTap: () {
+                      if (canEval) {
+                        controller.text = CalculatorEvaluator.formatResult(evalResult);
+                      }
+                      onSubmitted?.call();
+                    },
                   ),
                 ],
               ),

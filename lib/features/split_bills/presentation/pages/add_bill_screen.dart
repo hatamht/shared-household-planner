@@ -1154,6 +1154,7 @@ class AddBillScreenState extends State<AddBillScreen>
           CalculatorKeyboard(
             controller: amountController,
             accentColor: categoryColor,
+            onSubmitted: () => setState(() => _showCalculator = false),
           ),
         ],
       ],
@@ -2549,6 +2550,7 @@ class AddBillScreenState extends State<AddBillScreen>
               CalculatorKeyboard(
                 controller: amountController,
                 accentColor: categoryColor,
+                onSubmitted: () => setState(() => _showCalculator = false),
               ),
             ],
             const SizedBox(height: 16),

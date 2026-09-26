@@ -113,7 +113,7 @@ Widget buildTestApp({
         Project(
           id: 'proj-1',
           name: 'Home',
-          members: ['Alice', 'Bob'],
+          members: const ['Alice', 'Bob'],
           currency: 'VND',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
@@ -408,6 +408,64 @@ void main() {
 
       final amountField = tester.widget<TextField>(find.byKey(const Key('compactAmountField')));
       expect(amountField.controller!.text, equals('100'));
+    });
+
+    testWidgets('13. Compact mode: Tapping Done key evaluates and hides CalculatorKeyboard', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(buildTestApp(
+        child: const AddBillScreen(initialCompactMode: true),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('compactAmountContainer')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CalculatorKeyboard), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('calc_key_5')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('calc_key_multiply')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('calc_key_6')));
+      await tester.pump();
+
+      // Tap Done
+      await tester.tap(find.byKey(const Key('calc_key_done')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CalculatorKeyboard), findsNothing);
+      final amountField = tester.widget<TextField>(find.byKey(const Key('compactAmountField')));
+      expect(amountField.controller!.text, equals('30'));
+    });
+
+    testWidgets('14. Full mode: Tapping Done key evaluates and hides CalculatorKeyboard', (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(buildTestApp(
+        child: const AddBillScreen(initialCompactMode: false),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('fullAmountContainer')));
+      await tester.pumpAndSettle();
+      expect(find.byType(CalculatorKeyboard), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('calc_key_2')));
+      await tester.pump();
+      await tester.tap(find.byKey(const Key('calc_key_0')));
+      await tester.pump();
+
+      // Tap Done
+      await tester.tap(find.byKey(const Key('calc_key_done')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CalculatorKeyboard), findsNothing);
+      final amountField = tester.widget<TextField>(find.byKey(const Key('amountField')));
+      expect(amountField.controller!.text, equals('20'));
     });
   });
 }
