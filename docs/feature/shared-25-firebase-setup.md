@@ -1,45 +1,52 @@
-# Shared-25: Firebase Setup & Authentication (Multi-Device Sync - Phase 1)
+# Shared-25: Firebase Auth (1-Tap Google/Email) & Cloud Schema (Multi-Device Sync - Phase 1)
 
 ## Overview
 
-Phase 1 of **Hướng 3: Multi-Device Sync & Group Sharing** for `shared-household-planner`.
-This task sets up the cloud backend infrastructure with Firebase Authentication and Cloud Firestore schema, enabling users to create accounts, sign in, manage profile info, and prepare data models for multi-device synchronization.
+Phase 1 of **Multi-Device Sync & Group Project Sharing** for `shared-household-planner` (HomeSplit).
+This task sets up Firebase Authentication and Cloud Firestore schema, enabling users to optionally sign in (Google 1-Tap or Email/Password) when sharing or joining projects, while maintaining complete offline-first usability for non-authenticated users.
 
-## Scope & Requirements
+## Key Requirements & Philosophy
 
-### 1. Firebase Core & Auth Setup
-- Configure Firebase dependencies (`firebase_core`, `firebase_auth`, `cloud_firestore` or mock/abstracted cloud repository interfaces for offline-first architecture).
-- Implement Authentication repository and use cases:
-  - Email & Password registration / sign in.
-  - Google Sign-in flow (or guest/anonymous auth upgrade).
-  - Sign out, password reset, and auth state stream (`Stream<User?>`).
-- Ensure offline-first fallback: users can continue using local SQLite storage without signing in, and optionally link/login to sync.
+### 1. Offline-First Non-Intrusive Auth
+- **No mandatory login**: Users can use the entire app offline (create projects, log bills, split debts, view charts, export PDF) with local SQLite without ever creating an account.
+- **Contextual Auth Prompt**: When a user taps **"Chia sẻ dự án"** (Share Project) or **"Tham gia dự án"** (Join Project), a modal/bottom-sheet appears explaining why an account is needed (to link across devices) and offers:
+  - 1-Tap Google Sign-In (`google_sign_in` / Firebase Google credential).
+  - Quick Email & Password registration / sign in.
+- **Guest / Anonymous Upgrade**: When an offline user signs in, their existing local projects can seamlessly sync with their new account.
 
 ### 2. Firestore Schema & Security Rules
-- Define Firestore collection structure:
-  - `users/{uid}`: Profile info (email, displayName, photoUrl, createdAt).
-  - `projects/{projectId}`: Project metadata, ownerId, memberIds, permissions, currency, color, icon, updatedAt.
-  - `projects/{projectId}/bills/{billId}`: Bills synchronized with local SQLite entities.
-  - `projects/{projectId}/settlements/{settlementId}`: Settlement records.
-  - `share_invites/{inviteId}`: Invite codes / join links for group sharing.
-- Document security rules ensuring only authorized project members can read/write project bills and settlements.
+- Collections:
+  - `users/{uid}`: Profile info (email, displayName, photoUrl, createdAt, lastLoginAt).
+  - `projects/{projectId}`:
+    - Metadata: `id`, `name`, `currency`, `category`, `color`, `icon`, `ownerId`, `memberIds: [uid1, uid2...]`, `inviteCode`, `createdAt`, `updatedAt`.
+  - `projects/{projectId}/bills/{billId}`:
+    - Bills belonging to this project (amount, description, payerId, splitMethod, splits, date, createdAt, updatedAt, createdBy).
+  - `projects/{projectId}/settlements/{settlementId}`:
+    - Settlement debt payments between members.
+  - `share_invites/{inviteCode}`:
+    - Unique 6-character code (e.g., `DL-8899`), `projectId`, `createdBy`, `createdAt`, `expiresAt`, `isActive`.
+- Security Rules:
+  - Only authenticated users can read/write.
+  - Users can only read/write documents in `projects/{projectId}` if `request.auth.uid in resource.data.memberIds` (or request resource).
+  - Only `ownerId` can delete projects or remove members.
 
 ### 3. Presentation Layer
-- Authentication screens / bottom sheets or settings integration:
-  - Login / Register screen or dialog.
-  - User profile badge & account management in Settings screen.
-  - Clean error handling (weak password, email already in use, network error).
+- **Account / Profile in Settings**:
+  - Displays user profile badge (avatar, name, email) or "Dùng ngoại tuyến (Chưa đăng nhập)".
+  - Button to Sign In / Register or Log Out.
+- **Contextual Sign-In Sheet**:
+  - Modal bottom sheet with friendly UX when tapping "Share" or "Join" from project screens.
 
-### 4. Testing & Verification
-- Unit tests covering `AuthRepository`, `AuthBloc`, and user entity mappings.
-- Widget tests for Login/Register forms with validation and error states.
-- Mock Firebase dependencies to guarantee fast and deterministic tests in CI/CD without requiring live network access.
+### 4. Testing & Mock Architecture
+- All Firebase services wrapped in repository interfaces (`AuthRepository`, `CloudSyncRepository`).
+- Comprehensive unit and widget tests (≥80 tests) using mocks (no real network required during tests).
 
 ## Acceptance Criteria
 
-1. Firebase project configuration and auth service interfaces integrated.
-2. Sign-in, sign-up, sign-out, and auth state listeners implemented with clean BLoC/Repository pattern.
-3. Firestore schema defined and documented with security rules.
-4. User profile UI available in Settings / Account section.
-5. Graceful offline-first operation when user is not signed in.
-6. Comprehensive test suite (80+ assertions/tests) for auth flows and schema validation.
+1. Firebase Auth integration supporting 1-Tap Google Sign-In & Email/Password.
+2. Complete offline-first support: app operates 100% offline without requiring login.
+3. Contextual sign-in sheet when tapping "Chia sẻ dự án" or "Tham gia dự án".
+4. Cloud Firestore schema designed with collections `users`, `projects`, `bills`, `settlements`, `share_invites`.
+5. Security rules defined restricting access to project members only.
+6. Settings screen includes Profile / Auth management section.
+7. Unit & Widget test suite (≥80 tests) with clean mocking and 100% pass rate.
