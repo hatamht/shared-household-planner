@@ -29,6 +29,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/sync/presentation/bloc/sync_bloc.dart';
 import 'features/sync/presentation/bloc/conflict_bloc.dart';
+import 'features/sync/presentation/bloc/realtime_bloc.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -116,6 +117,9 @@ class MyApp extends StatelessWidget {
               ),
               BlocProvider<ConflictBloc>.value(
                 value: getIt<ConflictBloc>(),
+              ),
+              BlocProvider<RealtimeBloc>.value(
+                value: getIt<RealtimeBloc>(),
               ),
             ],
             child: MaterialApp(

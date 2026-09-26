@@ -161,4 +161,68 @@ class FirestoreCloudSyncRepository implements CloudSyncRepository {
       userName: userName,
     );
   }
+
+  @override
+  Stream<List<CloudBill>> listenToProjectBills(String projectId) {
+    final db = _db;
+    if (db != null) {
+      return db
+          .collection(CloudCollections.projects)
+          .doc(projectId)
+          .collection(CloudCollections.bills)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs
+            .map((doc) => CloudBill.fromMap(doc.data(), doc.id))
+            .toList();
+      });
+    }
+    return _fallback.listenToProjectBills(projectId);
+  }
+
+  @override
+  Stream<CloudProject?> listenToProject(String projectId) {
+    final db = _db;
+    if (db != null) {
+      return db
+          .collection(CloudCollections.projects)
+          .doc(projectId)
+          .snapshots()
+          .map((doc) {
+        if (!doc.exists || doc.data() == null) return null;
+        return CloudProject.fromMap(doc.data()!, doc.id);
+      });
+    }
+    return _fallback.listenToProject(projectId);
+  }
+
+  @override
+  Future<void> saveBill(CloudBill bill) async {
+    final db = _db;
+    if (db != null) {
+      await db
+          .collection(CloudCollections.projects)
+          .doc(bill.projectId)
+          .collection(CloudCollections.bills)
+          .doc(bill.id)
+          .set(bill.toMap(), SetOptions(merge: true));
+      return;
+    }
+    await _fallback.saveBill(bill);
+  }
+
+  @override
+  Future<void> deleteBill(String projectId, String billId) async {
+    final db = _db;
+    if (db != null) {
+      await db
+          .collection(CloudCollections.projects)
+          .doc(projectId)
+          .collection(CloudCollections.bills)
+          .doc(billId)
+          .delete();
+      return;
+    }
+    await _fallback.deleteBill(projectId, billId);
+  }
 }

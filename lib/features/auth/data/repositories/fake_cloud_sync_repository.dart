@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import '../../domain/entities/cloud_schema.dart';
 import '../../domain/repositories/cloud_sync_repository.dart';
@@ -139,6 +140,93 @@ class FakeCloudSyncRepository implements CloudSyncRepository {
     );
 
     projects[project.id] = updatedProject;
+    _projectStreamControllers[project.id]?.add(updatedProject);
     return updatedProject;
+  }
+
+  // --- Real-time Streams & Bill Storage ---
+  final Map<String, List<CloudBill>> bills = {};
+  final Map<String, StreamController<List<CloudBill>>> _billStreamControllers = {};
+  final Map<String, StreamController<CloudProject?>> _projectStreamControllers = {};
+
+  @override
+  Stream<List<CloudBill>> listenToProjectBills(String projectId) {
+    if (!_billStreamControllers.containsKey(projectId)) {
+      _billStreamControllers[projectId] = StreamController<List<CloudBill>>.broadcast();
+    }
+    // Emit initial snapshot on microtask
+    Future.microtask(() {
+      if (_billStreamControllers.containsKey(projectId) &&
+          !_billStreamControllers[projectId]!.isClosed) {
+        _billStreamControllers[projectId]!.add(List.unmodifiable(bills[projectId] ?? []));
+      }
+    });
+    return _billStreamControllers[projectId]!.stream;
+  }
+
+  @override
+  Stream<CloudProject?> listenToProject(String projectId) {
+    if (!_projectStreamControllers.containsKey(projectId)) {
+      _projectStreamControllers[projectId] = StreamController<CloudProject?>.broadcast();
+    }
+    Future.microtask(() {
+      if (_projectStreamControllers.containsKey(projectId) &&
+          !_projectStreamControllers[projectId]!.isClosed) {
+        _projectStreamControllers[projectId]!.add(projects[projectId]);
+      }
+    });
+    return _projectStreamControllers[projectId]!.stream;
+  }
+
+  @override
+  Future<void> saveBill(CloudBill bill) async {
+    _checkFailure();
+    final list = bills.putIfAbsent(bill.projectId, () => []);
+    final idx = list.indexWhere((b) => b.id == bill.id);
+    if (idx != -1) {
+      list[idx] = bill;
+    } else {
+      list.add(bill);
+    }
+    _billStreamControllers[bill.projectId]?.add(List.unmodifiable(list));
+  }
+
+  @override
+  Future<void> deleteBill(String projectId, String billId) async {
+    _checkFailure();
+    final list = bills[projectId];
+    if (list != null) {
+      list.removeWhere((b) => b.id == billId);
+      _billStreamControllers[projectId]?.add(List.unmodifiable(list));
+    }
+  }
+
+  /// Simulation helper: push an arbitrary list of bills for a project
+  void emitProjectBills(String projectId, List<CloudBill> newBills) {
+    bills[projectId] = List.from(newBills);
+    if (!_billStreamControllers.containsKey(projectId)) {
+      _billStreamControllers[projectId] = StreamController<List<CloudBill>>.broadcast();
+    }
+    _billStreamControllers[projectId]!.add(List.unmodifiable(newBills));
+  }
+
+  /// Simulation helper: push a project update
+  void emitProjectUpdate(CloudProject project) {
+    projects[project.id] = project;
+    if (!_projectStreamControllers.containsKey(project.id)) {
+      _projectStreamControllers[project.id] = StreamController<CloudProject?>.broadcast();
+    }
+    _projectStreamControllers[project.id]!.add(project);
+  }
+
+  void dispose() {
+    for (final c in _billStreamControllers.values) {
+      c.close();
+    }
+    for (final c in _projectStreamControllers.values) {
+      c.close();
+    }
+    _billStreamControllers.clear();
+    _projectStreamControllers.clear();
   }
 }

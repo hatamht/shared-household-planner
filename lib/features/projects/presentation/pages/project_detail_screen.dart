@@ -23,8 +23,13 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
 import '../../../auth/presentation/widgets/share_project_modal.dart';
+import 'dart:async';
 import '../../../sync/presentation/widgets/manual_sync_button.dart';
 import '../../../sync/presentation/widgets/sync_status_badge.dart';
+import '../../../sync/domain/services/realtime_sync_service.dart';
+import '../../../sync/presentation/bloc/realtime_bloc.dart';
+import '../../../sync/presentation/bloc/realtime_event.dart';
+import '../../../sync/presentation/widgets/remote_change_banner.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -39,6 +44,7 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Future<_ProjectDetailData> _dataFuture;
+  StreamSubscription? _realtimeSubscription;
 
   @override
   void initState() {
@@ -46,6 +52,27 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
     _tabController = TabController(length: 3, vsync: this);
     _dataFuture = _loadData();
     LastActiveProjectService.instance.setLastActiveProjectId(widget.project.id);
+    _initRealtimeListeners();
+  }
+
+  void _initRealtimeListeners() {
+    try {
+      final realtimeBloc = context.read<RealtimeBloc>();
+      realtimeBloc.add(StartProjectRealtimeEvent(widget.project.id));
+    } catch (_) {
+      try {
+        getIt<RealtimeBloc>().add(StartProjectRealtimeEvent(widget.project.id));
+      } catch (_) {}
+    }
+
+    try {
+      final realtimeService = getIt<RealtimeSyncService>();
+      _realtimeSubscription = realtimeService.changeStream.listen((event) {
+        if (event.projectId == widget.project.id && mounted) {
+          refreshData();
+        }
+      });
+    } catch (_) {}
   }
 
   void refreshData() {
@@ -119,6 +146,10 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
 
   @override
   void dispose() {
+    _realtimeSubscription?.cancel();
+    try {
+      getIt<RealtimeBloc>().add(StopProjectRealtimeEvent(widget.project.id));
+    } catch (_) {}
     _tabController.dispose();
     super.dispose();
   }
@@ -165,21 +196,24 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
     final onProjectColor = isBright ? Colors.black87 : Colors.white;
     final onProjectColorSubtle = isBright ? Colors.black54 : Colors.white70;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Icon(project.iconData, size: 22, color: onProjectColor),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                project.name,
-                style: TextStyle(color: onProjectColor, fontWeight: FontWeight.bold),
-                overflow: TextOverflow.ellipsis,
+    return RemoteChangeNotificationListener(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Row(
+            children: [
+              Icon(project.iconData, size: 22, color: onProjectColor),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  project.name,
+                  style: TextStyle(color: onProjectColor, fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 6),
+              RemoteSyncStatusIndicator(projectId: project.id),
+            ],
+          ),
         iconTheme: IconThemeData(color: onProjectColor),
         backgroundColor: project.color,
         actions: [
@@ -271,7 +305,8 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
           );
         },
       ),
-    );
+    ),
+  );
   }
 }
 

@@ -482,5 +482,10 @@
   "conflict_lww_wins": "Đã áp dụng phiên bản mới hơn",
   "conflict_lww_wins_message": "Tìm thấy phiên bản mới hơn của dữ liệu này. Bản cục bộ của bạn đã được cập nhật.",
   "conflict_local_wins": "Đã giữ lại thay đổi của bạn",
-  "conflict_local_wins_message": "Thay đổi gần nhất của bạn được ưu tiên và đã được giữ lại."
+  "conflict_local_wins_message": "Thay đổi gần nhất của bạn được ưu tiên và đã được giữ lại.",
+  "remote_bill_added": "{user} vừa thêm chi tiêu: {amount} [{description}]",
+  "remote_bill_updated": "{user} vừa sửa chi tiêu: {amount} [{description}]",
+  "remote_bill_deleted": "{user} vừa xóa chi tiêu [{description}]",
+  "remote_sync_active": "Đang đồng bộ trực tiếp",
+  "remote_member_activity": "Hoạt động thành viên"
 }

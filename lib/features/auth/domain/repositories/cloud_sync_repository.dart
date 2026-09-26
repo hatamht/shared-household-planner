@@ -33,4 +33,16 @@ abstract class CloudSyncRepository {
 
   /// Generate a unique invite code
   String generateInviteCode({String prefix = 'HS'});
+
+  /// Stream real-time updates of bills for a project
+  Stream<List<CloudBill>> listenToProjectBills(String projectId);
+
+  /// Stream real-time updates of a project document
+  Stream<CloudProject?> listenToProject(String projectId);
+
+  /// Save or update a bill in Firestore
+  Future<void> saveBill(CloudBill bill);
+
+  /// Delete a bill from Firestore
+  Future<void> deleteBill(String projectId, String billId);
 }

@@ -482,6 +482,11 @@
   "conflict_lww_wins": "Newer version applied",
   "conflict_lww_wins_message": "A newer version of this data was found. Your local copy has been updated.",
   "conflict_local_wins": "Your changes preserved",
-  "conflict_local_wins_message": "Your recent changes take precedence and have been kept."
+  "conflict_local_wins_message": "Your recent changes take precedence and have been kept.",
+  "remote_bill_added": "{user} added an expense: {amount} [{description}]",
+  "remote_bill_updated": "{user} updated an expense: {amount} [{description}]",
+  "remote_bill_deleted": "{user} deleted expense [{description}]",
+  "remote_sync_active": "Live sync active",
+  "remote_member_activity": "Member Activity"
 }
 
