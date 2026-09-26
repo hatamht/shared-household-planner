@@ -146,19 +146,21 @@ class SyncService {
     try {
       int syncedCount = 0;
 
-      // 1. Process local pending queue
+      // 1. Verify cloud repository connectivity
+      await cloudSyncRepository.getUserProfile('__sync_health_check__');
+
+      // 2. Process local pending queue
       final itemsToProcess = List<SyncQueueItem>.from(_queue);
       for (final item in itemsToProcess) {
-        try {
-          if (item.entityType == 'project') {
-            // Sync project entity
-            // Can be extended with remote repository calls
-          }
-          _queue.remove(item);
-          syncedCount++;
-        } catch (_) {
-          // Keep in queue for next retry
+        if (item.entityType == 'project') {
+          await cloudSyncRepository.getProject(item.entityId);
+        } else if (item.entityType == 'bill') {
+          await cloudSyncRepository.getProject(
+            item.payload['projectId'] as String? ?? item.entityId,
+          );
         }
+        _queue.remove(item);
+        syncedCount++;
       }
 
       // 2. Record sync time

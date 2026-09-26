@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/injection_container.dart';
@@ -26,6 +27,9 @@ class ManualSyncButton extends StatefulWidget {
 class _ManualSyncButtonState extends State<ManualSyncButton>
     with SingleTickerProviderStateMixin {
   late final AnimationController _animController;
+  bool _showSuccessFlash = false;
+  bool _wasSyncing = false;
+  Timer? _successFlashTimer;
 
   @override
   void initState() {
@@ -38,6 +42,7 @@ class _ManualSyncButtonState extends State<ManualSyncButton>
 
   @override
   void dispose() {
+    _successFlashTimer?.cancel();
     _animController.dispose();
     super.dispose();
   }
@@ -47,6 +52,7 @@ class _ManualSyncButtonState extends State<ManualSyncButton>
     super.didChangeDependencies();
     final bloc = _resolveBloc(context);
     if (bloc != null && bloc.state.isSyncing && !_animController.isAnimating) {
+      _wasSyncing = true;
       _animController.repeat();
     }
   }
@@ -91,6 +97,11 @@ class _ManualSyncButtonState extends State<ManualSyncButton>
           previous.lastSyncMessage != current.lastSyncMessage,
       listener: (context, state) {
         if (state.isSyncing) {
+          _wasSyncing = true;
+          _successFlashTimer?.cancel();
+          if (_showSuccessFlash && mounted) {
+            setState(() => _showSuccessFlash = false);
+          }
           if (!_animController.isAnimating) {
             _animController.repeat();
           }
@@ -98,6 +109,20 @@ class _ManualSyncButtonState extends State<ManualSyncButton>
           if (_animController.isAnimating) {
             _animController.stop();
             _animController.reset();
+          }
+          if (_wasSyncing && !state.hasError && !state.isOffline) {
+            _wasSyncing = false;
+            if (mounted) {
+              setState(() => _showSuccessFlash = true);
+              _successFlashTimer?.cancel();
+              _successFlashTimer = Timer(const Duration(milliseconds: 1200), () {
+                if (mounted) {
+                  setState(() => _showSuccessFlash = false);
+                }
+              });
+            }
+          } else {
+            _wasSyncing = false;
           }
         }
 
@@ -137,13 +162,19 @@ class _ManualSyncButtonState extends State<ManualSyncButton>
             children: [
               IconButton(
                 key: const Key('manualSyncButtonAction'),
-                icon: RotationTransition(
-                  turns: _animController,
-                  child: Icon(
-                    Icons.sync,
-                    color: iconColor,
-                  ),
-                ),
+                icon: _showSuccessFlash
+                    ? const Icon(
+                        Icons.check_circle_outline,
+                        key: Key('syncSuccessCheckmark'),
+                        color: Colors.green,
+                      )
+                    : RotationTransition(
+                        turns: _animController,
+                        child: Icon(
+                          Icons.sync,
+                          color: iconColor,
+                        ),
+                      ),
                 onPressed: state.isSyncing
                     ? null
                     : () {
