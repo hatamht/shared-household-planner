@@ -12,7 +12,13 @@ import '../../../templates/presentation/pages/bill_templates_screen.dart';
 import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../onboarding/domain/services/onboarding_service.dart';
 import '../../../onboarding/presentation/pages/onboarding_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/services/cache_service.dart';
+import '../../../auth/domain/entities/auth_user.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../auth/presentation/bloc/auth_event.dart';
+import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
 
 
 /// Comprehensive Settings Screen consolidating Profile, Theme, Language,
@@ -225,6 +231,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildAccountCard(BuildContext context, AppLocalizations loc, bool isDark) {
+    AuthUser? currentUser;
+    bool hasAuthBloc = false;
+    bool isUnauthenticated = false;
+    try {
+      final authBloc = context.watch<AuthBloc>();
+      hasAuthBloc = true;
+      if (authBloc.state is Authenticated) {
+        currentUser = (authBloc.state as Authenticated).user;
+      } else if (authBloc.state is Unauthenticated) {
+        isUnauthenticated = true;
+      }
+    } catch (_) {}
+
+    final bool isAuthenticated = currentUser != null && !currentUser.isAnonymous;
+
+    final String initial = isAuthenticated
+        ? currentUser.initial
+        : (isUnauthenticated ? 'G' : 'H');
+
+    final String displayName = isAuthenticated
+        ? currentUser.displayTitle
+        : (isUnauthenticated
+            ? loc.translate('account_guest_title')
+            : loc.translate('account_name'));
+
+    final String email = isAuthenticated
+        ? (currentUser.email ?? '')
+        : (isUnauthenticated
+            ? loc.translate('account_guest_subtitle')
+            : 'household@example.com');
+
+    final String roleBadgeText = isAuthenticated
+        ? loc.translate('auth_status_cloud')
+        : (isUnauthenticated
+            ? loc.translate('auth_status_offline')
+            : loc.translate('account_role_owner'));
+
     return Card(
       key: const Key('accountInfoCard'),
       elevation: 1,
@@ -232,66 +275,102 @@ class _SettingsScreenState extends State<SettingsScreen> {
       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: const Text(
-                'H',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  child: Text(
+                    initial,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
-                        child: Text(
-                          loc.translate('account_name'),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          loc.translate('account_role_owner'),
-                          key: const Key('accountRoleBadge'),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.primary,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              displayName,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              roleBadgeText,
+                              key: const Key('accountRoleBadge'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        style: TextStyle(
+                          color: isDark ? Colors.white60 : Colors.black54,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'household@example.com',
-                    style: TextStyle(
-                      color: isDark ? Colors.white60 : Colors.black54,
-                      fontSize: 13,
-                    ),
+                ),
+                if (isAuthenticated)
+                  IconButton(
+                    key: const Key('settingsSignOutButton'),
+                    icon: const Icon(Icons.logout_rounded),
+                    tooltip: loc.translate('auth_sign_out_button'),
+                    onPressed: () {
+                      context.read<AuthBloc>().add(const SignOutEvent());
+                    },
+                  )
+                else if (isUnauthenticated)
+                  IconButton(
+                    key: const Key('settingsSignInButton'),
+                    icon: const Icon(Icons.login_rounded),
+                    tooltip: loc.translate('auth_sign_in_button'),
+                    onPressed: () => AuthPromptBottomSheet.show(context),
+                  )
+                else
+                  IconButton(
+                    key: const Key('editProfileButton'),
+                    icon: const Icon(Icons.edit_outlined),
+                    tooltip: loc.translate('edit_profile'),
+                    onPressed: () => _handleEditProfile(context, loc),
                   ),
-                ],
+              ],
+            ),
+            if (isUnauthenticated) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const Key('accountConnectButton'),
+                  onPressed: () => AuthPromptBottomSheet.show(context),
+                  icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                  label: Text(loc.translate('auth_sign_in_button')),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
               ),
-            ),
-            IconButton(
-              key: const Key('editProfileButton'),
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: loc.translate('edit_profile'),
-              onPressed: () => _handleEditProfile(context, loc),
-            ),
+            ],
           ],
         ),
       ),

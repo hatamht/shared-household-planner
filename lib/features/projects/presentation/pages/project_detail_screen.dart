@@ -15,6 +15,13 @@ import '../../../settlement/presentation/pages/payment_history_screen.dart';
 import '../../../settlement/presentation/widgets/add_settlement_dialog.dart';
 import '../../../settlement/presentation/bloc/settlement_bloc.dart';
 import '../../domain/services/last_active_project_service.dart';
+import '../../../auth/domain/entities/auth_user.dart';
+import '../../../auth/domain/repositories/cloud_sync_repository.dart';
+import '../../../auth/data/repositories/firestore_cloud_sync_repository.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
+import '../../../auth/presentation/widgets/share_project_modal.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -62,6 +69,49 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
       ),
     );
     refreshData();
+  }
+
+  Future<void> _handleShareProject(BuildContext context) async {
+    AuthUser? currentUser;
+    try {
+      final authBloc = context.read<AuthBloc>();
+      if (authBloc.state is Authenticated) {
+        currentUser = (authBloc.state as Authenticated).user;
+      }
+    } catch (_) {}
+
+    if (currentUser == null || currentUser.isAnonymous) {
+      final authed = await AuthPromptBottomSheet.show(
+        context,
+        customTitle: AppLocalizations.of(context).translate('auth_prompt_share_title'),
+        customSubtitle: AppLocalizations.of(context).translate('auth_prompt_share_subtitle'),
+      );
+      if (authed != true || !context.mounted) return;
+      try {
+        final authBloc = context.read<AuthBloc>();
+        if (authBloc.state is Authenticated) {
+          currentUser = (authBloc.state as Authenticated).user;
+        }
+      } catch (_) {}
+      if (currentUser == null) return;
+    }
+
+    if (!context.mounted) return;
+
+    CloudSyncRepository? cloudSyncRepo;
+    try {
+      cloudSyncRepo = context.read<CloudSyncRepository>();
+    } catch (_) {
+      cloudSyncRepo = FirestoreCloudSyncRepository();
+    }
+
+    await ShareProjectModal.show(
+      context,
+      projectId: widget.project.id,
+      projectName: widget.project.name,
+      userId: currentUser.uid,
+      cloudSyncRepository: cloudSyncRepo ?? FirestoreCloudSyncRepository(),
+    );
   }
 
   @override
@@ -117,6 +167,14 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
         ),
         iconTheme: IconThemeData(color: onProjectColor),
         backgroundColor: project.color,
+        actions: [
+          IconButton(
+            key: const Key('shareProjectButton'),
+            icon: Icon(Icons.share_outlined, color: onProjectColor),
+            tooltip: loc.translate('share_project_button'),
+            onPressed: () => _handleShareProject(context),
+          ),
+        ],
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

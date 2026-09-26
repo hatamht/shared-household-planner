@@ -6,6 +6,13 @@ import '../../domain/entities/project_palette.dart';
 import '../bloc/project_bloc.dart';
 import 'create_project_screen.dart';
 import 'project_detail_screen.dart';
+import '../../../auth/domain/entities/auth_user.dart';
+import '../../../auth/domain/repositories/cloud_sync_repository.dart';
+import '../../../auth/data/repositories/firestore_cloud_sync_repository.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
+import '../../../auth/presentation/widgets/invite_code_dialog.dart';
 
 /// Category filter definition tied to icon indices in [ProjectPalette]
 class _CategoryFilter {
@@ -217,6 +224,42 @@ class _ProjectScreenState extends State<ProjectScreen> {
     );
   }
 
+  void _handleJoinProject(BuildContext context) {
+    AuthUser? user;
+    try {
+      final authBloc = context.read<AuthBloc>();
+      if (authBloc.state is Authenticated) {
+        user = (authBloc.state as Authenticated).user;
+      }
+    } catch (_) {}
+
+    if (user == null || user.isAnonymous) {
+      AuthPromptBottomSheet.show(
+        context,
+        customTitle: AppLocalizations.of(context).translate('join_project_title'),
+        customSubtitle: AppLocalizations.of(context).translate('auth_sheet_subtitle'),
+        onSuccess: () => _handleJoinProject(context),
+      );
+      return;
+    }
+
+    CloudSyncRepository? cloudSync;
+    try {
+      cloudSync = context.read<CloudSyncRepository>();
+    } catch (_) {}
+    cloudSync ??= FirestoreCloudSyncRepository();
+
+    InviteCodeDialog.show(
+      context,
+      cloudSyncRepository: cloudSync,
+      userId: user.uid,
+      userName: user.displayTitle,
+      onJoined: (_) {
+        context.read<ProjectBloc>().add(const GetAllProjects());
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -228,6 +271,12 @@ class _ProjectScreenState extends State<ProjectScreen> {
         key: const Key('projectScreenAppBar'),
         title: Text(loc.translate('projects')),
         actions: [
+          IconButton(
+            key: const Key('joinProjectButton'),
+            icon: const Icon(Icons.group_add_outlined),
+            tooltip: loc.translate('join_project_button'),
+            onPressed: () => _handleJoinProject(context),
+          ),
           IconButton(
             key: const Key('sortProjectsButton'),
             icon: const Icon(Icons.sort_rounded),

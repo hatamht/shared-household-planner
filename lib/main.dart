@@ -23,6 +23,10 @@ import 'features/settlement/presentation/pages/payment_history_screen.dart';
 import 'features/onboarding/domain/services/onboarding_service.dart';
 import 'features/onboarding/presentation/pages/onboarding_screen.dart';
 import 'core/widgets/global_keyboard_dismiss.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/repositories/cloud_sync_repository.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
+import 'features/auth/presentation/bloc/auth_event.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -42,6 +46,7 @@ void main() async {
   // On first launch: languageProvider already defaults to 'en' in constructor
 
   await setupServiceLocator();
+  getIt<AuthBloc>().add(const CheckAuthStatusEvent());
   getIt<ProjectBloc>().add(const GetAllProjects());
   getIt<BillsBloc>().add(const GetBillsEvent());
   getIt<BillTemplatesBloc>().add(const LoadTemplatesEvent());
@@ -80,9 +85,18 @@ class MyApp extends StatelessWidget {
             RepositoryProvider<SettlementRepository>.value(
               value: getIt<SettlementRepository>(),
             ),
+            RepositoryProvider<AuthRepository>.value(
+              value: getIt<AuthRepository>(),
+            ),
+            RepositoryProvider<CloudSyncRepository>.value(
+              value: getIt<CloudSyncRepository>(),
+            ),
           ],
           child: MultiBlocProvider(
             providers: [
+              BlocProvider<AuthBloc>.value(
+                value: getIt<AuthBloc>(),
+              ),
               BlocProvider<BillsBloc>.value(
                 value: getIt<BillsBloc>(),
               ),

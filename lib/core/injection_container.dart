@@ -30,8 +30,12 @@ import 'package:shared_household_planner/features/templates/presentation/bloc/bi
 import 'package:shared_household_planner/features/settlement/data/datasources/settlement_local_datasource.dart';
 import 'package:shared_household_planner/features/settlement/data/repositories/settlement_repository_impl.dart';
 import 'package:shared_household_planner/features/settlement/domain/repositories/settlement_repository.dart';
-import 'package:shared_household_planner/features/settlement/domain/usecases/settlement_usecases.dart';
 import 'package:shared_household_planner/features/settlement/presentation/bloc/settlement_bloc.dart';
+import 'package:shared_household_planner/features/auth/domain/repositories/auth_repository.dart';
+import 'package:shared_household_planner/features/auth/domain/repositories/cloud_sync_repository.dart';
+import 'package:shared_household_planner/features/auth/data/repositories/firebase_auth_repository.dart';
+import 'package:shared_household_planner/features/auth/data/repositories/firestore_cloud_sync_repository.dart';
+import 'package:shared_household_planner/features/auth/presentation/bloc/auth_bloc.dart';
 
 
 final getIt = GetIt.instance;
@@ -294,6 +298,25 @@ Future<void> setupServiceLocator() async {
   if (!getIt.isRegistered<LastActiveProjectService>()) {
     getIt.registerSingleton<LastActiveProjectService>(
       LastActiveProjectService.instance,
+    );
+  }
+
+  // ── Auth & Cloud Sync ──────────────────────────────────────────────────
+  if (!getIt.isRegistered<AuthRepository>()) {
+    getIt.registerSingleton<AuthRepository>(
+      FirebaseAuthRepository(),
+    );
+  }
+
+  if (!getIt.isRegistered<CloudSyncRepository>()) {
+    getIt.registerSingleton<CloudSyncRepository>(
+      FirestoreCloudSyncRepository(),
+    );
+  }
+
+  if (!getIt.isRegistered<AuthBloc>()) {
+    getIt.registerSingleton<AuthBloc>(
+      AuthBloc(authRepository: getIt<AuthRepository>()),
     );
   }
 }
