@@ -56,14 +56,16 @@ post_install do |installer|
     end
   end
 
-  # Fix Xcode 16.3+ gRPC-Core template syntax error in basic_seq.h
-  basic_seq_path = File.join(installer.sandbox.root, 'gRPC-Core/src/core/lib/promise/detail/basic_seq.h')
-  if File.exist?(basic_seq_path)
-    `chmod +w "#{basic_seq_path}" 2>/dev/null`
-    content = File.read(basic_seq_path)
-    if content.include?('Traits::template CallSeqFactory(')
-      content = content.gsub('Traits::template CallSeqFactory(', 'Traits::template CallSeqFactory<>(')
-      File.write(basic_seq_path, content)
+  # Fix Xcode 16.3+ gRPC-Core & gRPC-C++ template syntax error in basic_seq.h
+  ['gRPC-Core', 'gRPC-C++'].each do |pod_name|
+    basic_seq_path = File.join(installer.sandbox.root, "#{pod_name}/src/core/lib/promise/detail/basic_seq.h")
+    if File.exist?(basic_seq_path)
+      `chmod +w "#{basic_seq_path}" 2>/dev/null`
+      content = File.read(basic_seq_path)
+      if content.include?('Traits::template CallSeqFactory(')
+        content = content.gsub('Traits::template CallSeqFactory(', 'Traits::template CallSeqFactory<>(')
+        File.write(basic_seq_path, content)
+      end
     end
   end
 end
