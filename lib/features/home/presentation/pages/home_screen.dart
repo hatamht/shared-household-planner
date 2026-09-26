@@ -15,6 +15,8 @@ import 'package:shared_household_planner/features/projects/domain/services/last_
 import 'package:shared_household_planner/features/split_bills/domain/entities/bill.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/bloc/bills_bloc.dart';
 import 'package:shared_household_planner/features/split_bills/presentation/pages/bills_list_screen.dart';
+import 'package:shared_household_planner/features/sync/presentation/widgets/manual_sync_button.dart';
+import 'package:shared_household_planner/features/sync/presentation/widgets/sync_status_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool showAppBar;
@@ -225,6 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               elevation: 0.5,
               actions: [
+                const ManualSyncButton(),
                 PopupMenuButton<String>(
                   icon: const Icon(Icons.language),
                   tooltip: loc.translate('language'),

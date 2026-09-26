@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/injection_container.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../features/split_bills/domain/entities/bill.dart';
 import '../../../../features/split_bills/domain/repositories/bill_repository.dart';
@@ -22,6 +23,8 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
 import '../../../auth/presentation/widgets/share_project_modal.dart';
+import '../../../sync/presentation/widgets/manual_sync_button.dart';
+import '../../../sync/presentation/widgets/sync_status_badge.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
   final Project project;
@@ -121,7 +124,19 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
   }
 
   Future<_ProjectDetailData> _loadData() async {
-    final repo = context.read<BillRepository>();
+    BillRepository? repo;
+    try {
+      repo = context.read<BillRepository>();
+    } catch (_) {
+      try {
+        repo = getIt<BillRepository>();
+      } catch (_) {}
+    }
+
+    if (repo == null) {
+      return _ProjectDetailData(bills: const [], stats: null);
+    }
+
     final billsResult =
         await repo.getBillsByProjectId(widget.project.id);
 
@@ -168,6 +183,7 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
         iconTheme: IconThemeData(color: onProjectColor),
         backgroundColor: project.color,
         actions: [
+          ManualSyncButton(projectId: project.id),
           IconButton(
             key: const Key('shareProjectButton'),
             icon: Icon(Icons.share_outlined, color: onProjectColor),
@@ -216,18 +232,41 @@ class ProjectDetailScreenState extends State<ProjectDetailScreen>
             return Center(child: Text(loc.translate('error')));
           }
           final data = snapshot.data!;
-          return TabBarView(
-            controller: _tabController,
+          return Column(
             children: [
-              _BillsTab(
-                project: project,
-                bills: data.bills,
-                onAddBill: _navigateToAddBill,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        project.description?.isNotEmpty == true
+                            ? project.description!
+                            : '${project.members.length} ${loc.translate("members")}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SyncStatusBadge(isCompact: true),
+                  ],
+                ),
               ),
-              _SettlementTab(
-                  project: project, stats: data.stats),
-              _StatisticsTab(
-                  project: project, stats: data.stats),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _BillsTab(
+                      project: project,
+                      bills: data.bills,
+                      onAddBill: _navigateToAddBill,
+                    ),
+                    _SettlementTab(
+                        project: project, stats: data.stats),
+                    _StatisticsTab(
+                        project: project, stats: data.stats),
+                  ],
+                ),
+              ),
             ],
           );
         },

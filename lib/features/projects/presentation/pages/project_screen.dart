@@ -13,6 +13,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/presentation/widgets/auth_prompt_bottom_sheet.dart';
 import '../../../auth/presentation/widgets/invite_code_dialog.dart';
+import '../../../sync/presentation/widgets/manual_sync_button.dart';
 
 /// Category filter definition tied to icon indices in [ProjectPalette]
 class _CategoryFilter {
@@ -271,6 +272,7 @@ class _ProjectScreenState extends State<ProjectScreen> {
         key: const Key('projectScreenAppBar'),
         title: Text(loc.translate('projects')),
         actions: [
+          const ManualSyncButton(),
           IconButton(
             key: const Key('joinProjectButton'),
             icon: const Icon(Icons.group_add_outlined),

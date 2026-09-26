@@ -457,5 +457,20 @@
   "invite_code_instruction": "Gửi mã này cho bạn bè để mời vào dự án:",
   "copy_code_button": "Sao chép mã",
   "share_code_button": "Chia sẻ",
-  "invite_code_copied": "Đã sao chép mã mời vào bộ nhớ tạm!"
+  "invite_code_copied": "Đã sao chép mã mời vào bộ nhớ tạm!",
+  "sync_now": "Đồng bộ ngay",
+  "sync_in_progress": "Đang đồng bộ dữ liệu...",
+  "sync_success": "Đồng bộ thành công",
+  "sync_offline_message": "Bạn đang ngoại tuyến. Dữ liệu đã lưu trên máy và sẽ đồng bộ khi có mạng.",
+  "sync_error_message": "Đồng bộ thất bại. Sẽ thử lại sau.",
+  "sync_status_synced": "Đã đồng bộ",
+  "sync_status_syncing": "Đang đồng bộ...",
+  "sync_status_pending": "Chưa đồng bộ ({count})",
+  "sync_status_offline": "Ngoại tuyến",
+  "sync_status_error": "Lỗi đồng bộ",
+  "sync_last_synced": "Giờ đồng bộ cuối: {time}",
+  "sync_just_now": "Vừa xong",
+  "sync_minutes_ago": "{minutes} phút trước",
+  "sync_hours_ago": "{hours} giờ trước",
+  "sync_never": "Chưa đồng bộ"
 }

@@ -457,6 +457,21 @@
   "invite_code_instruction": "Share this code with members to invite them:",
   "copy_code_button": "Copy Code",
   "share_code_button": "Share",
-  "invite_code_copied": "Invite code copied to clipboard!"
+  "invite_code_copied": "Invite code copied to clipboard!",
+  "sync_now": "Sync now",
+  "sync_in_progress": "Syncing data...",
+  "sync_success": "Synced successfully",
+  "sync_offline_message": "You are offline. Data is saved locally and will sync when reconnected.",
+  "sync_error_message": "Sync failed. Will retry later.",
+  "sync_status_synced": "Synced",
+  "sync_status_syncing": "Syncing...",
+  "sync_status_pending": "Pending ({count})",
+  "sync_status_offline": "Offline",
+  "sync_status_error": "Sync error",
+  "sync_last_synced": "Last sync: {time}",
+  "sync_just_now": "Just now",
+  "sync_minutes_ago": "{minutes}m ago",
+  "sync_hours_ago": "{hours}h ago",
+  "sync_never": "Never"
 }
 
