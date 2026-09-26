@@ -1469,7 +1469,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Weekly Groceries'), findsOneWidget);
-      expect(find.text('350000'), findsOneWidget);
+      expect(find.text('350,000'), findsOneWidget);
       expect(find.text('David'), findsAtLeastNWidgets(1));
     });
 
@@ -1527,7 +1527,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Applied from Chip'), findsWidgets);
-      expect(find.text('80000'), findsOneWidget);
+      expect(find.text('80,000'), findsOneWidget);
     });
 
     testWidgets('Save as template button creates template from current form', (tester) async {

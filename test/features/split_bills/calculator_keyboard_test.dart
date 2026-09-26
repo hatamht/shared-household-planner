@@ -598,4 +598,74 @@ void main() {
       expect(find.text('Invalid expression'), findsOneWidget);
     });
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // AC 13: Comma as Thousands Separator
+  // ───────────────────────────────────────────────────────────────────────────
+  group('AC 13: Comma Thousands Separator & Formatting', () {
+    test('13.1 formatWithCommas formats integer digits with commas', () {
+      expect(CalculatorEvaluator.formatWithCommas('1000'), equals('1,000'));
+      expect(CalculatorEvaluator.formatWithCommas('100000'), equals('100,000'));
+      expect(CalculatorEvaluator.formatWithCommas('1000000'), equals('1,000,000'));
+      expect(CalculatorEvaluator.formatWithCommas('500'), equals('500'));
+    });
+
+    test('13.2 formatWithCommas formats decimal digits correctly', () {
+      expect(CalculatorEvaluator.formatWithCommas('1234.56'), equals('1,234.56'));
+      expect(CalculatorEvaluator.formatWithCommas('100000.5'), equals('100,000.5'));
+    });
+
+    test('13.3 formatExpression formats numbers with operators', () {
+      expect(CalculatorEvaluator.formatExpression('100000+50000'), equals('100,000+50,000'));
+      expect(CalculatorEvaluator.formatExpression('1000*20'), equals('1,000*20'));
+    });
+
+    test('13.4 evaluate evaluates expressions with comma-separated numbers', () {
+      expect(CalculatorEvaluator.evaluate('100,000 + 50,000'), equals(150000.0));
+      expect(CalculatorEvaluator.evaluate('1,000,000 / 2'), equals(500000.0));
+      expect(CalculatorEvaluator.evaluate('25,000 * 4'), equals(100000.0));
+    });
+
+    test('13.5 formatResult formats double with comma separators', () {
+      expect(CalculatorEvaluator.formatResult(1000000.0), equals('1,000,000'));
+      expect(CalculatorEvaluator.formatResult(100000.0), equals('100,000'));
+      expect(CalculatorEvaluator.formatResult(12500.5), equals('12,500.5'));
+    });
+
+    testWidgets('13.6 Typing numbers on CalculatorKeyboard automatically formats with commas', (tester) async {
+      final controller = TextEditingController();
+      await tester.pumpWidget(buildTestApp(child: CalculatorKeyboard(controller: controller)));
+      await tester.pumpAndSettle();
+
+      for (final digit in ['1', '0', '0', '0', '0', '0']) {
+        await tester.tap(find.text(digit).first);
+        await tester.pumpAndSettle();
+      }
+
+      expect(controller.text, equals('100,000'));
+
+      // Now tap '+' and '5', '0', '0', '0', '0'
+      await tester.tap(find.text('+'));
+      await tester.pumpAndSettle();
+      for (final digit in ['5', '0', '0', '0', '0']) {
+        await tester.tap(find.text(digit).first);
+        await tester.pumpAndSettle();
+      }
+
+      expect(controller.text, equals('100,000+50,000'));
+      expect(find.text('= 150,000'), findsOneWidget);
+    });
+
+    testWidgets('13.7 Backspacing on formatted number updates commas correctly', (tester) async {
+      final controller = TextEditingController(text: '100,000');
+      await tester.pumpWidget(buildTestApp(child: CalculatorKeyboard(controller: controller)));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('⌫'));
+      await tester.pumpAndSettle();
+
+      expect(controller.text, equals('10,000'));
+    });
+  });
 }
+

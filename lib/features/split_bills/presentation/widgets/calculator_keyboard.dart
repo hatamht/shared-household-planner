@@ -24,9 +24,13 @@ class CalculatorKeyboard extends StatelessWidget {
     }
 
     if (key == '⌫') {
-      final text = controller.text;
+      var text = controller.text;
       if (text.isNotEmpty) {
-        controller.text = text.substring(0, text.length - 1);
+        text = text.substring(0, text.length - 1);
+        if (text.endsWith(',')) {
+          text = text.substring(0, text.length - 1);
+        }
+        controller.text = CalculatorEvaluator.formatExpression(text);
         controller.selection = TextSelection.collapsed(offset: controller.text.length);
       }
       return;
@@ -43,7 +47,7 @@ class CalculatorKeyboard extends StatelessWidget {
 
     // Append key
     final text = controller.text;
-    controller.text = text + key;
+    controller.text = CalculatorEvaluator.formatExpression(text + key);
     controller.selection = TextSelection.collapsed(offset: controller.text.length);
   }
 

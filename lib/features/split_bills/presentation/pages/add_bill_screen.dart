@@ -243,7 +243,7 @@ class AddBillScreenState extends State<AddBillScreen>
     if (widget.billToEdit != null) {
       final b = widget.billToEdit!;
       titleController.text = b.title;
-      amountController.text = b.amount.toStringAsFixed(0);
+      amountController.text = CalculatorEvaluator.formatResult(b.amount);
       paidByController.text = b.paidBy;
       selectedDate = b.date;
       selectedCurrency = b.currency ?? widget.projectSettings.defaultCurrency;
@@ -376,7 +376,7 @@ class AddBillScreenState extends State<AddBillScreen>
   void _applyTemplate(BillTemplate t, {bool recordUsage = false}) {
     titleController.text = t.title;
     if (t.amount > 0) {
-      amountController.text = t.amount.toStringAsFixed(0);
+      amountController.text = CalculatorEvaluator.formatResult(t.amount);
     }
     paidByController.text = t.paidBy ?? '';
     selectedCurrency = t.currency;
@@ -1610,7 +1610,7 @@ class AddBillScreenState extends State<AddBillScreen>
   // ────────────────────────────────────────
   // Real-time Split Calculation
   double get _currentAmount {
-    final text = amountController.text.trim();
+    final text = amountController.text.replaceAll(',', '').trim();
     final direct = double.tryParse(text);
     if (direct != null) return direct;
     return CalculatorEvaluator.evaluate(text) ?? 0.0;
@@ -1684,7 +1684,7 @@ class AddBillScreenState extends State<AddBillScreen>
       amountController.text = CalculatorEvaluator.formatResult(evalResult);
     }
 
-    final amount = double.tryParse(amountController.text) ?? _currentAmount;
+    final amount = double.tryParse(amountController.text.replaceAll(',', '')) ?? _currentAmount;
     if (amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(loc.translate('amount_must_be_positive'))),
@@ -1755,7 +1755,7 @@ class AddBillScreenState extends State<AddBillScreen>
   void _submitForm() async {
     if (!_validateForm()) return;
 
-    final amount = double.tryParse(amountController.text) ?? _currentAmount;
+    final amount = double.tryParse(amountController.text.replaceAll(',', '')) ?? _currentAmount;
     final parts = _effectiveParticipants;
     final mode = SplitMode.fromString(_splitMode);
 
@@ -1978,25 +1978,6 @@ class AddBillScreenState extends State<AddBillScreen>
                           _buildCollapseBar(loc, categoryColor, isDark),
                           _buildQuickTemplatesSection(loc, isDark),
                           const SizedBox(height: 6),
-            // ── 0. Tab Selector Refinement ───────────────────────
-            Container(
-              key: const Key('transactionTypeTabs'),
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cardBorder),
-              ),
-              padding: const EdgeInsets.all(4),
-              child: Row(
-                children: [
-                  _buildTabItem(loc.translate('expense'), selectedTransactionType == 0, 0, categoryColor),
-                  _buildTabItem(loc.translate('income'), selectedTransactionType == 1, 1, categoryColor),
-                  _buildTabItem(loc.translate('transfer'), selectedTransactionType == 2, 2, categoryColor),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
 
             // ── 1. Title Section (CEO Clarification) ─────────────
             // LEFT: Circular badge with category icon + brand color

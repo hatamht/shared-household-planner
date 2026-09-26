@@ -2,11 +2,13 @@
 /// Supports integers, decimals, parentheses, and operators: +, -, *, ×, /, ÷.
 class CalculatorEvaluator {
   /// Evaluates an expression string and returns the calculated [double],
+  /// Evaluates an expression string and returns the calculated [double],
   /// or `null` if the expression is empty or invalid.
   static double? evaluate(String? input) {
     if (input == null) return null;
     final cleaned = input
         .replaceAll(' ', '')
+        .replaceAll(',', '')
         .replaceAll('×', '*')
         .replaceAll('÷', '/');
 
@@ -39,14 +41,40 @@ class CalculatorEvaluator {
 
   /// Checks if a character is valid in a calculator expression.
   static bool isValidChar(String char) {
-    return RegExp(r'[0-9\.\+\-\*\/×÷\s\(\)]').hasMatch(char);
+    return RegExp(r'[0-9\.\+\-\*\/×÷\s\(\),]').hasMatch(char);
   }
 
-  /// Formats a double value cleanly (no trailing decimals if whole number).
+  /// Formats an integer or number string with comma thousand separators (e.g. "100000" -> "100,000").
+  static String formatWithCommas(String digits) {
+    final isNegative = digits.startsWith('-');
+    final absDigits = isNegative ? digits.substring(1) : digits;
+    final formatted = absDigits.replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+    return isNegative ? '-$formatted' : formatted;
+  }
+
+  /// Formats all numbers in an expression with comma thousand separators.
+  static String formatExpression(String expr) {
+    if (expr.isEmpty) return expr;
+    final uncomma = expr.replaceAll(',', '');
+    return uncomma.replaceAllMapped(RegExp(r'\d+(?:\.\d*)?'), (match) {
+      final s = match.group(0)!;
+      if (s.contains('.')) {
+        final parts = s.split('.');
+        final intPart = formatWithCommas(parts[0]);
+        return '$intPart.${parts.length > 1 ? parts[1] : ''}';
+      }
+      return formatWithCommas(s);
+    });
+  }
+
+  /// Formats a double value cleanly (with comma thousand separators).
   static String formatResult(double value) {
     if (value.isNaN || value.isInfinite) return '0';
     if (value == value.roundToDouble()) {
-      return value.toInt().toString();
+      return formatWithCommas(value.toInt().toString());
     }
     // Trim trailing zeros after decimal point
     final str = value.toStringAsFixed(4);
@@ -54,7 +82,12 @@ class CalculatorEvaluator {
     if (trimmed.endsWith('.')) {
       trimmed = trimmed.substring(0, trimmed.length - 1);
     }
-    return trimmed;
+    final parts = trimmed.split('.');
+    final intPart = formatWithCommas(parts[0]);
+    if (parts.length > 1) {
+      return '$intPart.${parts[1]}';
+    }
+    return intPart;
   }
 
   // ─── Internal Tokenizer & Shunting Yard Parser ──────────────────────────

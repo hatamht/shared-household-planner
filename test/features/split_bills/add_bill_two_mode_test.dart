@@ -759,7 +759,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('compactDescriptionField')), findsNothing);
-      expect(find.byKey(const Key('transactionTypeTabs')), findsOneWidget);
+      expect(find.byKey(const Key('transactionTypeTabs')), findsNothing);
       expect(find.byKey(const Key('titleField')), findsOneWidget);
     });
 
@@ -774,14 +774,14 @@ void main() {
       expect(find.text('Collapse'), findsOneWidget);
     });
 
-    testWidgets('4.4 Full mode displays transactionTypeTabs and form elements', (tester) async {
+    testWidgets('4.4 Full mode displays form elements (transactionTypeTabs removed)', (tester) async {
       await tester.pumpWidget(buildTestApp(child: const AddBillScreen()));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('transactionTypeTabs')), findsOneWidget);
+      expect(find.byKey(const Key('transactionTypeTabs')), findsNothing);
       expect(find.byKey(const Key('titleField')), findsOneWidget);
     });
 

@@ -326,89 +326,14 @@ void main() {
   // AC 2: Tab Selector Refinement (Expense / Income / Transfer)
   // ───────────────────────────────────────────────────────────────────────────
   group('AC 2: Tab Selector Refinement', () {
-    testWidgets('Tabs container rendered with Key("transactionTypeTabs")', (tester) async {
+    testWidgets('Tabs container (Expense / Income / Transfer) is removed', (tester) async {
       await tester.pumpWidget(buildTestUIPolishApp());
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('transactionTypeTabs')), findsOneWidget);
-    });
-
-    testWidgets('Contains Expense, Income, and Transfer tab options', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      expect(find.text('Expense'), findsOneWidget);
-      expect(find.text('Income'), findsOneWidget);
-      expect(find.text('Transfer'), findsOneWidget);
-    });
-
-    testWidgets('Expense tab is selected by default', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      final expenseText = tester.widget<Text>(find.text('Expense'));
-      expect(expenseText.style?.fontWeight, equals(FontWeight.bold));
-    });
-
-    testWidgets('Switching tab to Income updates selection smoothly', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Income'));
-      await tester.pumpAndSettle();
-
-      final incomeText = tester.widget<Text>(find.text('Income'));
-      expect(incomeText.style?.fontWeight, equals(FontWeight.bold));
-    });
-
-    testWidgets('Switching tab to Transfer updates selection smoothly', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Transfer'));
-      await tester.pumpAndSettle();
-
-      final transferText = tester.widget<Text>(find.text('Transfer'));
-      expect(transferText.style?.fontWeight, equals(FontWeight.bold));
-    });
-
-    testWidgets('Tabs have rounded container background styling', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      final tabContainer = tester.widget<Container>(find.byKey(const Key('transactionTypeTabs')));
-      final decor = tabContainer.decoration as BoxDecoration?;
-      expect(decor?.borderRadius, isNotNull);
-    });
-
-    testWidgets('Each tab item has equal flex weight', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      final tabRow = find.descendant(
-        of: find.byKey(const Key('transactionTypeTabs')),
-        matching: find.byType(Row),
-      );
-      expect(tabRow, findsOneWidget);
-
-      final rowWidget = tester.widget<Row>(tabRow);
-      expect(rowWidget.children.length, equals(3));
-      for (final child in rowWidget.children) {
-        expect(child, isA<Expanded>());
-      }
-    });
-
-    testWidgets('Tapping back to Expense restores Expense selection', (tester) async {
-      await tester.pumpWidget(buildTestUIPolishApp());
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Income'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Expense'));
-      await tester.pumpAndSettle();
-
-      final expenseText = tester.widget<Text>(find.text('Expense'));
-      expect(expenseText.style?.fontWeight, equals(FontWeight.bold));
+      expect(find.byKey(const Key('transactionTypeTabs')), findsNothing);
+      expect(find.text('Expense'), findsNothing);
+      expect(find.text('Income'), findsNothing);
+      expect(find.text('Transfer'), findsNothing);
     });
   });
 
@@ -969,7 +894,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add Bill'), findsOneWidget);
-      expect(find.text('Expense'), findsOneWidget);
+      expect(find.byKey(const Key('titleField')), findsOneWidget);
     });
 
     testWidgets('Cards in Dark Mode have dark surface background, not pure black', (tester) async {
@@ -987,14 +912,11 @@ void main() {
       expect(decor?.color, isNot(equals(Colors.black)));
     });
 
-    testWidgets('Tabs container in Dark Mode has dark surface fill', (tester) async {
+    testWidgets('Tabs container is not present in Dark Mode', (tester) async {
       await tester.pumpWidget(buildTestUIPolishApp(brightness: Brightness.dark));
       await tester.pumpAndSettle();
 
-      final tabContainer = tester.widget<Container>(find.byKey(const Key('transactionTypeTabs')));
-      final decor = tabContainer.decoration as BoxDecoration?;
-      expect(decor?.color, isNotNull);
-      expect(decor?.color, isNot(equals(Colors.white)));
+      expect(find.byKey(const Key('transactionTypeTabs')), findsNothing);
     });
 
     testWidgets('Divider below AppBar renders with dark mode border color', (tester) async {

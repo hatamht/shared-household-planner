@@ -282,7 +282,7 @@ void main() {
       expect(find.byKey(const Key('compactAmountField')), findsNothing);
     });
 
-    testWidgets('2.5 After expand full mode fields appear (transactionTypeTabs)', (tester) async {
+    testWidgets('2.5 After expand full mode fields appear (titleField)', (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -290,7 +290,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('expandToFullModeButton')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('transactionTypeTabs')), findsOneWidget);
+      expect(find.byKey(const Key('titleField')), findsOneWidget);
     });
 
     testWidgets('2.6 Multiple expand/collapse cycles work without crash', (tester) async {
