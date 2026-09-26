@@ -472,5 +472,15 @@
   "sync_just_now": "Vừa xong",
   "sync_minutes_ago": "{minutes} phút trước",
   "sync_hours_ago": "{hours} giờ trước",
-  "sync_never": "Chưa đồng bộ"
+  "sync_never": "Chưa đồng bộ",
+  "conflict_resolved": "Đã giải quyết xung đột",
+  "conflict_resolved_message": "Xung đột dữ liệu đã được giải quyết thành công bằng phiên bản mới nhất",
+  "conflict_delete_vs_edit": "Mục đã bị người dùng khác xóa",
+  "conflict_delete_vs_edit_message": "Mục này đã bị người dùng khác xóa trong khi bạn đang chỉnh sửa. Thay đổi của bạn đã được giữ lại trên máy.",
+  "conflict_rollback_success": "Dữ liệu cục bộ đã được bảo toàn",
+  "conflict_rollback_message": "Phát hiện xung đột đồng bộ. Dữ liệu cục bộ của bạn đã được bảo toàn an toàn và sẽ được đồng bộ lại.",
+  "conflict_lww_wins": "Đã áp dụng phiên bản mới hơn",
+  "conflict_lww_wins_message": "Tìm thấy phiên bản mới hơn của dữ liệu này. Bản cục bộ của bạn đã được cập nhật.",
+  "conflict_local_wins": "Đã giữ lại thay đổi của bạn",
+  "conflict_local_wins_message": "Thay đổi gần nhất của bạn được ưu tiên và đã được giữ lại."
 }

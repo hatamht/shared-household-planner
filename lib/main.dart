@@ -28,6 +28,7 @@ import 'features/auth/domain/repositories/cloud_sync_repository.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth_event.dart';
 import 'features/sync/presentation/bloc/sync_bloc.dart';
+import 'features/sync/presentation/bloc/conflict_bloc.dart';
 
 final themeProvider = ThemeProvider();
 final languageProvider = LanguageProvider();
@@ -112,6 +113,9 @@ class MyApp extends StatelessWidget {
               ),
               BlocProvider<SyncBloc>.value(
                 value: getIt<SyncBloc>(),
+              ),
+              BlocProvider<ConflictBloc>.value(
+                value: getIt<ConflictBloc>(),
               ),
             ],
             child: MaterialApp(

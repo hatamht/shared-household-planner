@@ -472,6 +472,16 @@
   "sync_just_now": "Just now",
   "sync_minutes_ago": "{minutes}m ago",
   "sync_hours_ago": "{hours}h ago",
-  "sync_never": "Never"
+  "sync_never": "Never",
+  "conflict_resolved": "Conflict resolved",
+  "conflict_resolved_message": "Data conflict resolved successfully using latest version",
+  "conflict_delete_vs_edit": "Item was deleted by another user",
+  "conflict_delete_vs_edit_message": "This item was deleted by another user while you were editing. Your changes have been preserved locally.",
+  "conflict_rollback_success": "Local data safely preserved",
+  "conflict_rollback_message": "Sync conflict detected. Your local data has been safely preserved and will be re-synced.",
+  "conflict_lww_wins": "Newer version applied",
+  "conflict_lww_wins_message": "A newer version of this data was found. Your local copy has been updated.",
+  "conflict_local_wins": "Your changes preserved",
+  "conflict_local_wins_message": "Your recent changes take precedence and have been kept."
 }
 

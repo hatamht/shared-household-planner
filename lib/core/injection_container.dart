@@ -40,7 +40,9 @@ import 'package:shared_household_planner/features/auth/presentation/bloc/auth_bl
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared_household_planner/features/sync/domain/services/network_connectivity_service.dart';
 import 'package:shared_household_planner/features/sync/domain/services/sync_service.dart';
+import 'package:shared_household_planner/features/sync/domain/services/conflict_resolver.dart';
 import 'package:shared_household_planner/features/sync/presentation/bloc/sync_bloc.dart';
+import 'package:shared_household_planner/features/sync/presentation/bloc/conflict_bloc.dart';
 
 
 final getIt = GetIt.instance;
@@ -350,6 +352,16 @@ Future<void> setupServiceLocator() async {
   if (!getIt.isRegistered<SyncBloc>()) {
     getIt.registerSingleton<SyncBloc>(
       SyncBloc(syncService: getIt<SyncService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ConflictResolver>()) {
+    getIt.registerSingleton<ConflictResolver>(ConflictResolver());
+  }
+
+  if (!getIt.isRegistered<ConflictBloc>()) {
+    getIt.registerSingleton<ConflictBloc>(
+      ConflictBloc(resolver: getIt<ConflictResolver>()),
     );
   }
 }
